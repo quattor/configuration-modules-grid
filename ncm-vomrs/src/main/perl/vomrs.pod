@@ -1,0 +1,114 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+yaim: NCM component for configuring VOMRS
+
+=head1 DESCRIPTION
+
+The I<vomrs> component generates the vomrs configuration file and runs
+the corresponding configuration script 
+(vomrs_configure). The configuration file is generated under /etc/vomrs-quattor.d.
+
+
+=head1 RESOURCES
+
+=head2 /software/components/vomrs/configure (boolean)
+
+If defined and set to true then then the configuration will be executed via
+the vomrs_configure script.
+
+=head2 /software/comonents/vomrs/confdir (string)
+Location to create configuration files in and execute vomrs_configure on.
+By default /etc/vomrs-quattor.d
+
+
+=head2 /software/components/vomrs/vomrssecretdir (string)
+Location to look for secret additions, e.g as transported
+via sindes to be appended to the configuration files.
+File names are expected of the form vomrs-secrets-<vo>.cfg
+Default value is /etc/vomrs-secrets
+
+=head2 /software/components/vomrs/home (string)
+Home location for vomrs, default /opt/vomrs-1.3
+
+=head2 /software/components/vomrs/confscript (string)
+Default  value is /opt/vomrs-1.3/sbin/configure_vomrs
+
+=head2 /software/components/vomrs/log4jconfig (string)
+Replaces the file /opt/voms-1.3/etc/cfg/log4j.properties.template
+with something else.
+
+=head2 /software/components/vomrs/VOs (list)
+List of VOs to configure. Any old configuration for removed
+VOs will not be removed.
+
+=head2 /software/componets/vomrs/<vo>/vomrs/<KEY>/<VALUE>
+Will populate the VOMRS Configuration section with
+
+  <KEY> = <VALUE>
+
+=head2 /software/componets/vomrs/<vo>/voinfo/<KEY>/<VALUE>
+Will populate the VO Related information 
+
+  <KEY> = <VALUE>
+
+=head2 /software/componets/vomrs/<vo>/gridorg/<KEY>/<VALUE>
+Will populate the Grid Organisation section with
+
+  <KEY> = <VALUE>
+
+=head2 /software/componets/vomrs/<vo>/tomcat/<KEY>/<VALUE>
+Will populate the tomcat related section with
+
+  <KEY> = <VALUE>
+
+=head2 /software/componets/vomrs/<vo>/cacert/<KEY>/<VALUE>
+Will populate the CA and certificate section of the configuration file with
+
+  <KEY> = <VALUE>
+
+=head2 /software/componets/vomrs/<vo>/vomem/<KEY>/<VALUE>
+Will populate the VO Membership portion of the configuration files with
+
+  <KEY> = <VALUE>
+
+=head2 /software/componets/vomrs/<vo>/event/<KEY>/<VALUE>
+Will populate the Event notification of the configuration file with.
+
+  <KEY> = <VALUE>
+
+=head2 /software/componets/vomrs/<vo>/sync/<KEY>/<VALUE>
+Will populate the voms syncronisation part of the configuration with
+
+  <KEY> = <VALUE>
+
+=head2 /software/componets/vomrs/<vo>/db/<KEY>/<VALUE>
+Will populate the database configuration part of the configuration.
+
+  <KEY> = <VALUE>
+
+=head2 /software/componets/vomrs/<vo>/lcg/<KEY>/<VALUE>
+Will populate the LCG Registration Part of the configuration.
+
+  <KEY> = <VALUE>
+
+
+
+
+=head1 AUTHOR
+
+Steve Traylen <steve.traylen@cern.ch>
+=head1 SEE ALSO
+
+ncm-ncd(1), http://cern.ch/quattor
+http://cern.ch/grid-deployment
+
+
+
+=cut
+
