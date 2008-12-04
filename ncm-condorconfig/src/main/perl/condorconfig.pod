@@ -1,0 +1,30 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+The I<condorconfig> component manages the configuration file of 
+Condor.  
+
+=head1 DESCRIPTION
+
+The I<condorconfig> component manages the configuration file (default
+is /opt/condor/etc/condor.conf) for Condor.  All of the condor
+parameters are available with exactly the same name in Quattor.  See
+the condor documentation for the names and descriptions of the
+parameters. 
+
+=head1 RESOURCES
+
+=head2 configfile (/opt/condor/etc/condor.conf)
+
+The absolute file name of the configuration file.
+
+=head2 user (edguser)
+
+The username to use for running condor.
+
+=cut
