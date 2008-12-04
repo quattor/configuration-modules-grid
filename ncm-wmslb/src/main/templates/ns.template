@@ -1,0 +1,25 @@
+II_Port  = <%II_Port|2170%>;
+Gris_Port = <%Gris_Port|2170%>;
+II_Timeout = <%II_Timeout|30%>;
+Gris_Timeout = <%Gris_Timeout|20%>;
+II_DN     = "<%II_DN|mds-vo-name=local,o=grid%>";
+Gris_DN   = "<%Gris_DN|mds-vo-name=resource,o=grid%>";
+II_Contact = "<%II_Contact|topbdii.grif.fr%>";
+
+BacklogSize = <%BacklogSize|64%>;
+ListeningPort = <%ListeningPort|7772%>;
+MasterThreads = <%MasterThreads|8%>;
+DispatcherThreads = <%DispatcherThreads|10%>;
+SandboxStagingPath = "<%SandboxStagingPath|${GLITE_LOCATION_VAR}/SandboxDir%>";
+
+LogFile = "<%LogFile|${GLITE_WMS_LOCATION_VAR}/log/networkserver_events.log%>";
+LogLevel = <%LogLevel|5%>;
+
+ConnectionTimeout = <%ConnectionTimeout|300%>;
+DLI_SI_CatalogTimeout = <%DLI_SI_CatalogTimeout|60%>;
+EnableQuotaManagement = <%EnableQuotaManagement|false%>;
+ListMatchParadise = "<%ListMatchParadise|${GLITE_LOCATION_TMP}/MatchArea%>";
+MaxInputSandboxSize = <%MaxInputSandboxSize|10000000%>;
+EnableDynamicQuotaAdjustment = <%EnableDynamicQuotaAdjustment|false%>;
+QuotaAdjustmentAmount = <%QuotaAdjustmentAmount|10000%>;
+QuotaInsensibleDiskPortion = <%QuotaInsensibleDiskPortion|2.0%>;

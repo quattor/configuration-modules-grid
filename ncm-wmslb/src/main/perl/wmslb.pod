@@ -1,0 +1,67 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=begin comment
+
+Be sure to put a blank line before and after every formatting command
+
+=end comment
+
+=head1 NAME
+
+wmslb : NCM component to configure gLite  WMS and LB
+
+=head1 DESCRIPTION
+
+This NCM component allows to configure gLite WMS and LB. 
+
+=head1 RESOURCES
+
+=head2 /software/components/@COMP/envScript : string (required)
+
+Name of the shell script containing environment variables used by WMS/LB startup scripts to configure the services.
+
+Default : /etc/profile.d/glite-wms-vars.sh
+
+=head2 /software/components/@COMP/env : nlist of string (optional)
+
+Each nlist element defines an environment variable to be added to envScript. Key is the variable name, value is variable value.
+For the complete list of supported variables and their default values, see schema.tpl.
+
+Default : see schema.tpl
+
+=head2 /software/components/@COMP/services : nlist (optional)
+
+Per service configuration. For the list of supported services, see schema.tpl.
+
+Default : none
+
+=head1 DEPENDENCIES
+
+None.
+
+=head1 BUGS
+
+None known.
+
+=head1 AUTHOR
+
+Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 MAINTAINER
+
+Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 VERSION
+
+1.1.12
+
+=head1 SEE ALSO
+
+ncm-ncd(1)
+
+
+=cut

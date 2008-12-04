@@ -1,0 +1,17 @@
+CondorSubmit = "<%CondorSubmit|${CONDORG_INSTALL_PATH}/bin/condor_submit%>";
+CondorRemove = "<%CondorRemove|${CONDORG_INSTALL_PATH}/bin/condor_rm%>";
+CondorQuery  = "<%CondorQuery|${CONDORG_INSTALL_PATH}/bin/condor_q%>";
+CondorRelease = "<%CondorRelease|${CONDORG_INSTALL_PATH}/bin/condor_release%>";
+CondorDagman = "<%CondorDagman|${CONDORG_INSTALL_PATH}/bin/condor_dagman%>";
+
+SubmitFileDir = "<%SubmitFileDir|${GLITE_WMS_LOCATION_VAR}/jobcontrol/submit%>";
+OutputFileDir = "<%OutputFileDir|${GLITE_WMS_LOCATION_VAR}/jobcontrol/condorio%>";
+Input = "<%Input|${GLITE_WMS_LOCATION_VAR}/jobcontrol/queue.fl%>";
+
+LockFile = "<%LockFile|${GLITE_WMS_LOCATION_VAR}/jobcontrol/lock%>";
+LogFile = "<%LogFile|${GLITE_WMS_LOCATION_VAR}/log/jobcontroller_events.log%>";
+LogLevel = <%LogLevel|5%>;
+
+ContainerRefreshThreshold = <%ContainerRefreshThreshold|1000%>;
+DagmanMaxPre = <%DagmanMaxPre|10%>;
+MaximumTimeAllowedForCondorMatch = <%MaximumTimeAllowedForCondorMatch|1800%>;

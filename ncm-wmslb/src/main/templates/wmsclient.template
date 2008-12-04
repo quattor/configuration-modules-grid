@@ -1,0 +1,21 @@
+ErrorStorage = "<%ErrorStorage|${GLITE_LOCATION_LOG}%>";
+OutputStorage = "<%OutputStorage|${GLITE_LOCATION_TMP}%>";
+ListenerStorage = "<%ListenerStorage|${GLITE_LOCATION_TMP}%>";
+virtualorganisation = "<%virtualorganisation|egee%>";
+rank = <%rank|-other.GlueCEStateEstimatedResponseTime%>;
+requirements = "<%requirements|other.GlueCEStateStatus == Production%>";
+RetryCount = <%RetryCount|3%>;
+ShallowRetryCount = <%ShallowRetryCount|3%>;
+WMProxyEndPoints = {"https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"};
+// Force LB address selection
+// LBAddress  = "<%LBAddress|ghemon.cnaf.infn.it:9000%>"; 
+MyProxyServer = "<%MyProxyServer|kuiken.nikhef.nl%>";
+//** Enable storing of job provenance info:
+// JobProvenance  = "<%JobProvenance|skurut.ics.muni.cz:8901%>";
+//** Enable job file perusal mechanism:
+// PerusalFileEnable = <%PerusalFileEnable|true%>;
+//** Allow ISB compression mechanism:
+// AllowZippedISB = <%AllowZippedISB|true%>;
+
+LBServiceDiscoveryType  = "<%LBServiceDiscoveryType|org.glite.lb.server%>";
+WMProxyServiceDiscoveryType = "<%WMProxyServiceDiscoveryType|org.glite.wms.wmproxy%>";

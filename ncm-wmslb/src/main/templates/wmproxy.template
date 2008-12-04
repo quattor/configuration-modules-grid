@@ -1,0 +1,27 @@
+SandboxStagingPath = "<%SandboxStagingPath|${GLITE_LOCATION_VAR}/SandboxDir%>";
+LogFile = "<%LogFile|${GLITE_LOCATION_LOG}/wmproxy.log%>";
+LogLevel = <%LogLevel|5%>;
+MaxInputSandboxSize = <%MaxInputSandboxSize|10000000%>;
+ListMatchRootPath = "<%ListMatchRootPath|${GLITE_LOCATION_TMP}%>";
+LBProxy = <%LBProxy|true%>;
+//HTTPSPort = <%HTTPSPort|7443%>;
+GridFTPPort = <%GridFTPPort|2811%>;
+//DefaultProtocol = "<%DefaultProtocol|gsiftp%>";
+//LBServer = "<LB Server address>:<LB Server port>"; single element or a list:
+//LBServer = {"<LB Server address 1>:<LB Server port 1>", "<LB Server address 2>:<LB Server port 2>" };
+//LBLocalLogger = "<LB Local Logger address>:<LB Local Logger port>";
+LBServer = "<%LBServer%>";
+LBLocalLogger = "<%LBLocalLogger|localhost:9002%>";
+MaxServedRequests = <%MaxServedRequests|50%>;
+MinPerusalTimeInterval = <%MinPerusalTimeInterval|5%>;
+AsyncJobStart = <%AsyncJobStart|true%>;
+SDJRequirements = <%SDJRequirements|RegExp("*sdj$", other.GlueCEUniqueID)%>;
+EnableServiceDiscovery = <%EnableServiceDiscovery|false%>;
+LBServiceDiscoveryType = "<%LBServiceDiscoveryType|org.glite.lb.server%>";
+ServiceDiscoveryInfoValidity = <%ServiceDiscoveryInfoValidity|3600%>;
+WeightsCacheValidity = <%WeightsCacheValidity|86400%>;
+OperationLoadScripts = [
+  jobRegister = "<%LoadMonitor/Script/name|${GLITE_LOCATION}/sbin/glite_wms_wmproxy_load_monitor%> --oper jobRegister --load1 <%LoadMonitor/ThresholdCPULoad1%> --load5 <%LoadMonitor/ThresholdCPULoad5%> --load15 <%LoadMonitor/ThresholdCPULoad15%> --memusage <%LoadMonitor/ThresholdMemUsage%> --diskusage <%LoadMonitor/ThresholdDiskUsage%> --fdnum <%LoadMonitor/ThresholdFDNum%>";
+  jobStart = "<%LoadMonitor/Script/name|${GLITE_LOCATION}/sbin/glite_wms_wmproxy_load_monitor%> --oper jobStart --load1 <%LoadMonitor/ThresholdCPULoad1%> --load5 <%LoadMonitor/ThresholdCPULoad5%> --load15 <%LoadMonitor/ThresholdCPULoad15%> --memusage <%LoadMonitor/ThresholdMemUsage%> --diskusage <%LoadMonitor/ThresholdDiskUsage%> --fdnum <%LoadMonitor/ThresholdFDNum%>";
+  jobSubmit = "<%LoadMonitor/Script/name|${GLITE_LOCATION}/sbin/glite_wms_wmproxy_load_monitor%> --oper jobSubmit --load1 <%LoadMonitor/ThresholdCPULoad1%> --load5 <%LoadMonitor/ThresholdCPULoad5%> --load15 <%LoadMonitor/ThresholdCPULoad15%> --memusage <%LoadMonitor/ThresholdMemUsage%> --diskusage <%LoadMonitor/ThresholdDiskUsage%> --fdnum <%LoadMonitor/ThresholdFDNum%>";
+];
