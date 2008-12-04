@@ -1,0 +1,18 @@
+  rank = <%CEAttrs/glue/rank|-other.GlueCEStateEstimatedResponseTime%>;
+  requirements = <%CEAttrs/glue/requirements|other.GlueCEStateStatus == "Production"%>;
+  RetryCount = <%retryCount|3%>;
+  ErrorStorage = <%"errorStorage|/tmp"%>;
+  OutputStorage = <%"outputStorage|~/JobOutput"%>;
+  ListenerPort = <%listenerPort|44000%>;
+  ListenerStorage = <%"listenerStorage|/tmp"%>;
+  LoggingTimeout = <%loggingTimeout|30%>;
+  LoggingSyncTimeout = <%loggingSynctimeout|30%>;
+  LoggingDestination = <%"loggingDestination"%>;
+
+  # Default NS logger level is set to 0 (null)
+  # max value is 6 (very verbose)
+  NSLoggerLevel = <%NSLoggerLevel|0%>;
+
+  DefaultLogInfoLevel = <%loggingLevel|0%>;
+  DefaultStatusLevel = <%statusLevel|0%>;
+  DefaultVo = <%"defaultVO|unspecified"%>;
