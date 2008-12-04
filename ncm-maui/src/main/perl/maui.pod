@@ -1,0 +1,33 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+maui: NCM component to configure Maui server.
+
+=head1 DESCRIPTION
+
+The I<maui> component manages the configuration for the maui
+scheduler. By default the configuration file resides in
+/var/spool/maui/maui.cfg.  
+
+=head1 RESOURCES
+
+=head2 configPath (/var/spool/maui)
+
+The absolute path for the maui configuration directory. 
+
+=head2 configFile (maui.cfg)
+
+The file name for the maui configuration file.
+
+=head3 contents
+
+The full contents of the maui configuration file.  The syntax is too
+complex to fully translate into pan.  You must supply the complete
+maui configuration file in this variable. 
+
+=cut
