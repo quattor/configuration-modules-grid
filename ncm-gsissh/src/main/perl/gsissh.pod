@@ -1,0 +1,51 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+gsissh: NCM component to manage gsissh configuration file(s)
+
+=head1 DESCRIPTION
+
+The I<gsissh> component writes manages the configuration for 
+both the client and server sides of the GSI-enabled SSH daemon. 
+
+=head1 RESOURCES
+
+=head2 /software/components/gsissh/server
+
+An optional nlist with the server-side configuration.  If not
+specified, then the server is not configured. 
+
+=head3 /software/components/gsissh/server/port
+
+The port to use for the daemon.  This is mandatory. 
+
+=head3 /software/components/gsissh/server/options
+
+An nlist giving the options to use.  Typical options are:
+PermitRootLogin, RSAAuthentication, PubkeyAuthentication,
+PasswordAuthentication, ChallengeResponseAuthentication, which take
+yes/no values.
+
+=head2 /software/components/gsissh/client/options
+
+An optional nlist giving the client options to use.  Typical options
+are: GssapiAuthentication, GssapiKeyExchange, and 
+GssapiDelegateCredentials which take yes/no values.  The client is
+always configured even if there are no options. 
+
+=head1 EXAMPLE
+
+"/software/components/gsissh/server/port" = 1975;
+"/software/components/gsissh/server/options" = 
+  nlist("PermitRootLogin", "no",
+        "RSAAuthentication", "no",
+        "PubkeyAuthentication", "no",
+        "PasswordAuthentication", "no",
+        "ChallengeResponseAuthentication", "no");
+
+=cut
