@@ -1,0 +1,60 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+# Coding style: emulate <TAB> characters with 4 spaces, thanks!
+################################################################################
+
+=head1 NAME
+
+lcas: NCM component to manage LCAS configuration file(s)
+
+=head1 DESCRIPTION
+
+The I<lcas> component writes the LCAS configuration file(s). The
+primary file is the LCAS database, listing the plugin modules
+to be called (in the specific order as specified in the list in
+the CDB).
+
+Optionally, it can write the module configuration files as well
+(as just plain files, one line for every entry in the content
+list). The header can be suppressed, if ever there is a module
+that chokes on the pound-sign comments at the top.
+
+=head1 RESOURCES
+
+=head2 /software/components/lcas/dbpath
+
+Location of the main LCAS database (list of plugin modules).
+Default: /opt/edg/etc/lcas/lcas.db
+
+=head2 /software/components/lcas/module/[]/path
+
+For each plugin module, specify the path (may be relative to the
+lcas search path).
+
+=head2 /software/components/lcas/module/[]/args
+
+Arguments to this module (like: the name of the module's config
+file). This resource is optional.
+
+=head2 /software/components/lcas/module/[]/conf
+
+Optional: write out the contents of the single configuration file
+for this plugin module. You must specify at least the path, and
+optionally some content as well.
+
+=head2 /software/components/lcas/module/[]/conf/path
+
+Location (absolute path) of the module configuration file.
+
+=head2 /software/components/lcas/module/[]/conf/noheader
+
+When set to true: supporess the pound-signed header comments.
+
+=head2 /software/components/lcas/module/[]/conf/content[]
+
+Lines of content for this configuration file (one element per line).
+
+=cut
