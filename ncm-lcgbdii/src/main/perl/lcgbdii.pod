@@ -1,0 +1,92 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+The I<lcgbdii> component manages the configuration file of 
+Condor.  
+
+=head1 DESCRIPTION
+
+The I<lcgbdii> component manages the BDII configuration.
+
+=head1 RESOURCES
+
+=head2 configFile ("/opt/lcg/var/bdii/lcg-bdii.conf")
+
+The location of the LCG BDII configuration file.
+
+=head2 schemaFile
+
+The location of the LCG BDII schema.  This is required for LCG 2.5.0
+or above.
+
+=head2 schemas
+
+List of file names for the schema files. 
+
+=head2 urls
+
+A hash containing all of the update URLs.  The keys are for
+documentation purposes only.  
+
+=head2 portRead (2170)
+
+The port to read from. 
+
+=head2 portsWrite (2171,2172,2173)
+
+The list of ports to write to.
+
+=head2 user ("lcgbdii")
+
+The default user for running the BDII daemon.
+
+=head2 bind ("mds-vo-name=local,o=grid")
+
+The binding string. 
+
+=head2 searchFilter ("'*'")
+
+The LDAP filter.
+
+=head2 searchTimeout (30)
+
+The LDAP timeout in seconds. 
+
+=head2 breatheTime (60)
+
+The time between LDAP queries.
+
+=head2 autoUpdate ("yes")
+
+Whether or not to auto-update.  Valid values are "yes" and "no".
+
+=head2 autoModify ("no")
+
+Whether or not to automatically modify this file.
+
+=head2 dir ("/opt/lcg/bdii")
+
+The base directory for the BDII code and configuration files. 
+
+=head2 updateUrl
+
+The URL for the update file. 
+
+=head2 updateLdif
+
+The URL for the update LDIF file.
+
+=head2 slapd ("/opt/openldap/libexec/slapd")
+
+The location of the slapd executable.
+
+=head2 slapadd ("/opt/openldap/sbin/slapadd")
+
+The location of the slapadd executable.
+
+=cut
