@@ -1,0 +1,28 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+The I<gridmapdir> component manages the gridmapdir directory.
+
+=head1 DESCRIPTION
+
+The I<gridmapdir> component manages the gridmapdir directory used for the
+mapping of pool accounts.
+
+=head1 RESOURCES
+
+=head2 gridmapdir
+
+The location of the configuration file.  Normally this should not be
+changed. 
+
+=head2 poolaccounts
+
+An nlist with the pool account prefix as the name and a long as the
+size of the pool.  
+
+=cut
