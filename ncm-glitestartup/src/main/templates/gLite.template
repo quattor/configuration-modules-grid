@@ -1,0 +1,86 @@
+#!/bin/bash
+###############################################################################
+#
+#       Copyright (c) Members of the EGEE Collaboration. 2004
+#       See http://eu-egee.org/partners/ for details on the copyright holders
+#       For license conditions see the license file or http://eu-egee.org/license.html
+#
+#   Startup script for POST stage setup
+#
+#   chkconfig: 345 96 96
+#
+#   description:  gLite startup script
+#
+#   processname: gLite
+#
+#   Author(s): Marian ZUREK \<Marian.ZUREK@cern.ch\> 
+#        Nuno SILVA \<Nuno.Orestes.Vaz.da.Silva@cern.ch\>
+#
+#   Version: V1.1 for Yaim-core-4
+#
+#   Date: 07/08/2007
+#
+# IMPORTANT:
+# The template is written in ncm-template syntax: be sure to escape \< and \>
+#
+###############################################################################
+
+<FOREACH: $script restartEnv>
+. <restartEnv/<$script>>;
+<ENDFOR>
+
+ 
+GLITE_STARTUP_SCRIPT_DIR=${GLITE_LOCATION}/etc/init.d/
+
+if [ ! -d ${GLITE_STARTUP_SCRIPT_DIR} ]
+then
+        echo "Directory not found: ( ${GLITE_STARTUP_SCRIPT_DIR}) ... exiting!"
+        exit 1
+fi
+
+GLITE_STARTUP_FILE=${GLITE_LOCATION}/etc/gLiteservices
+
+if [ ! -r ${GLITE_STARTUP_FILE} ]
+then
+        echo "File ${GLITE_STARTUP_FILE} not created (or not readable) ... exiting!"
+        exit 1
+fi
+
+case "$1" in 
+      start)  SERVICE_LIST=`cat $GLITE_STARTUP_FILE`
+              for s in `echo ${SERVICE_LIST}`
+              do
+                echo "*** `basename ${s}`:"; 
+                ${s} start
+                echo""
+              done;;
+ 
+        stop) SERVICE_LIST=`cat $GLITE_STARTUP_FILE | sort `
+              for s in `echo ${SERVICE_LIST}`
+              do
+                echo "*** `basename ${s}`:";
+                ${s} stop
+                echo""
+              done;;
+ 
+        restart) echo "STOPPING SERVICES"; $0 stop; 
+                 echo "STARTING SERVICES"; $0 start;;
+ 
+        status) SERVICE_LIST=`cat $GLITE_STARTUP_FILE`
+                for s in `echo ${SERVICE_LIST}`
+                do
+                  echo "*** `basename ${s}`:";
+                  ${s} status
+                  echo""
+                done;;
+
+        version) echo -n "glite version: "; rpm -q --qf %{V} glite-version; echo
+                 echo -n "yaim version:  "; rpm -q --qf %{V} glite-yaim-core; echo ;;
+
+        *) echo "====================================================================="
+           echo "===== Usage: gLite { start | stop | restart | status | version} ====="
+           echo "====================================================================="
+           exit 1;;
+    esac
+ 
+exit 0
