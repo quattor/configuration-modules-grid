@@ -1,0 +1,128 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+ncm-gip2:  NCM component for generic LCG information provider
+
+=head1 DESCRIPTION
+
+The ncm-gip2 component manages configuration of Generic Information Provider (GIP), used to collect data on available resources. It
+allows to manage both LCG and gLite flavor of GIP.
+  
+
+=head1 Resources
+
+=head2 /software/components/gip2/basedir : string (required)
+
+Base directory for gip components (must contain directories plugin/, provider/...)
+
+Default : none.
+
+=head2 /software/components/gip2/group : string (required)
+
+Group GIP account belongs to. Used to define group ownership of GIP directories and files.
+
+Default : root.
+
+=head2 /software/components/gip2/flavor : string (required)
+
+Define GIP flavor used. Can be 'lcg' org 'glite'.
+
+Default : lcg.
+
+=head2 /software/components/gip2/ldif : nlist (optional)
+
+Named list of LDIF files used by GIP plugins. Key the file name, value is a structure with the attributes defined below.
+
+Default : none.
+
+=head3 LDIF template : string (required)
+
+LDIF template used by 'staticInfoCmd' in conjunction with 'entries' to produce the actual LDIF file.
+
+Default : none.
+
+=head3 LDIF ldifFile : string (required)
+
+Name of the LDIF file to produce.
+
+Default : none
+
+=head3 LDIF entries : list (required)
+
+List of LDIF entries to put in the resulting file.
+
+Default : none.
+
+=head2 /software/components/gip2/plugin : nlist (optional)
+
+Named list of GIP plugins (plugins are associated with a static LDIF file). Key the plugin name, value is the plugin script.
+
+Default : none.
+
+=head2 /software/components/gip2/provider : nlist (optional)
+
+Named list of GIP providers. Key the provider name, value is the provider script.
+
+Default : none.
+
+=head2 /software/components/gip2/staticInfoCmd : string (required)
+
+Command used to process LDIF templates.
+
+Default : none.
+
+=head2 /software/components/gip2/scripts : nlist (optional)
+
+Named list of GIP scripts (usually used to launch lcg/glite-info-generic with the appropriate configuration.
+Key the script name, value is the script.
+
+Default : none.
+
+=head2 /software/components/gip2/stubs : nlist (optional)
+
+Named list of static LDIF files produced without a Glue template. Mainly used to add intermediate LDIF entries
+required for subtree search to work. Key is LDIF the file name (without directory), value is a list of LDIF entries
+to put in the LDIF file.
+
+If stubs are defined, BDII will be restarted if running on the current node.
+
+Default : none.
+
+=head2 /software/components/gip2/user : string (required)
+
+Account GIP runs under. Used to define user ownership of GIP directories and files.
+
+Default : none.
+
+
+=head1 DEPENDENCIES
+
+None.
+
+=head1 BUGS
+
+None known.
+
+=head1 AUTHOR
+
+Charles Loomis <charles.loomis@cern.ch>
+
+=head1 MAINTAINER
+
+Charles Loomis <charles.loomis@cern.ch>,Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 VERSION
+
+2.4.1
+
+=head1 SEE ALSO
+
+ncm-ncd(1)
+
+
+=cut
