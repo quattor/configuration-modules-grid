@@ -1,0 +1,121 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+mkgridmap:  NCM component to configure edg-mkgridmap.conf for mkgridmap.
+
+=head1 DESCRIPTION
+
+The I<mkgridmap> component manages the configuration file (e.g. /opt/edg/etc/edg-mkgridmap.conf) for mkgridmap.
+It can handle several mapfiles and support two distinct mapfile format : 
+
+=over
+
+=item * edg : the traditional format associating DNs with pool accounts
+
+=item * lcgdm : a mapfile to associate DNs to VO name. It is used by LCG products like DPM and LFC to handle
+authorization for users not authenticated with VOMS (grid-proxy-init or voms-proxy-init without -voms).
+
+=back
+
+
+=head1 RESOURCES
+
+=head2 entries : nlist
+
+A nlist of mapfile entries. The name of the entry is informational only. The entry resources are described
+below.
+
+=head2 lcmaps : nlist (optional)
+
+This nlist describes lcmaps gridmapfile and groupmapfile to update. The entry resources are described
+below.
+
+=head2 voList : list (optional)
+
+This list specifies the VO to process. If not present or undefined, defaults to all VOs defined in the configuration (/system/vo).
+
+
+=head1 LCMAPS RESOURCES
+
+=head2 flavor : string 
+
+This property indicates LCMAPS gridmapfile/groupmafile format. It can be 'edg' or 'glite'. When format is 'glite', FQANs 
+are taken literally from configuration : they must be valid VOMS FQAN in standard format. When format is 'edg', FQANs
+in configuration are converted into EDG format (/VO=vo_name/GROUP=.../ROLE=...).
+
+Default : glite (no conversion)
+
+=head2 lcmaps/gridmapfile : string (required)
+
+The full path to the LCMAPS gridmapfile.
+
+Default : /opt/edg/etc/lcmaps/gridmapfile
+
+=head2 lcmaps/groupmapfile : string (required)
+
+The full path to the LCMAPS groupmapfile.
+
+Default : /opt/edg/etc/lcmaps/groupmapfile
+
+
+=head1 MAPFILE ENTRY RESOURCES
+
+=head2 mkgridmapconf
+
+The location of the edg-mkgridmap.conf file, by default
+/opt/edg/etc/edg-mkgridmap.conf
+
+=head2 command
+
+The command to run to regenerate the gridmap file.  If provided, this
+command will be run whenever changes to the configuration occur. 
+
+=head2 groups
+
+A list of group entries in the edg-mkgridmap.conf file. For each group
+uri_<group> and user_<group> can be defined to specify the collection
+of users at a URI that should be mapped to a particular user.
+
+=head2 auths
+
+A list of auth entries in the edg-mkgridmap.conf file. For each auth line
+a uri_<auth> should be defined.
+
+=head2 lcuser
+
+What the lcuser should be defined as.
+
+=head2 allow
+
+A pattern match of certs that should be permitted in the grid-mapfile.
+
+=head2 deny
+
+A pattern match of certs that should be denied in the grid-mapfile.
+
+Note the allow allways occurs, if it is defined at all, in the mkgridmap.conf
+file before the deny rule. Read man edg-mkgridmap.conf for the consequences of
+this.
+
+=head2 gmflocal
+
+A local grid-mapfile to be imported in the generated grid-mapfile. By default 
+this is <edgcfg.location>/etc/grid-mapfile-local
+
+=head2 overwrite
+
+By default set to yes. If set to no the local grid-mapfile will not be
+overwritten if it already exists.
+
+=head2 locals
+
+A list for which each element has the values of cert_<local> and 
+user_<local>. This will add mappings to the grid-mapfile-local defined
+above.
+
+=cut
