@@ -1,0 +1,300 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+=head1 NAME
+
+dpmlfc : NCM component to manage DPM and LFC configuration.
+
+=head1 DESCRIPTION
+
+This component allows to manage configuration of LCG DPM and LFC services. Currently, it allows to manage the configuration of all daemons. In a future version, it should allow to manage configuration of DPM pools and initialization of DPM VOs environment.
+
+Component dpmlfc requires that the DPM and/or LFC configuration describes all nodes participating to the service and their respective role (in term of daemon running on each node). Each daemon/host combination is called a daemon instance in this documentation.
+
+Using the whole DPM and/or LFC description, dpmlfc takes care of action needed on every node to configure it as requested (you MUST use the same configuration description on every node participating to DPM and/or LFC). This includes restarting a service after configuration changes if needed.
+
+In addition to daemon instance options, there are some global options (one set for DPM and one set for LFC). A subset of these global options are used to describe database connection (currently only MySQL database supported).
+
+Following sections describe each option by group of related options.
+
+=head1 GLOBAL OPTIONS (DPM and LFC)
+
+DPM and LFC accept the same global options but there is a separate set for each. Replace 'PRODUCT' by 'dpm' or 'lfc'.
+
+=head2 /software/components/dpmlfc/options/PRODUCT/accessProtocols : list (optional, DPM only)
+
+List of access protocols supported on disk servers. Supported protocols are : https, gsiftp, rfio, xroot.
+
+If undefined, defaults to gsiftp and rfio.
+
+=head2 /software/components/dpmlfc/options/PRODUCT/controlProtocols : list (optional, DPM only)
+
+List of control protocols supported. Supported protocols are : srmv1, srmv2, srmv2.2.
+
+If undefined, defaults to srmv1 and srmv2.2.
+
+=head2 /software/components/dpmlfc/options/PRODUCT/gridmapfile
+
+This option defines the local gridmap file used by products daemons. 
+
+Default : /etc/grid-security/grid-mapfile
+
+=head2 /software/components/dpmlfc/options/PRODUCT/gridmapdir
+
+This option defines the gridmap dir used by products daemons. 
+
+Default : /etc/grid-security/gridmapdir
+
+=head2 /software/components/dpmlfc/options/PRODUCT/group
+
+This option defines the userid used by product daemons. 
+
+Default : product daemons userid
+
+=head2 /software/components/dpmlfc/options/PRODUCT/user
+
+This option defines the userid used by product daemons. 
+
+Default : dpmmgr for DPM, lfcmgr for LFC
+
+
+=head1 DATABASE CONNECTION OPTIONS (DPM and LFC)
+
+DPM and LFC accepts the same set of options to describe the database connection. In the following options name, replace 'PRODUCT' by either 'dpm' or 'lfc'. Both sets can coexist.
+
+=head2 /software/components/dpmlfc/options/PRODUCT/db/adminuser
+
+This option defines the database administrator userid to use when configuring the database.
+
+Default : root
+
+=head2 /software/components/dpmlfc/options/PRODUCT/db/adminpwd
+
+This option defines the database administrator password to use when configuring the database. If not present, database configuration will be skipped.
+
+Default : none
+
+=head2 /software/components/dpmlfc/options/PRODUCT/db/configfile
+
+This option defines the file used to keep track of database connection information. This file will be owned by the userid used to run daemons and only this user will have access to this file.
+
+Default : /opt/lcg/etc/DPMCONFIG for DPM, /opt/lcg/etc/NSCONFIG for LFC
+
+=head2 /software/components/dpmlfc/options/PRODUCT/db/infoFile
+
+Name of the file containing connection information to DPM DB to be used by GIP to collect information about DPM. This file will be owned and accessible only by GP user.
+
+Default : /opt/lcg/etc/DPMINFO
+
+=head2 /software/components/dpmlfc/options/PRODUCT/db/infoPwd
+
+Password for database connection account used by GIP to collect information about DPM
+
+Default : generated password. It is recommended to use this default value (password changed at each run).
+
+=head2 /software/components/dpmlfc/options/PRODUCT/db/infoUser
+
+Username for database connection account used by GIP to collect information about DPM
+
+Default : dminfo
+
+=head2 /software/components/dpmlfc/options/PRODUCT/db/password
+
+This option defines the password used to connect to the database.
+
+Default : generated password. If default value is used, DPM daemons are restarted at each run.
+
+=head2 /software/components/dpmlfc/options/PRODUCT/db/server
+
+This option defines the server running the database. This component checks that
+DPM and LFC database server run on different node (DPNS and LFC use the same database name). 'localhost' is considered different as DPNS and LFC are not allowed to run on the same node. 
+
+Default : localhost.
+
+=head2 /software/components/dpmlfc/options/PRODUCT/db/type
+
+This option defines the the database type. 
+
+Valid value : mysql, oracle
+
+Default : mysql.
+
+=head2 /software/components/dpmlfc/options/PRODUCT/db/user
+
+This option defines the userid used to connect to the database.
+
+Default : userid used to run daemons
+
+
+=head1 DAEMON INSTANCE OPTIONS (DPM and LFC)
+
+Every daemon instance description accepts a subset of the following options (see the actual subset accepted by every daemon under RESSOURCES below).
+
+=head2 host
+
+'host' option is the node name where this daemon instance will run. This option is accepted by every type of daemon.
+
+=head2 logfile
+
+'logfile' option is the name of the logfile used by the daemon instance. Generally, each daemon has a dedicated directory under /var/log, where the actual log file is rotated. This option is accepted by every type of daemon.
+
+Default : use daemon default (see documentation).
+
+=head2 port
+
+'port' option allows to use a non standard port for the service.
+
+Default : default service port (see documentation or 'man service_name').
+
+
+
+=head1 DAEMON RESOURCES (DPM)
+
+=head2 /software/components/dpmlfc/dpm
+
+This option is a list of 'dpm' daemon instances. In each daemon instance, 'host' option is mandatory.
+
+Restriction : currently restricted to one instance.
+
+=head2 /software/components/dpmlfc/dpns
+
+This option is a list of 'dpnsdaemon' daemon instances. If 'host' is undefined in one instance, it defaults to 'dpm' daemon host.
+
+This component checks that 'dpnsdaemon' is not running on the same node as 'lfcdaemon' (they cannot be run on the same node as both use the same port and same database name).
+
+Restriction : currently restricted to one instance.
+
+=head2 /software/components/dpmlfc/gsiftp
+
+This option is a list of 'dpm-gsiftp' daemon instances. If 'host' is undefined in one instance, it defaults to 'dpm' daemon host.
+
+'logfile' parameter is valid but ignored for this daemon (always log in /var/log/messages).
+
+Remark : dpm-gsiftp is required on disk servers and DPM master node.
+
+=head2 /software/components/dpmlfc/rfio
+
+This option is a list of 'rfiod' daemon instances. If 'host' is undefined in one instance, it defaults to 'dpm' daemon host.
+
+Remark : rfiod is required on disk servers and DPM master node.
+
+=head2 /software/components/dpmlfc/srmv1
+
+This option is a list of 'srmv1' daemon instances. If 'host' is undefined in one instance, it defaults to 'dpm' daemon host.
+
+=head2 /software/components/dpmlfc/srmv2
+
+This option is a list of 'srmv2' daemon instances. If 'host' is undefined in one instance, it defaults to 'dpm' daemon host.
+
+=head2 /software/components/dpmlfc/srmv22
+
+This option is a list of 'srmv2.2' daemon instances. If 'host' is
+undefined in one instance, it defaults to 'dpm' daemon host.
+
+
+=head1 DAEMON RESOURCES (LFC)
+
+=head2 /software/components/dpmlfc/lfc
+
+This option is a list of 'lfcdaemon' daemon instances. In each daemon instance, 'host' option is mandatory.
+
+This component checks that 'dpnsdaemon' is not running on the same node as 'lfcdaemon' (they cannot be run on the same node as both use the same port and same database name).
+
+Restriction : currently restricted to one instance.
+
+
+=head2 /software/components/dpmlfc/lfc-dli
+
+This option is a list of 'lfc-dli' daemon instances. If 'host' is undefined in one instance, it defaults to 'lfc' daemon host.
+
+
+=head1 VO OPTIONS (DPM and LFC) : /software/components/dpmlfc/vos
+
+VO-related options described each VO that must be configured to get access to DPM or LFC namespace. This includes creating VO home directory and setting correct permissions.
+
+VO-related options are stored under /software/components/dpmlfc/vos, which is a nlist with one entry per VO. nlist key is the VO name. Value is a nlist describing VO properties.
+
+=head2 /software/components/dpmlfc/vos/VONAME/gid
+
+This property specifies virtual GID to associate with the VO. Default is normally appropriate
+
+Default : auto-generated virtual GID.
+
+
+=head1 POOL OPTIONS (DPM)
+
+=head2 /software/components/dpmlfc/pool
+
+Not yet implemented
+
+
+=head1 EXAMPLES
+
+Here is a template example for DPM :
+
+    include pro_software_component_dpmlfc;
+
+    "/software/components/dpmlfc/dpm/db/type" = "mysql";
+    "/software/components/dpmlfc/dpm/db/configfile" = "/opt/lcg/etc/DPMCONFIG";
+    "/software/components/dpmlfc/dpm/db/password" = "MyMySQLPwd";
+
+    "/software/components/dpmlfc/dpm" = push(nlist(
+		"host", "grid05.lal.in2p3.fr",
+	));
+
+    "/software/components/dpmlfc/dpns" = push(nlist(
+		"host", "grid05.lal.in2p3.fr",
+	));
+
+    "/software/components/dpmlfc/gsiftp" = push(nlist(
+		"host", "grid05.lal.in2p3.fr",
+	));
+    "/software/components/dpmlfc/gsiftp" = push(nlist(
+		"host", "grid07.lal.in2p3.fr",
+	));
+
+    "/software/components/dpmlfc/rfio" = push(nlist(
+		"host", "grid05.lal.in2p3.fr",
+	));
+    "/software/components/dpmlfc/rfio" = push(nlist(
+		"host", "grid07.lal.in2p3.fr",
+	));
+
+    "/software/components/dpmlfc/srmv1" = push(nlist(
+		"host", "grid05.lal.in2p3.fr",
+	));
+
+    "/software/components/dpmlfc/srmv2" = push(nlist(
+		"host", "grid05.lal.in2p3.fr",
+	));
+
+
+=head1 DEPENDENCIES
+
+None.
+
+=head1 BUGS
+
+None known.
+
+=head1 AUTHOR
+
+Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 MAINTAINER
+
+Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 VERSION
+
+1.5.2
+
+=head1 SEE ALSO
+
+ncm-ncd(1)
+
+
+=cut
+
