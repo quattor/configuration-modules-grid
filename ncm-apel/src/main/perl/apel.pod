@@ -1,0 +1,104 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+apel: NCM component to manage apel configuration file(s)
+
+=head1 DESCRIPTION
+
+The I<apel> component writes manages the configuration for
+the APEL software.  This collects the accounting information for
+EGEE/LCG. 
+
+=head1 RESOURCES
+
+=head2 /software/components/apel/configFiles
+
+An nlist with the key being the ENCODED path of the file to configure. 
+The value is an nlist containing the data for the file.  These data
+include the following attributes.
+
+=head3 DBURL
+
+The full JDBC URL to access the APEL database.
+
+=head3 DBUsername
+
+The username to use to access the APEL database.
+
+=head3 DBPassword
+
+The password to use to access the APEL database.
+
+=head3 SiteName
+
+The GOC database name for the site.
+
+=head3 DBDeleteProcessor
+
+The DBDeleteProcessor parameters.  These include "cleanAll" which
+takes a yes/no value.
+
+=head3 CPUProcessor
+
+The CPUProcessor parameters.  Takes two parameters GIIS (hostname) and
+DefaultCPUSpec (string of form 56:45).
+
+=head3 EventLogProcessor
+
+The EventLogProcessor parameters.  Takes the following options:
+searchSubDirs: yes/no value
+reprocess: yes/no value
+Dir: directory to process
+ExtraFile: a list of extra files to process
+Timezone: the timezone to use for processing files
+
+=head3 GKLogProcessor
+
+The GKLogProcess parameters.  Takes the following options:
+SubmitHost: hostname
+searchSubDirs: yes/no value
+reprocess: yes/no value
+GKLogs: list of directories containing logs
+MessageLogs: list of directories containing logs
+
+=head3 JoinProcessor
+
+The JoinProcessor parameters.  Takes the parameters:
+publishGlobalUserName: yes/no value
+Republish: all, missing or nothing
+
+=head1 EXAMPLE
+
+"/software/components/apel/configFiles" = {
+
+  # Create the configuration.
+  data = nlist(
+    "enableDebugLogging", "yes",
+    "DBURL", "jdbc:mysql://mon.example.org:3306/accounting",
+    "DBUsername", "accounting",
+    "DBPassword", "secret",
+    "SiteName", "MySite",
+
+    "JoinProcessor", nlist("publishGlobalUserName","no",
+                           "Republish", "missing"),
+  );
+  
+  # Retrieve the current configuration. 
+  if (exists(self)) {
+    tbl = self;
+  } else {
+    tbl = nlist();
+  };
+
+  # Add in the file.
+  tbl[escape("/opt/glite/etc/edg-rgma/glite-apel-publisher/publisher-config-quattor.xml")] = data;
+
+  return(tbl);
+};
+
+=cut
