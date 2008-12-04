@@ -1,0 +1,23 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+myproxy:  NCM component to configure MyProxy server.
+
+=head1 DESCRIPTION
+
+The I<myproxy> component manages the /opt/edg/etc/edg-myproxy.conf
+file for the MyProxy server.  
+
+=head1 RESOURCES
+
+=head2 trustedDNs
+
+A list containing the list of DNs to trust for proxy renewal.  This is
+usually the DNs of all trusted resource brokers.
+
+=cut
