@@ -44,9 +44,12 @@ sub Configure($$@) {
     
     # Loop over all of the trusted DNs.
     my $new_config;
+    if ( $myproxy_config->{flavor} eq 'glite' ) {
+      $new_config .= "accepted_credentials \"*\"\n";
+    }
     for my $subject (@{$myproxy_config->{trustedDNs}}) {
       if ( $myproxy_config->{flavor} eq 'glite' ) {
-        $new_config .= "authorized_renewers $subject"
+        $new_config .= "authorized_renewers $subject\n";
         
       } else {
         $new_config .= "$subject\n";        
@@ -68,11 +71,11 @@ sub Configure($$@) {
     if ( -f $fname ) {
       my $status = open(CONFFILE,"<$fname");
       if ( $status ) {
-        $self->warn("Failed to open existing configuration file. Trying to continue...")
-      } else {
         my @old_config = grep (!/^#/,<CONFFILE>);
         $old_config = join "", @old_config;
         close CONFFILE;
+      } else {
+        $self->warn("Failed to open existing configuration file. Trying to continue...")
       }
     }
     
