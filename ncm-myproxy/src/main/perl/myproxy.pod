@@ -15,6 +15,18 @@ file for the MyProxy server.
 
 =head1 RESOURCES
 
+=head2 flavor : string
+
+MyProxy configuration variant. Must be either 'edg' or 'glite'.
+
+Default: edg
+
+=head2 confFile : string
+
+Configuration file for MyProxy. In edg variant, this is an intermediate configuration file used to generate the real one.
+
+Default: /opt/edg/etc/edg-myproxy.conf
+
 =head2 trustedDNs
 
 A list containing the list of DNs to trust for proxy renewal.  This is
