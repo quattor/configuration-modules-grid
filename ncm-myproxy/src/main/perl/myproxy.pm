@@ -12,7 +12,7 @@ use vars qw(@ISA $EC);
 @ISA = qw(NCM::Component);
 $EC=LC::Exception::Context->new->will_store_all;
 use NCM::Check;
-use CAF::Process
+use CAF::Process;
 
 use EDG::WP4::CCM::Element;
 
@@ -99,14 +99,14 @@ sub Configure($$@) {
     if ( system('/sbin/service myproxy status >/dev/null 2>&1') ||
          (($myproxy_config->{flavor} eq 'edg') && ($changes > 0)) ) {
       $self->info("Restarting MyProxy server...");
-      my $proc = CAF::Process->new ([qw ('/sbin/service myproxy restart')], log => $self);
+      my $proc = CAF::Process->new ([qw('/sbin/service'), qw('myproxy restart')], log => $self);
       my $output = $proc->output();
       if ( $? ) {
         $self->error("MyProxy server restart failed:\n$output"); 
       }
     } elsif ( $changes > 0 ) {
       $self->info("Reloading MyProxy server...");
-      my $proc = CAF::Process->new ([qw ('/sbin/service myproxy reload')], log => $self);
+      my $proc = CAF::Process->new ([qw('/sbin/service'), qw('myproxy reload')], log => $self);
       my $output = $proc->output();
       if ( $? ) {
         $self->error("MyProxy server reload failed\n$output"); 
