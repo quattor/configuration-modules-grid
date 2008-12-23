@@ -59,8 +59,8 @@ sub Configure($$@) {
 
     # Retrieve MyProxy configuration file path
     my $fname;
-    if ( $myproxy_config->{trustedDNsFile} ) {
-      $fname = $myproxy_config->{trustedDNsFile};
+    if ( $myproxy_config->{confFile} ) {
+      $fname = $myproxy_config->{confFile};
     } else {
       $fname = '/opt/edg/etc/edg-myproxy.conf'
     }
@@ -68,7 +68,7 @@ sub Configure($$@) {
     # Read old file to do a comparaison ignoring comments.
     # If an error occurs, try to continue as the file should be overwritten or
     # another error happen.
-    $self->info("Checking MyProxy server configuration...");
+    $self->info("Checking MyProxy server configuration (flavor: ".$myproxy_config->{flavor}.")...");
     my $old_config = '';
     if ( -f $fname ) {
       my $status = open(CONFFILE,"<$fname");
