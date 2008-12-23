@@ -50,8 +50,8 @@ sub Configure($$@) {
     }
     for my $subject (@{$myproxy_config->{trustedDNs}}) {
       if ( $myproxy_config->{flavor} eq 'glite' ) {
-        $new_config .= "authorized_renewers $subject\n";        
-        $new_config .= "authorized_retrievers $subject\n";        
+        $new_config .= "authorized_renewers \"$subject\"\n";        
+        $new_config .= "authorized_retrievers \"$subject\"\n";        
       } else {
         $new_config .= "$subject\n";        
       }
