@@ -50,8 +50,8 @@ sub Configure($$@) {
     }
     for my $subject (@{$myproxy_config->{trustedDNs}}) {
       if ( $myproxy_config->{flavor} eq 'glite' ) {
-        $new_config .= "authorized_renewers $subject\n";
-        
+        $new_config .= "authorized_renewers $subject\n";        
+        $new_config .= "authorized_retrievers $subject\n";        
       } else {
         $new_config .= "$subject\n";        
       }
@@ -99,18 +99,18 @@ sub Configure($$@) {
     if ( system('/sbin/service myproxy status >/dev/null 2>&1') ||
          (($myproxy_config->{flavor} eq 'edg') && ($changes > 0)) ) {
       $self->info("Restarting MyProxy server...");
-      my $proc = CAF::Process->new ([qw('/sbin/service'), qw('myproxy restart')], log => $self);
-      my $output = $proc->output();
+      my $proc = CAF::Process->new (['/sbin/service', 'myproxy', 'restart'], log => $self);
+      $self->info($proc->output());
       if ( $? ) {
-        $self->error("MyProxy server restart failed:\n$output"); 
+        $self->error("MyProxy server restart failed");
       }
     } elsif ( $changes > 0 ) {
       $self->info("Reloading MyProxy server...");
-      my $proc = CAF::Process->new ([qw('/sbin/service'), qw('myproxy reload')], log => $self);
-      my $output = $proc->output();
+      my $proc = CAF::Process->new (['/sbin/service', 'myproxy', 'reload'], log => $self);
+      $self->info($proc->output());
       if ( $? ) {
-        $self->error("MyProxy server reload failed\n$output"); 
-      }      
+        $self->error("MyProxy server reload failed");
+      }
     }
 
     return 1;
