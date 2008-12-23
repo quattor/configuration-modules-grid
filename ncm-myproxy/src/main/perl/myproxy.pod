@@ -15,21 +15,65 @@ file for the MyProxy server.
 
 =head1 RESOURCES
 
-=head2 flavor : string
+=head2 flavor : string (required)
 
 MyProxy configuration variant. Must be either 'edg' or 'glite'.
 
 Default: edg
 
-=head2 confFile : string
+=head2 confFile : string (required)
 
 Configuration file for MyProxy. In edg variant, this is an intermediate configuration file used to generate the real one.
 
 Default: /opt/edg/etc/edg-myproxy.conf
 
-=head2 trustedDNs
+=head2 trustedDNs : list of string (optional, deprecated)
 
 A list containing the list of DNs to trust for proxy renewal.  This is
 usually the DNs of all trusted resource brokers.
+
+=head2 authorizedDNs :  (optional)
+
+A structure containing the following items, each one being a list of string:
+
+=over
+
+=item renewers
+
+=item retrievers
+
+=item keyRetrievers
+
+=item trustedRetrievers
+
+=back
+=head2 defaultDNs : list of string (optional)
+
+A structure containing the same list of items as the previous one.
+
+=head1 DEPENDENCIES
+
+None.
+
+=head1 BUGS
+
+None known.
+
+=head1 AUTHOR
+
+Charles Loomis <charles.loomis@cern.ch>
+
+=head1 MAINTAINER
+
+Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 VERSION
+
+1.2.0
+
+=head1 SEE ALSO
+
+ncm-ncd(1)
+
 
 =cut
