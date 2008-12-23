@@ -11,7 +11,7 @@ include { 'quattor/schema' };
 type ${project.artifactId}_component = {
 	include structure_component
 	'flavor' : string = 'edg' with match(SELF,'^edg|glite$')
-	'confFile' ? string = value('/system/edg/config/EDG_LOCATION')+'/etc/edg-myproxy.conf'
+	'confFile' ? string = 'opt/edg/etc/edg-myproxy.conf'
   'trustedDNs' ? string[]
 };
 
