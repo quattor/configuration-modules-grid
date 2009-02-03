@@ -96,6 +96,20 @@ Sets a specific Yaim configuration setting <X>. Valid config keys are:
         SITE_DESC SITE_SECURITY_EMAIL
         SITE_OTHER_GRID SITE_OTHER_EGEE_ROC SITE_OTHER_EGEE_SERVICE
         SITE_OTHER_WLCG_TIER
+        MYSQL_ADMIN
+        NAGIOS_ADMIN_DNS
+        NAGIOS_CGI_ENABLE_CONFIG
+        NAGIOS_HOST
+        NAGIOS_HTTPD_ENABLE_CONFIG
+        NAGIOS_NAGIOS_ENABLE_CONFIG
+        NAGIOS_NCG_ENABLE_CONFIG
+        NAGIOS_NSCA_PASS
+        NAGIOS_ROLE
+        NCG_GOCDB_COUNTRY_NAME
+        NCG_GOCDB_ROC_NAME
+        NCG_LDAP_FILTER
+        NCG_NRPE_UI
+        NCG_PROBES_TYPE
 
 Note: the values for <X> have to be upper case!
 

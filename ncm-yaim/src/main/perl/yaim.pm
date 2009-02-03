@@ -330,6 +330,7 @@ sub Configure($$@) {
                  'WN',
                  'glite-WN',
                  'glite-UI',
+                 'glite-NAGIOS',
                  'WN_torque',
                  'TORQUE_utils',
                  'MSG_publish_gridftp'
@@ -409,7 +410,21 @@ sub Configure($$@) {
                     SITE_DESC SITE_SECURITY_EMAIL
                     SITE_OTHER_GRID SITE_OTHER_EGEE_ROC SITE_OTHER_EGEE_SERVICE
                     SITE_OTHER_WLCG_TIER
-                    ) {
+                    MYSQL_ADMIN
+                    NAGIOS_ADMIN_DNS
+                    NAGIOS_CGI_ENABLE_CONFIG
+                    NAGIOS_HOST
+                    NAGIOS_HTTPD_ENABLE_CONFIG
+                    NAGIOS_NAGIOS_ENABLE_CONFIG
+                    NAGIOS_NCG_ENABLE_CONFIG
+                    NAGIOS_NSCA_PASS
+                    NAGIOS_ROLE
+                    NCG_GOCDB_COUNTRY_NAME
+                    NCG_GOCDB_ROC_NAME
+                    NCG_LDAP_FILTER
+                    NCG_NRPE_UI
+                    NCG_PROBES_TYPE
+                      ) {
       
       if ($config->elementExists("$base/conf/$entry")) {
           $val=$config->getValue("$base/conf/$entry");
