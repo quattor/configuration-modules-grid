@@ -419,11 +419,14 @@ sub Configure($$@) {
                     NAGIOS_NCG_ENABLE_CONFIG
                     NAGIOS_NSCA_PASS
                     NAGIOS_ROLE
+                    NCG_VO
+                    NAGIOS_MYPROXY_NAME
                     NCG_GOCDB_COUNTRY_NAME
                     NCG_GOCDB_ROC_NAME
                     NCG_LDAP_FILTER
                     NCG_NRPE_UI
                     NCG_PROBES_TYPE
+
                       ) {
       
       if ($config->elementExists("$base/conf/$entry")) {

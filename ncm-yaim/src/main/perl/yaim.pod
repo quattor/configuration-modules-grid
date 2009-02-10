@@ -105,6 +105,8 @@ Sets a specific Yaim configuration setting <X>. Valid config keys are:
         NAGIOS_NCG_ENABLE_CONFIG
         NAGIOS_NSCA_PASS
         NAGIOS_ROLE
+        NCG_VO
+        NAGIOS_MYPROXY_NAME
         NCG_GOCDB_COUNTRY_NAME
         NCG_GOCDB_ROC_NAME
         NCG_LDAP_FILTER
