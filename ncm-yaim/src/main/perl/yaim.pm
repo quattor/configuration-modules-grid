@@ -297,6 +297,7 @@ sub Configure($$@) {
                  'BDII_top',
                  'CE',
                  'CE_torque',
+		 'creamCE',
                  'lcg-RB',
                  'lcg-CE',
                  'lcg-CE_torque',
@@ -404,7 +405,7 @@ sub Configure($$@) {
                     GROUPS_CONF RB_RLS SE_ARCH
                     YAIM_VERSION
                     VOMS_HOST
-                    BATCH_BIN_DIR BATCH_VERSION
+                    BATCH_BIN_DIR BATCH_VERSION BATCH_CONF_DIR 
                     RFIO_PORT_RANGE VO_SW_DIR WMS_HOST ORACLE_LOCATION LB_HOST 
                     GRIDVIEW_WSDL GLITE_LOCATION USERS_DN_WMS
                     SITE_DESC SITE_SECURITY_EMAIL
@@ -426,6 +427,8 @@ sub Configure($$@) {
                     NCG_LDAP_FILTER
                     NCG_NRPE_UI
                     NCG_PROBES_TYPE
+                    CEMON_HOST ACCESS_BY_DOMAIN CREAM_DB_USER BLPARSER_HOST BLP_PORT CREAM_PORT BLAH_JOBID_PREFIX 
+                    CREAM_CE_STATE
 
                       ) {
       

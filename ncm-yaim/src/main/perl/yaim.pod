@@ -90,7 +90,7 @@ Sets a specific Yaim configuration setting <X>. Valid config keys are:
         GROUPS_CONF RB_RLS SE_ARCH
         YAIM_VERSION
         DPM_DB_HOST
-        BATCH_BIN_DIR BATCH_VERSION
+        BATCH_BIN_DIR BATCH_VERSION BATCH_CONF_DIR 
         RFIO_PORT_RANGE VO_SW_DIR WMS_HOST ORACLE_LOCATION LB_HOST
         GRIDVIEW_WSDL USERS_DN_WMS
         SITE_DESC SITE_SECURITY_EMAIL
@@ -112,6 +112,8 @@ Sets a specific Yaim configuration setting <X>. Valid config keys are:
         NCG_LDAP_FILTER
         NCG_NRPE_UI
         NCG_PROBES_TYPE
+        CEMON_HOST ACCESS_BY_DOMAIN CREAM_DB_USER BLPARSER_HOST BLP_PORT CREAM_PORT BLAH_JOBID_PREFIX 
+        CREAM_CE_STATE
 
 Note: the values for <X> have to be upper case!
 
