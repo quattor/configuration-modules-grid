@@ -221,6 +221,8 @@ type ${project.artifactId}_component_service_wm_opts = {
   'Input'              ? string
   'IsmDump'            ? string
   'IsmUpdateRate'      ? string
+  'IsmIiPurchasingRate' ? long
+  'IsmIiLDAPCEFilterExt' ? string
   'JobWrapperTemplateDir' ? string
   'LogLevel'           ? long
   'LogFile'            ? string
