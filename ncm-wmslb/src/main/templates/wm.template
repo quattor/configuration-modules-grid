@@ -13,6 +13,7 @@ IsmBlackList = {};
 IsmDump = "<%IsmDump|${GLITE_LOCATION_VAR}/workload_manager/ismdump.fl%>";
 IsmUpdateRate = <%IsmUpdateRate|600%>;
 IsmIiPurchasingRate = <%IsmIiPurchasingRate|480%>;
+IsmIiLDAPCEFilterExt = <%IsmIiLDAPCEFilterExt%>;
 IsmDumpRate = <%IsmDumpRate|1000000%>;
 MinPerusalTimeInterval = <%MinPerusalTimeInterval|1000%>;
 JobWrapperTemplateDir = "<%JobWrapperTemplateDir|${GLITE_WMS_LOCATION}/etc/templates%>";
