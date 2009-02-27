@@ -288,6 +288,7 @@ type ${project.artifactId}_component_service_wmproxy = {
 
   'LoadMonitorScript' : ${project.artifactId}_component_service_wmproxy_loadmonitor_script
   'options'     : ${project.artifactId}_component_service_wmproxy_opts
+  'drained'     : boolean = false;
 };
 
 type ${project.artifactId}_component_service_wmsclient_opts = {

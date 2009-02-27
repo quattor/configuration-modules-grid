@@ -65,6 +65,10 @@ sub Configure {
     $self->error("GLITE_GROUP undefined");
     $config_error = 1;
   }
+  unless ( defined($glite_config->{GLITE_LOCATION_VAR}) ) {
+    $self->error("GLITE_LOCATION_VAR undefined");
+    $config_error = 1;
+  }
   if ( $config_error ) {
     return(4);
   }
@@ -210,6 +214,7 @@ sub Configure {
     # For WMProxy service, build Load Monitor script.
     # If script content is explicitly set, update the script if needed.
     # Else build the script from the template, if the script doesn't exist.
+    # Also check if the WMProxy must be drained.
     
     if ( $service eq $wmproxy_service_name ) {
       my $script_config = $services->{$service}->{LoadMonitorScript};
@@ -234,9 +239,27 @@ sub Configure {
                                     );
           if ( $changes < 0 ) {
             $self->error("Error creating WM Load Monitor script from template ($script_config->{name})");
-            next;
           }            
         }          
+      }
+      
+      # Check if the WMProxy must be drained and do appropriate actions
+      my $drain_file = $glite_config->{GLITE_LOCATION_VAR} . '/.drain';
+      if ( $services->{$service}->{drained} ) {
+        $self->info('Draining WMProxy...');
+        my $contents = "<gacl>\n  <entry>\n    <any-user/>\n    <deny><exec/></deny>\n  </entry>\n</gacl>";
+        $changes = LC::Check::file($drain_file,
+                                   contents   => $contents,
+                                   mode => 0755,
+                                  );
+        if ( $changes < 0 ) {
+          $self->error("Error creating WMProxy drain file ($drain_file)");
+        }                    
+      } else {
+        if ( -f $drain_file ) {
+          $self->info('Enabling WMProxy...');
+          unlink $drain_file;
+        }
       }
     }
   }
