@@ -217,12 +217,14 @@ type ${project.artifactId}_component_service_wm_opts = {
   'DliServiceName'     ? string
   'EnableBulkMM'       ? boolean
   'EnableIsmDump'      ? boolean
+  'EnableRecovery'     ? boolean
   'ExpiryPeriod'       ? long
   'Input'              ? string
   'IsmDump'            ? string
   'IsmUpdateRate'      ? string
   'IsmIiPurchasingRate' ? long
   'IsmIiLDAPCEFilterExt' ? string
+  'IsmIiLDAPSearchAsync' ? boolean
   'JobWrapperTemplateDir' ? string
   'LogLevel'           ? long
   'LogFile'            ? string
