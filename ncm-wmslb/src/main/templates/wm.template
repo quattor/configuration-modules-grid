@@ -24,6 +24,7 @@ LogFile  = "<%LogFile|${GLITE_WMS_LOCATION_VAR}/log/workload_manager_events.log%
 MatchRetryPeriod = <%MatchRetryPeriod|21600%>;
 MaxOutputSandboxSize = <%MaxOutputSandboxSize|-1%>;
 MaxRetryCount = <%MaxRetryCount|10%>;
+MaxShallowRetryCount = <%MaxShallowRetryCount|10%>;
 PboxHostName = "<%PboxHostName%>";
 PboxPortNum = <%PboxPortNum|6699%>;
 PipeDepth = <%PipeDepth|200%>;

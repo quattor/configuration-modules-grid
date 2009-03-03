@@ -231,6 +231,7 @@ type ${project.artifactId}_component_service_wm_opts = {
   'MatchRetryPeriod'   ? long
   'MaxOutputSandboxSize' ? long
   'MaxRetryCount'      ? long
+  'MaxShallowRetryCount'      ? long
   'PipeDepth'          ? long
   'SiServiceName'      ? string
   'WorkerThreads'      ? long
