@@ -6,13 +6,17 @@
 
 =head1 NAME
 
-yaim: NCM component for configuring LCG-2 and gLite 3.0 via YAIM.
+yaim: NCM component for configuring gLite middleware via YAIM (version 3.1 and higher).
+
+Note that this version of the component is not backwards compatible with version 
+1.1 and earlier. See section B<CHANGES SINCE VERSION 1.1> for more details.
 
 =head1 DESCRIPTION
 
 The I<yaim> component generates the yaim configuration file and runs
-the corresponding configuration script for the kind of node
-(configure_<node>). The configuration file is generated under /etc/lcg-quattor-site-info.def.
+the corresponding configuration script for the kind of node.
+By default, the configuration file (SITE_INFO_DEF_FILE) is generated under
+/etc/lcg-quattor-site-info.def.
 
 An example configuration template (yaim_example.tpl) is shipped with
 this component.
@@ -26,36 +30,39 @@ Important: Please read the BUGS section of this man page!!
 If defined and and set to true, the YAIM configuration phase is
 triggered. If not, the component will only print what it would do
 
-=head2 /software/components/yaim/nodetype/<X> (boolean)
+=head2 /software/components/yaim/force (boolean)
 
-specifies which node types are configured on that machine. A single
-machine may belong to one or more node types. Possible node types
-(values for <X>) are:
+If true, Yaim is always executed. Normally Yaim will only be executed if
+either the contents of the generated configuration files have changed, 
+or if the previous run of Yaim ended with an error.
+The default for this option is false.
 
-'BDII','CE','CE_torque','LFC_mysql','LFC_oracle','MON','PX',
-'RB','SE_classic','SE_dcache','SE_dpm_disk','SE_dpm_mysql','SE_dpm_oracle',
-'TAR','UI','VOBOX','VOMS','WN','WN_torque',
-'glite-CE','glite-LB','glite-WMSLB','glite-FTS','glite-FTA', 'glite-FTS2','glite-FTA2'
-'lcg-RB','lcg-CE','lcg-CE_torque', glite-FTM2
+=head2 /software/components/yaim/nodetype (list of strings)
 
-Note: the values for <X> are case sensitive!  Note as well that not
-all of these node types are fully tested. Please check yourself at
-least ones if you are happy with the result. (The ncm-yaim component
-is just responsible for generating the yaim config file and running
-yaim, but it cannot guarantee the correct functioning of yaim)
+specifies which node types are configured on that machine and the order
+in which they are configured. 
+A single machine may belong to one or more node types.
+The list of supported node types is automatically determined at run time by
+parsing the information in the files in directory node-info.d. These files are
+provided by the gLite middleware installation.
+
+Note: the values for <X> are case sensitive, but do not depend on
+the prefix I<glite->!
+Note as well that not all of these node types are fully tested.
+Please check yourself at least once if you are happy with the result.
+(The ncm-yaim component is just responsible for generating the yaim
+config file and running yaim, but it cannot guarantee the correct
+functioning of yaim).
 
 Please refer to the YAIM documentation for the precise meaning of
 these configuration keys.
 
 Example:
 
-     "/software/components/yaim/nodetype/WN" = true;
-     "/software/components/yaim/install"     = false;
+     "/software/components/yaim/nodetype"    = list("WN");
      "/software/components/yaim/configure"   = true;
 
-This will configure (but not install) the WN services (via the
-yaim configure_WN scripts, respectively).
-
+This will configure the WN services.
 
 =head2 /software/components/yaim/conf/<X> (string)
 
@@ -151,6 +158,10 @@ Note: the values for <X> have to be upper case!
 
 Please refer to the YAIM documentation for the precise meaning of
 these configuration keys.
+
+The VO output is by default written to the generated configuration file. However, if the
+value USE_VO_D is defined and true, the configuration per VO is written to a file vo.d/<VO_NAME>
+under the directory containing the SITE_INFO file.
 
 Example (assuming that /software/components/yaim/vo/0 is ATLAS):
 
@@ -248,6 +259,36 @@ Assuming that /software/components/yaim/conf/CLASSIC_HOST is "se.mydomain.org" t
   CE_CLOSE_SE2_HOST="anotherse.cern.ch"
   CE_CLOSE_SE2_ACCESS_POINT="/somewhere"
 
+=head2 /software/components/yaim/SCAS/<X>
+
+Sets configuration specific for the SCAS server. Valid configuration keys:
+  SCAS_HOST
+  SCAS_PORT
+
+=head2 /software/components/yaim/GLEXEC/<X>
+
+Sets configuration specific for GLEXEC at the worker node. Valid configuration keys:
+  GLEXEC_WN_OPMODE
+  GLEXEC_WN_SCAS_ENABLED
+  GLEXEC_WN_LCASLCMAPS_LOG
+  GLEXEC_WN_LCAS_DEBUG_LEVEL
+  GLEXEC_WN_LCAS_DIR
+  GLEXEC_WN_LCAS_CONFIG
+  GLEXEC_WN_LCAS_LOG_LEVEL
+  GLEXEC_WN_LCMAPS_DEBUG_LEVEL
+  GLEXEC_WN_LCMAPS_DIR
+  GLEXEC_WN_LCMAPS_CONFIG
+  GLEXEC_WN_LCMAPS_LOG_LEVEL
+  GLEXEC_WN_LOG_DIR
+  GLEXEC_WN_LOG_FILE
+  GLEXEC_WN_LOG_LEVEL
+  GLEXEC_WN_LOG_DESTINATION
+  PILOT_JOB_FLAG
+  GLEXEC_EXTRA_WHITELIST
+  SCAS_HOST
+  SCAS_PORT
+  SCAS_ENDPOINTS
+
 =head2 /software/components/yaim/vo
 
 If this (ordered) list exists, only these VOs are taken into account, in the given order. This was implemented
@@ -294,6 +335,14 @@ The path to YAIM is configurable, which allows to use this component for LCG as 
 
 All other paths are derived from it.
 
+The location of the Yaim script itself is configurable via:
+
+   "/software/components/yaim/YAIM_SCRIPT" = "/path/to/my/yaim/script";
+
+This allows to use wrappers for Yaim. By default, <YAIM_SCRIPT> is undefined
+and the script to be executed is <YAIM_HOME>/bin/yaim.
+
+
 =head1 DEPENDENCIES
 
 =head2 Components to be run before:
@@ -320,8 +369,23 @@ Savannah under https://savannah.cern.ch/bugs/?group=lcgoperation,
 category 'yaim').
 
 The Yaim functions used for any particular node type are defined in
-yaim/scripts/node-info.def. ncm-yaim cannot yet edit this file in
-order to add/remove/change functions.
+<YAIM_HOME>/node-info.d/*. These files are provided as part of the gLite release
+and cannot be edited by ncm-yaim in order to add/remove/change functions.
+
+=head1 CHANGES SINCE VERSION 1.1
+
+* Support for Yaim versions prior to 3.1 has been dropped.
+
+* It is no longer possible to install middleware via Yaim.
+
+* If writing the configuration file(s) or execution of the Yaim command fails,
+the generated configuration file is renamed with suffix I<.failed>. 
+When Yaim completes without errors, the configuration directory will not contain
+any more configuration file with this suffix.
+
+* The schema has changed: the attribute node type is now a list of strings, to
+enable configuration of an ordered list of node types.
+
 
 =head1 AUTHOR
 
@@ -330,6 +394,8 @@ German Cancio <German.Cancio@cern.ch>
 James Casey <James.Casey@cern.ch>
 Ulrich Schwickerath <Ulrich.Schwickerath@cern.ch>
 Veronique Lefebure <Veronique.Lefebure@cern.ch>
+Ronald Starink <ronalds@nikhef.nl>
+
 =head1 SEE ALSO
 
 ncm-ncd(1), http://cern.ch/quattor
