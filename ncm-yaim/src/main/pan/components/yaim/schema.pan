@@ -164,6 +164,9 @@ type structure_yaim_conf = extensible {
     "CREAM_PORT"                        ? string
     "BLAH_JOBID_PREFIX"                 ? string
     "CREAM_CE_STATE"                    ? string
+
+    "WMS_EXPIRY_PERIOD"                 ? string
+    "WMS_MATCH_RETRY_PERIOD"="value2"   ? string
 };
 
 type structure_yaim_close_se = {
