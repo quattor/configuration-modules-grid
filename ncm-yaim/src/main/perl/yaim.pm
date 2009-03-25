@@ -605,17 +605,28 @@ sub write_configuration {
         $cfgfilename = $cfgtree->{'SITE_INFO_DEF_FILE'};
     } 
 
+    # create base directory for configuration files
+    my $basedir = dirname($cfgfilename);
+    if ( ! -d $basedir ) {
+        $self->info("Creating directory $basedir");
+        if ( ! LC::File::makedir("$basedir", 0750) ) {
+            $self->error("$!");
+            return -1;
+        }
+    }
+
     my $result = &write_cfg_file($self, $cfgfilename, $cfgfile);
     if ( $result != -1 ) {
         $update ||= $result;
 
         if ( defined $vo_d_ref ) {
             # get basedir for SITE_INFO_DEF and check for existence of dir vo.d
-            my $basedir = dirname($cfgfilename);
             if ( ! -d "$basedir/vo.d" ) {
                 $self->info("Creating directory $basedir/vo.d");
-                mkdir "$basedir/vo.d", "0777" or $self->error("$!");
-                $result = -1;
+                if ( ! LC::File::makedir("$basedir/vo.d", 0750) ) {
+                    $self->error("$!");
+                    $result = -1;
+                }
             }
 
             if ( $result != -1 ) {
