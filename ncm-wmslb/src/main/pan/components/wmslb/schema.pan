@@ -225,6 +225,7 @@ type ${project.artifactId}_component_service_wm_opts = {
   'IsmIiPurchasingRate' ? long
   'IsmIiLDAPCEFilterExt' ? string
   'IsmIiLDAPSearchAsync' ? boolean
+  'IsmThreads'         ? boolean
   'JobWrapperTemplateDir' ? string
   'LogLevel'           ? long
   'LogFile'            ? string
@@ -238,7 +239,9 @@ type ${project.artifactId}_component_service_wm_opts = {
   'IsmDumpRate'         ? long
   'IsmIiPurchasingRate' ? long 
   'IsmUpdateRate'       ? long 
-  'MinPerusalTimeInterval' ? long 
+  'MinPerusalTimeInterval' ? long
+  'QueueSize'          ? long
+  'RuntimeMalloc'      ? string
 };
 
 type ${project.artifactId}_component_service_wm = {
@@ -319,6 +322,10 @@ type ${project.artifactId}_component_service_wmsclient = {
   'options'     ? ${project.artifactId}_component_service_wmsclient_opts
 };
 
+type ${project.artifactId}_component_common_opts = {
+  'LBProxy'     ? boolean
+};
+
 type ${project.artifactId}_component_services = {
   'ice'         ? ${project.artifactId}_component_service_ice
   'jc'          ? ${project.artifactId}_component_service_jc
@@ -338,6 +345,7 @@ type ${project.artifactId}_component = {
   'env'       ? ${project.artifactId}_component_env
   'envScript' ? string = '/etc/profile.d/glite-wms.sh'
   'services'  ? ${project.artifactId}_component_services
+  'common'    ? ${project.artifactId}_component_common_opts
   'workDirDefaultParent' ? string
 };
 

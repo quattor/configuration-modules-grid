@@ -137,7 +137,7 @@ sub Configure {
     my $prologue_template = $template_dir . '/prologue.template';
     my $prologue_content;
     if ( -f $prologue_template) {
-      $prologue_content = $self->formatConfSection('Common',$config,$base,$prologue_template);
+      $prologue_content = $self->formatConfSection('Common',$config,$base.'/common',$prologue_template);
       if ( defined($prologue_content) ) {
         $conf_content .= $prologue_content;
       } else {

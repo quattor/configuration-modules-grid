@@ -7,6 +7,7 @@ CondorDagman = "<%CondorDagman|${CONDORG_INSTALL_PATH}/bin/condor_dagman%>";
 SubmitFileDir = "<%SubmitFileDir|${GLITE_WMS_LOCATION_VAR}/jobcontrol/submit%>";
 OutputFileDir = "<%OutputFileDir|${GLITE_WMS_LOCATION_VAR}/jobcontrol/condorio%>";
 Input = "<%Input|${GLITE_WMS_LOCATION_VAR}/jobcontrol/queue.fl%>";
+InputType = "<%InputType|filelist%>";
 
 LockFile = "<%LockFile|${GLITE_WMS_LOCATION_VAR}/jobcontrol/lock%>";
 LogFile = "<%LogFile|${GLITE_WMS_LOCATION_VAR}/log/jobcontroller_events.log%>";
