@@ -3,6 +3,7 @@ LogFile = "<%LogFile|${GLITE_LOCATION_LOG}/wmproxy.log%>";
 LogLevel = <%LogLevel|5%>;
 MaxInputSandboxSize = <%MaxInputSandboxSize|10000000%>;
 ListMatchRootPath = "<%ListMatchRootPath|${GLITE_LOCATION_TMP}%>";
+ListMatchTimeout = "<%ListMatchTimeout%>";
 LBProxy = <%LBProxy|true%>;
 //HTTPSPort = <%HTTPSPort|7443%>;
 GridFTPPort = <%GridFTPPort|2811%>;

@@ -272,6 +272,7 @@ type ${project.artifactId}_component_service_wmproxy_opts = {
   'LogLevel'                     ? long
   'MaxInputSandboxSize'          ? long
   'ListMatchRootPath'            ? string
+  'ListMatchTimeout'             ? long
   'LBProxy'                      ? boolean
   'HTTPSPort'                    ? long
   'GridFTPPort'                  ? long
