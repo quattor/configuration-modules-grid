@@ -68,6 +68,7 @@ type ${project.artifactId}_component_service_ice_opts = {
   'log_on_console'                     ? boolean
   'listener_port'                      ? long
   'Input'                              ? string
+  'InputType'                          ? string
   'logfile'                            ? string
   'start_poller'                       ? boolean
   'purge_jobs'                         ? boolean
@@ -122,6 +123,7 @@ type ${project.artifactId}_component_service_jc_opts = {
   'SubmitFileDir'  ? string
   'OutputFileDir'  ? string
   'Input'          ? string
+  'InputType'      ? string
 
   'LockFile'       ? string
   'LogFile'        ? string
