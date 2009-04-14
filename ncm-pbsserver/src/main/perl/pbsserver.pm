@@ -185,13 +185,16 @@ sub Configure($$@) {
         }
       }
 
-      # Removing non-defined server attributes if manualconfig is set to false
+      # Removing server attributes not defined in configuration if manualconfig is set to false.
+      # Take care of not removing a few attributes generated/maintained by the server.
+      # 'acl_hosts' is defined to the server host name at startup if not explicitly defined.
       if ( defined($pbsserver_config->{server}->{manualconfig}) && 
            !$pbsserver_config->{server}->{manualconfig} ) {
         $self->debug(1,"Removing server attributes not part of the configuration (manualconfig=false)");
         foreach (keys %existingsatt) {
           unless ( defined($definedsatt{$_}) ||
                    ($_ eq "pbs_version") ||
+                   ($_ eq "acl_hosts") ||
                    ($_ eq "next_job_number") ) {
             $self->runCommand($qmgr, "unset server $_");
           }
