@@ -132,6 +132,7 @@ sub Configure($$@) {
     # Wait a bit for the server to become active in case it has been restarted.
     # Check every 30s after the first try until it comes up; try for up to  
     # 5 minutes.
+    $self->info("Retrieving current configuration...");
     my $remaining = 10;
     sleep 5;
     my @current_config = qx/$qmgr_state/;
@@ -189,7 +190,11 @@ sub Configure($$@) {
            !$pbsserver_config->{server}->{manualconfig} ) {
         $self->debug(1,"Removing server attributes not part of the configuration (manualconfig=false)");
         foreach (keys %existingsatt) {
-          $self->runCommand($qmgr, "unset server $_") unless (defined($definedsatt{$_}) || ( $_ eq "pbs_version") );
+          unless ( defined($definedsatt{$_}) ||
+                   ($_ eq "pbs_version") ||
+                   ($_ eq "next_job_number") ) {
+            $self->runCommand($qmgr, "unset server $_");
+          }
         }
       }      
     }
