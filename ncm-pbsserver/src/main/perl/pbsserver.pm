@@ -236,7 +236,7 @@ sub Configure($$@) {
             }
           }
 
-          # Removing non-defined queue attributes if manualconfig is set to 
+          # Removing non-defined queue attributes if manualconfig is set to false
           if ( defined($queuelist->{$queue}->{manualconfig}) && 
                !$queuelist->{$queue}->{manualconfig} ) {
             $self->debug(1,"Removing queue $queue attributes not part of the configuration (manualconfig=false)");
@@ -340,7 +340,7 @@ sub Configure($$@) {
             }
           }
 
-          # Removing non-defined node attributes if manualconfig is set to 
+          # Removing non-defined node attributes if manualconfig is set to false
           if ( $nodelist->{$node}->{manualconfig} && 
                !$nodelist->{$node}->{manualconfig} ) {
             $self->debug(1,"Removing node $node attributes not part of the configuration (manualconfig=false)");
