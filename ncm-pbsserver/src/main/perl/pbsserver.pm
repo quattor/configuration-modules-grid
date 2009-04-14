@@ -341,7 +341,7 @@ sub Configure($$@) {
           }
 
           # Removing non-defined node attributes if manualconfig is set to false
-          if ( $nodelist->{$node}->{manualconfig} && 
+          if ( defined($nodelist->{$node}->{manualconfig}) && 
                !$nodelist->{$node}->{manualconfig} ) {
             $self->debug(1,"Removing node $node attributes not part of the configuration (manualconfig=false)");
             # First delete properties not part of the configuration
