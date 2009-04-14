@@ -185,7 +185,7 @@ sub Configure($$@) {
       }
 
       # Removing non-defined server attributes if manualconfig is set to false
-      if ( $pbsserver_config->{server}->{manualconfig} && 
+      if ( defined($pbsserver_config->{server}->{manualconfig}) && 
            ($pbsserver_config->{server}->{manualconfig} eq "false")  ) {
         foreach (keys %existingsatt) {
           $self->runCommand($qmgr, "unset server $_") unless (defined($definedsatt{$_}) || ( $_ eq "pbs_version") );
@@ -231,7 +231,7 @@ sub Configure($$@) {
           }
 
           # Removing non-defined queue attributes if manualconfig is set to false
-          if ( $queuelist->{$queue}->{manualconfig} && 
+          if ( defined($queuelist->{$queue}->{manualconfig}) && 
                ($queuelist->{$queue}->{manualconfig} eq "false")  ) {
             foreach (keys %{$existingqueues{$queue}}) {
               $self->runCommand($qmgr, "unset queue $queue $_") unless (defined($definedqatt{$_}));
@@ -241,7 +241,7 @@ sub Configure($$@) {
       }
 
       # Delete existing queues not part of the configuration if manualconfig is set to false
-      if ( $pbsserver_config->{queue}->{manualconfig} && 
+      if ( defined($pbsserver_config->{queue}->{manualconfig}) && 
            ($pbsserver_config->{queue}->{manualconfig} eq "false")  ) {
         foreach (keys %existingqueues) {
           $self->info("Removing queue $_...");
@@ -354,7 +354,7 @@ sub Configure($$@) {
       }
 
       # Delete existing nodes not part of the configuration if manualconfig is set to false
-      if ( $pbsserver_config->{node}->{manualconfig} && 
+      if ( defined($pbsserver_config->{node}->{manualconfig}) && 
            ($pbsserver_config->{node}->{manualconfig} eq "false")  ) {
         foreach (keys %existingnodes) {
           $self->info("Removing node $_...");
