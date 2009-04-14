@@ -60,7 +60,7 @@ sub Configure($$@) {
       if ( $result < 0 ) {
         $self->error("Error updating $fname");
       } elsif ( $result > 0 ) { 
-        $self->info("$fname updated. Restarting pbs_server...");
+        $self->log("$fname updated. Restarting pbs_server...");
         if (system('/sbin/service pbs_server restart')) {
           $self->error('pbs_server init.d restart failed: '. $?);
         }
