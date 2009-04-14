@@ -155,11 +155,11 @@ sub Configure($$@) {
         # Mark the server attribute as set.
         $existingsatt{$1} = 1;
 
-      } elsif (m/create queue (\w+)/) {
+      } elsif (m/create queue ([\w\.\_]+)/) {
         # Create a hash for the queue.
         $existingqueues{$1} = {};
 
-      } elsif (m/set queue (\w+)\s+([\w\.]+)/) {
+      } elsif (m/set queue ([\w\.\_]+)\s+([\w\.]+)/) {
         # Mark the attribute as set for the given queue. 
         my $queue = $1;
         my $name = $2;
