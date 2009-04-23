@@ -212,7 +212,8 @@ sub Configure {
       
     }
 
-    # For WM service, check if a non standard job wrapper has been specified
+    # For WM service, check if a non standard job wrapper has been specified.
+    # Job wrapper doesn't need to be executable on the WMS.
     
     if ( $service eq $wm_service_name ) {
       my $jw_config = $services->{$service}->{jobWrapper};
@@ -222,7 +223,7 @@ sub Configure {
                                    $jw_config->{file},
                                    backup   => ".old",
                                    contents => encode_utf8($jw_config->{contents}),
-                                   mode => 0755,
+                                   mode => 0644,
                                   );
         if ( $changes < 0 ) {
           $self->error("Error updating job wrapper");
