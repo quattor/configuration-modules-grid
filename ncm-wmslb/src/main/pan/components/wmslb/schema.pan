@@ -246,7 +246,7 @@ type ${project.artifactId}_component_service_wm_opts = {
   'RuntimeMalloc'      ? string
 };
 
-type ${project.artifactId}_component_service_wm = {
+type ${project.artifactId}_component_service_wm_jw = {
   'file'     : string
   'contents' : string
 };
