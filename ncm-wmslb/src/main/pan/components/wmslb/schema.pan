@@ -247,8 +247,14 @@ type ${project.artifactId}_component_service_wm_opts = {
 };
 
 type ${project.artifactId}_component_service_wm = {
+  'file'     : string
+  'contents' : string
+};
+
+type ${project.artifactId}_component_service_wm = {
   include ${project.artifactId}_component_service_common
 
+  'jobWrapper'  ? ${project.artifactId}_component_service_wm_jw
   'options'     : ${project.artifactId}_component_service_wm_opts
 };
 

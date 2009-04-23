@@ -31,6 +31,7 @@ my $true = "true";
 my $false = "false";
 
 my $wmproxy_service_name = 'wmproxy';
+my $wm_service_name = 'wm';
 
 
 ##########################################################################
@@ -211,6 +212,23 @@ sub Configure {
       
     }
 
+    # For WM service, check if a non standard job wrapper has been specified
+    
+    if ( $service eq $wm_service_name ) {
+      my $jw_config = $services->{$service}->{jobWrapper};
+      if ( $jw_config ) {
+        $self->info("Updating job wrapper (".$jw_config->{file}."...");
+        $changes = LC::Check::file(
+                                   $jw_config->{file},
+                                   backup   => ".old",
+                                   contents => encode_utf8($jw_config->{contents),
+                                  );
+        if ( $changes < 0 ) {
+          $self->error("Error updating job wrapper");
+        }
+      }
+    }
+        
     # For WMProxy service, build Load Monitor script.
     # If script content is explicitly set, update the script if needed.
     # Else build the script from the template, if the script doesn't exist.
