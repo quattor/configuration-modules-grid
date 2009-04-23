@@ -217,11 +217,11 @@ sub Configure {
     if ( $service eq $wm_service_name ) {
       my $jw_config = $services->{$service}->{jobWrapper};
       if ( $jw_config ) {
-        $self->info("Updating job wrapper (".$jw_config->{file}."...");
+        $self->info("Checking job wrapper (".$jw_config->{file}.")...");
         $changes = LC::Check::file(
                                    $jw_config->{file},
                                    backup   => ".old",
-                                   contents => encode_utf8($jw_config->{contents),
+                                   contents => encode_utf8($jw_config->{contents}),
                                    mode => 0755,
                                   );
         if ( $changes < 0 ) {
