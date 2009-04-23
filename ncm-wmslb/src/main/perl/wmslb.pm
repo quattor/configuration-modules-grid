@@ -222,6 +222,7 @@ sub Configure {
                                    $jw_config->{file},
                                    backup   => ".old",
                                    contents => encode_utf8($jw_config->{contents),
+                                   mode => 0755,
                                   );
         if ( $changes < 0 ) {
           $self->error("Error updating job wrapper");
