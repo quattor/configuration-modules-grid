@@ -59,6 +59,7 @@ type pbs_queue_attlist = {
     'max_running'            ? long(1..)
     'max_queuable'           ? long(1..)
     'resources_max.cput'     ? string
+    'resources_max.pcput'     ? string
     'resources_max.file' ? string
     'resources_max.mem' ? string
     'resources_max.vmem' ? string
