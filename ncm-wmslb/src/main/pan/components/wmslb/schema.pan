@@ -127,7 +127,7 @@ type ${project.artifactId}_component_service_jc_opts = {
 
   'LockFile'       ? string
   'LogFile'        ? string
-  'LogLevel'       ? long
+  'LogLevel'       ? long(1..6)
 
   'ContainerRefreshThreshold' ? long
 };
@@ -152,7 +152,7 @@ type ${project.artifactId}_component_service_lm_opts = {
 
   'LockFile'            ? string
   'LogFile'             ? string
-  'LogLevel'            ? long
+  ''            ? long(1..6)
   'ExternalLogFile'     ? string
 
   'MainLoopDuration'    ? long
@@ -196,7 +196,7 @@ type ${project.artifactId}_component_service_ns_opts = {
   'SandboxStagingPath'           ? string
 
   'LogFile'                      ? string
-  'LogLevel'                     ? long
+  'LogLevel'                     ? long(1..6)
 
   'EnableQuotaManagement'        ? boolean
   'MaxInputSandboxSize'          ? long
@@ -229,7 +229,7 @@ type ${project.artifactId}_component_service_wm_opts = {
   'IsmIiLDAPSearchAsync' ? boolean
   'IsmThreads'         ? boolean
   'JobWrapperTemplateDir' ? string
-  'LogLevel'           ? long
+  'LogLevel'           ? long(1..6)
   'LogFile'            ? string
   'MatchRetryPeriod'   ? long
   'MaxOutputSandboxSize' ? long
@@ -278,7 +278,7 @@ type ${project.artifactId}_component_service_wmproxy_opts = {
   'SandboxStagingPath'           ? string
   'LogFile'                      ? string
   'ApacheLogLevel'               ? string with match(SELF,'emerg|alert|crit|error|warn|notice|info|debug')
-  'LogLevel'                     ? long
+  'LogLevel'                     ? long(1..6)
   'MaxInputSandboxSize'          ? long
   'ListMatchRootPath'            ? string
   'ListMatchTimeout'             ? long
