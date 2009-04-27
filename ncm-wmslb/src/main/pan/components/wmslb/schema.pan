@@ -152,7 +152,7 @@ type ${project.artifactId}_component_service_lm_opts = {
 
   'LockFile'            ? string
   'LogFile'             ? string
-  ''            ? long(1..6)
+  'LogLevel'            ? long(1..6)
   'ExternalLogFile'     ? string
 
   'MainLoopDuration'    ? long
