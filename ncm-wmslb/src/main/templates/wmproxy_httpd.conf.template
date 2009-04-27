@@ -39,7 +39,7 @@ DocumentRoot ${GLITE_LOCATION_VAR}
 </Directory>
 
 # LogLevel: emerg, alert, crit, error, warn, notice, info, debug 
-LogLevel <%LogLevel|error%>
+LogLevel <%ApacheLogLevel|warn%>
 LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
 
 # Logging files with no Year/Month/Day extension

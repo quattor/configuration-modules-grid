@@ -277,6 +277,7 @@ type ${project.artifactId}_component_service_wmproxy_loadmonitor_opts = {
 type ${project.artifactId}_component_service_wmproxy_opts = {
   'SandboxStagingPath'           ? string
   'LogFile'                      ? string
+  'ApacheLogLevel'               ? string with match(SELF,'emerg|alert|crit|error|warn|notice|info|debug')
   'LogLevel'                     ? long
   'MaxInputSandboxSize'          ? long
   'ListMatchRootPath'            ? string
