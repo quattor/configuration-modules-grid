@@ -41,6 +41,7 @@ type pbs_server_attlist = {
     'poll_jobs'           ? boolean = true
     'query_other_jobs'    ? boolean = false
     'resources_available' ? string
+    'resources_available.nodect' ? long(1..) = 2048
     'scheduler_iteration' ? long(1..)
     'scheduling'          ? boolean
     'server_name'         ? type_hostname
@@ -58,6 +59,7 @@ type pbs_queue_attlist = {
     'queue_type'             ? string
     'max_running'            ? long(1..)
     'max_queuable'           ? long(1..)
+    'resources_available.nodect' ? long(1..) = 2048
     'resources_max.cput'     ? string
     'resources_max.pcput'     ? string
     'resources_max.file' ? string
