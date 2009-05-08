@@ -227,10 +227,8 @@ my %srmv22_config_rules = (
 
 my $xroot_config_file = "/etc/sysconfig/dpm-xrd";
 my %xroot_config_rules = (
-        "DPM_HOST" => "host:dpm;$line_format_envvar",
-        "DPNS_HOST" => "host:dpns;$line_format_envvar",
-        "DPM_XROOTD_NOGSI" => "xroot->gsiEnabled:xroot;$line_format_envvar",
-        "XRDCONFIG", => "xroot->config:xroot;$line_format_envvar",
+        "MANAGERHOST", => "host:dpm;$line_format_envvar",
+        "XRDCONFIG", => "config:xroot;$line_format_envvar",
        );
 
 my $trust_roles = "dpm,dpns,rfio,gsiftp";
