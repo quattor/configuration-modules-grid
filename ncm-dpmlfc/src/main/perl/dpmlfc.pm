@@ -66,7 +66,11 @@ my $dm_bin_default = "/opt/lcg/bin";
 
 my $dpm_def_host;
 
-my $config_template_ext = ".templ";
+# Entry DEFAULT is used for any role that has not an explicit entry
+my %config_template_ext = ('DEFAULT', '.templ',
+                           'xroot', '.example',
+                          );
+
 my $config_bck_ext = ".old";    # Replaced version extension
 #my $config_prod_ext = ".new";    # For testing purpose only
 my $config_prod_ext = "";    # For testing purpose only
@@ -2470,7 +2474,11 @@ sub updateConfigFile () {
   $self->debug(1,"$function_name : Building configuration file for role ".uc($role));
 
   my $template_contents;
-  my $template_file = ${$config_files{$role}}.$config_template_ext;
+  my $template_ext = $config_template_ext{'DEFAULT'};
+  if ( $config_template_ext{$role} ) {
+    $template_ext = $config_template_ext{$role};
+  }
+  my $template_file = ${$config_files{$role}}.$template_ext;
   if ( -e $template_file ) {
     $self->debug(1,"$function_name : template file $template_file found, reading it");
     $template_contents = file_contents($template_file);
