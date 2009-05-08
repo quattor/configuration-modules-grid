@@ -287,6 +287,7 @@ my %config_rules = (
         "srmv1" => \%srmv1_config_rules,
         "srmv2" => \%srmv2_config_rules,
         "srmv22" => \%srmv22_config_rules,
+        "xroot" => \%xroot_config_rules,
         "trusts" => \%trust_config_rules,
         "lfc" => \%lfc_config_rules,
         "lfc-dli" => \%lfcdli_config_rules,
