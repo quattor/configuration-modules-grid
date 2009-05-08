@@ -3,24 +3,23 @@
 # ${author-info}
 # ${build-info}
 #
-############################################################
 
 declaration template components/dpmlfc/schema;
 
 include { 'quattor/schema' };
 
 function component_dpmlfc_global_options_validation = {
-  if ( !is_defined(self) ) {
+  if ( !is_defined(SELF) ) {
     error('Internal error: DPM/LFC global options undefied in validation function');
     return(false);
   };
   
-  if ( exists(self['accessProtocols']) && is_defined(self['accessProtocols']) ) {
-    if ( !is_list(self['accessProtocols']) ) {
+  if ( exists(SELF['accessProtocols']) && is_defined(SELF['accessProtocols']) ) {
+    if ( !is_list(SELF['accessProtocols']) ) {
       error("Global option 'accessProtocols' must be a list");
       return(false);
     };
-    foreach (i;protocol;self['accessProtocols']) {
+    foreach (i;protocol;SELF['accessProtocols']) {
       if ( !match(protocol,'https|gsiftp|rfio|xroot') ) {
         error('Invalid DPM access protocol specified ('+protocol+'). Must be https, gsiftp, rfio or xroot');
         return(false);
@@ -28,12 +27,12 @@ function component_dpmlfc_global_options_validation = {
     };
   };
   
-  if ( exists(self['controlProtocols']) && is_defined(self['controlProtocols']) ) {
-    if ( !is_list(self['controlProtocols']) ) {
+  if ( exists(SELF['controlProtocols']) && is_defined(SELF['controlProtocols']) ) {
+    if ( !is_list(SELF['controlProtocols']) ) {
       error("Global option 'controlProtocols' must be a list");
       return(false);
     };
-    foreach (i;protocol;self['controlProtocols']) {
+    foreach (i;protocol;SELF['controlProtocols']) {
       if ( !match(protocol,'srmv1|srmv2|srmv2.2') ) {
         error('Invalid DPM control protocol specified ('+protocol+'). Must be srmv1, srmv2 or srmv2.2');
         return(false);
@@ -58,7 +57,7 @@ type ${project.artifactId}_component_pool_entry = {
         "gid"             ? long(1..)
         "group"           ? string
         "put_retenp"      ? long(0..)
-        "s_type"          ? string with match (self,'-|D|P|V')
+        "s_type"          ? string with match (SELF,'-|D|P|V')
         "fs"              ? ${project.artifactId}_component_fs_entry[]
 };
 
@@ -97,7 +96,7 @@ type ${project.artifactId}_component_global_options = {
         "gridmapdir"  ? string
         "accessProtocols"   ? string[]
         "controlProtocols"   ? string[]
-} with component_dpmlfc_global_options_validation(self);
+} with component_dpmlfc_global_options_validation(SELF);
 
 type ${project.artifactId}_component_global_options_tree = {
         "dpm"     ? ${project.artifactId}_component_global_options
@@ -125,6 +124,6 @@ type ${project.artifactId}_component = {
 	      "options"  ? ${project.artifactId}_component_global_options_tree
 };
 
-bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
+bind "/software/components/dpmlfc" = ${project.artifactId}_component;
 
 

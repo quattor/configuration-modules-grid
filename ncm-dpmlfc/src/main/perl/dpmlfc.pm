@@ -4,6 +4,7 @@
 # ${build-info}
 #
 #
+#
 # This component is dedicated to LCG DPM (Disk Pool Manager) and
 # LFC (Logical File Catalog) configuration management. It hs been designed
 # to be very flexible and need no major change to handle changes in

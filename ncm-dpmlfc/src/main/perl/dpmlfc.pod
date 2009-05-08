@@ -3,6 +3,13 @@
 # ${author-info}
 # ${build-info}
 #
+
+=begin comment
+
+Be sure to put a blank line before and after every formatting command
+
+=end comment
+
 =head1 NAME
 
 dpmlfc : NCM component to manage DPM and LFC configuration.
