@@ -229,6 +229,9 @@ my $xroot_config_file = "/etc/sysconfig/dpm-xrd";
 my %xroot_config_rules = (
         "MANAGERHOST", => "host:dpm;$line_format_envvar",
         "XRDCONFIG", => "config:xroot;$line_format_envvar",
+        "XRDLOGDIR" => "logfile:xroot;$line_format_param",
+        "XRDPORT" => "port:xroot;$line_format_envvar",
+        "XRDUSER" => "user:GLOBAL;$line_format_param",
        );
 
 my $trust_roles = "dpm,dpns,rfio,gsiftp";
