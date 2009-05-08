@@ -89,6 +89,7 @@ my @dpm_roles = (
      "srmv1",
      "srmv2",
      "srmv22",
+     "xroot",
     );
 my @lfc_roles = (
      "lfc",
@@ -106,6 +107,7 @@ my %dpm_comp_max_servers = (
           "srmv1" => 1,
           "srmv2" => 1,
           "srmv22" => 1,
+          "xroot" => 999,
          );
 
 my %lfc_comp_max_servers = (
@@ -130,8 +132,7 @@ my %lfc_comp_max_servers = (
 #  - param : a sh shell variable definition (VAR=val)
 #  - trust : a 'keyword value' line, as used by /etc/shift.conf
 # Line format has an impact on hosts list if there is one. For trust format,
-# each host in the local domain is inserted with its FQDN and its short name
-# and local host is removed. 
+# each host in the local domain is inserted with its FQDN and local host is removed. 
 #
 # If there are several servers for a role the option value from all the servers# is used for 'host' option, and only the server corresponding to current host
 # for other options.
@@ -231,7 +232,7 @@ my $trust_roles = "dpm,dpns,rfio,gsiftp";
 my $trust_config_file = "/etc/shift.conf";
 my %trust_config_rules = (
         "DPM PROTOCOLS" => "accessProtocols:GLOBAL;$line_format_trust",
-        "DPM TRUST" => "dpm->host:dpns,https;$line_format_trust",
+        "DPM TRUST" => "dpm->host:dpns,xroot;$line_format_trust",
         "DPNS TRUST" => "dpns->host:dpm,srmv1,srmv2,srm22,rfio;$line_format_trust",
         "RFIOD TRUST" => "rfio->host:dpm,rfio;$line_format_trust",
         "RFIOD WTRUST" => "rfio->host:dpm,rfio;$line_format_trust",
@@ -272,6 +273,7 @@ my %config_files = (
         "srmv2" => \$srmv2_config_file,
         "srmv22" => \$srmv22_config_file,
         "trusts" => \$trust_config_file,
+        "xroot" => \$xroot_config_file,
         "lfc" => \$lfc_config_file,
         "lfc-dli" => \$lfcdli_config_file,
        );
@@ -304,9 +306,10 @@ my %services = (
     "srmv1" => "srmv1",
     "srmv2" => "srmv2",
     "srmv22" => "srmv2.2",
+    "xroot" => "dpm-xrd",
     "lfc" => "lfcdaemon",
     "lfc-dli" => "lfc-dli",
-    "trusts" => "role:dpm,dpns,gsiftp,rfio",
+    "trusts" => "role:dpm,dpns,gsiftp,rfio,xroot",
          );
 
 
