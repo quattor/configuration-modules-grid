@@ -452,9 +452,9 @@ sub Configure($$@) {
     unless ( defined($dm_install_dir) ) {
       $dm_install_dir = $dm_install_dir_default;
     }
-    my $dm_bin_dir = $dm_install_dir . "/bin";
+    $dm_bin_dir = $dm_install_dir . "/bin";
     # Useless but harmless for LFC...
-    my $xrootd_config_dir = $dm_install_dir . "/etc/xrootd";
+    $xrootd_config_dir = $dm_install_dir . "/etc/xrootd";
 
     if ( $product eq "DPM" ) {
       $hosts_roles = \@dpm_roles;
@@ -2573,7 +2573,7 @@ sub xrootdSpecificConfig () {
                                   "KEY VO:*       PRIVKEY:".$xrootd_config_dir."/pvkey.pem PUBKEY:".$xrootd_config_dir."/pkey.pem\n\n" .
                                   "# Restrict the name space for export\n" .
                                   "EXPORT PATH:".$self->NSGetRoot().$xrootd_exported_vo." VO:*     ACCESS:ALLOW CERT:*\n\n";
-  if ( $self->hasHasRoles('dpns') ) {
+  if ( $self->hostHasRoles('dpns') ) {
     $xroot_authz_conf_contents .= "RULE PATH:/ AUTHZ:delete|read|write|write-once| NOAUTHZ:| VO:*| CERT:*\n";
   } else {
     $xroot_authz_conf_contents .= "RULE PATH:/ AUTHZ:delete|read|write|write-once| NOAUTHZ: VO:* CERT:*\n";    
@@ -2583,7 +2583,7 @@ sub xrootdSpecificConfig () {
                                 contents => encode_utf8($xroot_authz_conf_contents),
                                 owner => $self->getDaemonUser(),
                                 group => $self->getDaemonGroup(),
-                                mode => 0400)
+                                mode => 0400,
                                );
   unless ( $changes >= 0 ) {
     $self->error("Error updating xrootd authorization configuration ($xroot_authz_conf_file)");
