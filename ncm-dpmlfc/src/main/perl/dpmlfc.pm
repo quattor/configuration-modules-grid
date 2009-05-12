@@ -425,15 +425,6 @@ sub Configure($$@) {
 ##########################################################################
     
   (my $self, $config) = @_;
-
-  # Specific configuration actions for some roles.
-  # Each action must correspond to a specific function.
-  # This hash cannot be defined as a global variable as it requires
-  # $self to be defined.
-  my %specific_config_actions = ("xroot" => \&{$self->xrootdSpecificConfig},
-                                );
-
-  
   
   $this_host_name = hostname();
   $this_host_domain = hostdomain();
@@ -539,8 +530,8 @@ sub Configure($$@) {
     for my $role (@{$hosts_roles}) {
       if ( $self->hostHasRoles($role) ) {
         $self->updateConfigFile($role);
-        if ( $specific_config_actions{$role} ) {
-          $specific_config_actions{$role};
+        if ( $role == 'xroot' ) {
+          xrootdSpecificConfig();
         }
         for my $service ($self->getRoleServices($role)) {
           $self->enableService($service);
