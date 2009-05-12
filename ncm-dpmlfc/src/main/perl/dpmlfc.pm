@@ -449,7 +449,7 @@ sub Configure($$@) {
 
     $self->loadGlobalOption("installDir");
     $dm_install_dir = $self->getGlobalOption("installDir");
-    unless ( defined($dm_install_location) ) {
+    unless ( defined($dm_install_dir) ) {
       $dm_install_dir = $dm_install_dir_default;
     }
     my $dm_bin_dir = $dm_install_dir . "/bin";
@@ -540,7 +540,7 @@ sub Configure($$@) {
       if ( $self->hostHasRoles($role) ) {
         $self->updateConfigFile($role);
         if ( $specific_config_actions{$role} ) {
-          {$specific_config_actions{$role}}();
+          $specific_config_actions{$role};
         }
         for my $service ($self->getRoleServices($role)) {
           $self->enableService($service);
@@ -2562,7 +2562,7 @@ sub xrootdSpecificConfig () {
   my ($self) = @_;
   my $function_name = "xrootdSpecificConfig";
 
-  $self->debug(1,"$function_name: configuring xrootd for DPM")
+  $self->debug(1,"$function_name: configuring xrootd for DPM");
   unless ( $xrootd_exported_vo ) {
     $self->warn("dpm-xroot: export enabled for all VOs. You should consider restrict to one VO only.");
   }
@@ -2581,12 +2581,12 @@ sub xrootdSpecificConfig () {
   my $changes = LC::Check::file($xroot_authz_conf_file,
                                 backup => $config_bck_ext,
                                 contents => encode_utf8($xroot_authz_conf_contents),
-                                owner => $daemon_user,
-                                group => $daemon_group,
+                                owner => $self->getDaemonUser(),
+                                group => $self->getDaemonGroup(),
                                 mode => 0400)
                                );
   unless ( $changes >= 0 ) {
-    $self->error("Error updating xrootd authorization configuration ($xroot_authz_conf_file)")
+    $self->error("Error updating xrootd authorization configuration ($xroot_authz_conf_file)");
   }
   
 }
