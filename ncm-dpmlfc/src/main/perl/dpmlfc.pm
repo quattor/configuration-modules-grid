@@ -421,7 +421,7 @@ my $xrootd_exported_vo;
 my $xrootd_config_dir;
 my %xrootd_daemon_prefix = ('head' => 'dpm-manager-',
                             'disk' => 'dpm-',
-                           )
+                           );
 
 ##########################################################################
 sub Configure($$@) {
@@ -2573,14 +2573,14 @@ sub xrootdSpecificConfig () {
   }  
   my $xroot_authz_conf_file = $xrootd_config_dir."/authz.cf";
   my $xroot_token_priv_key;
-  if ( defined($server_config->{tokenPrivateKey}) ) {
-    $xroot_token_priv_key = $xrootd_config_dir . '/' . $server_config->{tokenPrivateKey};
+  if ( defined($xroot_config->{tokenPrivateKey}) ) {
+    $xroot_token_priv_key = $xrootd_config_dir . '/' . $xroot_config->{tokenPrivateKey};
   } else {
     $xroot_token_priv_key = $xrootd_config_dir . '/pvkey.pem';    
   }
   my $xroot_token_pub_key;
-  if ( defined($server_config->{tokenPublicKey}) ) {
-    $xroot_token_pub_key = $xrootd_config_dir . '/' . $server_config->{tokenPublicKey};
+  if ( defined($xroot_config->{tokenPublicKey}) ) {
+    $xroot_token_pub_key = $xrootd_config_dir . '/' . $xroot_config->{tokenPublicKey};
   } else {
     $xroot_token_pub_key = $xrootd_config_dir . '/pkey.pem';    
   }
@@ -2606,12 +2606,12 @@ sub xrootdSpecificConfig () {
   }
 
   # Set right permissions on token public/private keys
-  for my $key in (xroot_token_priv_key,xroot_token_pub_key) {
+  for my $key (xroot_token_priv_key,xroot_token_pub_key) {
     if ( -f $key ) {
       $self->debug(1,"$function_name : Checking permission on $key");
       $changes = LC::Check::status($key,
-                                   user => $daemon_user,
-                                   group => $daemon_group,
+                                   user => $self->getDaemonUser(),
+                                   group => $self->getDaemonGroup(),
                                    mode => 0400
                                   );
       unless (defined($changes)) {
@@ -2631,7 +2631,7 @@ sub xrootdSpecificConfig () {
     $prefix = $xrootd_daemon_prefix{disk};      
   }
 
-  for my $daemon in ('oldb','xrootd') {
+  for my $daemon ('oldb','xrootd') {
     my $link_name = $dm_bin_dir . '/' . $prefix . $daemon;
     my $link_target = $dm_bin_dir . '/' . $daemon;
     if ( -e $link_name && ! -l $link_name ) {
@@ -2654,11 +2654,11 @@ sub xrootdSpecificConfig () {
   
   my @xroot_service_list;
   for my $service ('olb','xrd') {
-    $service_name = $prefix . $service;
+    my $service_name = $prefix . $service;
     $self->enableService($service_name);
     push @xroot_service_list, $service_name;
   }
-  $services{'xroot'} = join (",", @xroot_servce_list);
+  $services{'xroot'} = join (",", @xroot_service_list);
 }
 
 1;      # Required for PERL modules
