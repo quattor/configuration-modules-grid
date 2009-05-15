@@ -2627,7 +2627,7 @@ sub xrootdSpecificConfig () {
                                );
   if ( $changes > 0 ) {
     $restart_services = 1;
-  } elsif ( $changes <> 0 ) {
+  } elsif ( $changes < 0 ) {
     $self->error("Error updating xrootd authorization configuration ($xroot_authz_conf_file)");
   }
 
