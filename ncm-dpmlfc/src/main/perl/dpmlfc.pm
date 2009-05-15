@@ -65,6 +65,7 @@ use Net::Domain qw(hostname hostfqdn hostdomain);
 # Define paths for convenience. 
 my $base = "/software/components/dpmlfc";
 my $dm_install_dir_default = "/opt/lcg";
+my $xroot_options_base = $base."/options/DPM/xroot";
 
 my $dpm_def_host;
 
@@ -232,8 +233,8 @@ my %xroot_config_rules = (
         "DPM_HOST" => "host:dpm;$line_format_envvar",
         "DPNS_HOST" => "host:dpns;$line_format_envvar",
         "MANAGERHOST", => "host:dpm;$line_format_envvar",
-        "XRDCONFIG", => "config:xroot;$line_format_envvar",
-        "XRDOFS" => "ofsPlugin:xroot;$line_format_param",
+        "XRDCONFIG", => "xrootConfig:GLOBAL;$line_format_envvar",
+        "XRDOFS" => "xrootOfsPlugin:GLOBAL;$line_format_param",
         "XRDLOCATION" => "installDir:GLOBAL;$line_format_param",
         "XRDLOGDIR" => "logfile:xroot;$line_format_param",
         "XRDPORT" => "port:xroot;$line_format_envvar",
@@ -446,13 +447,24 @@ sub Configure($$@) {
     unless ( defined($dm_install_dir) ) {
       $dm_install_dir = $dm_install_dir_default;
     }
+    $self->setGlobalOption("installDir",$dm_install_dir);
     $dm_bin_dir = $dm_install_dir . "/bin";
-    # Useless but harmless for LFC...
-    $xrootd_config_dir = $dm_install_dir . "/etc/xrootd";
-
+    
     if ( $product eq "DPM" ) {
       $hosts_roles = \@dpm_roles;
       $comp_max_servers = \%dpm_comp_max_servers;
+
+      # Some xroot-specific initializations. Useless in LFC context...
+      $xrootd_config_dir = $dm_install_dir . "/etc/xrootd";
+      if ( $config->elementExists($xroot_options_base."/ofsPlugin") ) {
+        $self->setGlobalOption("xrootOfsPlugin",$config->getElement($xroot_options_base."/ofsPlugin")->getValue());
+        $self->debug(1,"Global option 'xrootOfsPlugin' defined to ".$self->getGlobalOption("xrootOfsPlugin"));
+      }
+      if ( $config->elementExists($xroot_options_base."config") ) {
+        $self->setGlobalOption("xrootConfig",$config->getElement($xroot_options_base."config")->getValue());
+        $self->debug(1,"Global option 'xrootConfig' defined to ".$self->getGlobalOption("xrootConfig"));
+      }
+      
     } else {
       $hosts_roles = \@lfc_roles;
       $comp_max_servers = \%lfc_comp_max_servers;
@@ -475,14 +487,14 @@ sub Configure($$@) {
     my $db_options_base = $base."/options/".lc($product)."/db/";
     if ( $config->elementExists($db_options_base."configfile") ) {
       $self->setGlobalOption("dbconfigfile",$config->getElement($db_options_base."configfile")->getValue());
-      $self->debug(1,"Global option 'dbconfigfile' found : ".$self->getGlobalOption("dbconfigfile"));
+      $self->debug(1,"Global option 'dbconfigfile' defined to ".$self->getGlobalOption("dbconfigfile"));
     } else {
       $self->setGlobalOption("dbconfigfile",$db_conn_config{$product});
       $self->debug(1,"Global option 'dbconfigfile' set to default : ".$self->getGlobalOption("dbconfigfile"));
     }
     if ( $config->elementExists($db_options_base."configmode") ) {
       $self->setGlobalOption("dbconfigmode",$config->getElement($db_options_base."configmode")->getValue());
-      $self->debug(1,"Global option 'dbconfigmode' found : ".$self->getGlobalOption("dbconfigmode"));
+      $self->debug(1,"Global option 'dbconfigmode' defined to ".$self->getGlobalOption("dbconfigmode"));
     } else {
       $self->setGlobalOption("dbconfigmode",$db_conn_config_mode{$product});
       $self->debug(1,"Global option 'dbconfigmode' set to default : ".$self->getGlobalOption("dbconfigmode"));
@@ -2559,7 +2571,12 @@ sub xrootdSpecificConfig () {
   $self->info('Checking xroot configuration...');
   
   # Retrieve xrootd configuration
-  my $xroot_config = $self->getHostConfig('xroot',$this_host_full);
+  my xroot_config;
+  if ( $config->elementExists($xroot_options_base) ) {
+    $xroot_config = $self->getElement($xroot_options_base)->getTree();
+  }else {
+    $self->info('xroot options not defined. Using defaults.')
+  }
   my $xroot_headnode = $self->hostHasRoles('dpns');
 
   # Build authz.cf

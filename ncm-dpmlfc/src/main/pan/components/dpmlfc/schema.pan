@@ -73,11 +73,7 @@ type ${project.artifactId}_component_node_config = {
 };
 
 # xrood plugin daemons have several specific options
-type ${project.artifactId}_component_xroot_config = {
-        "host"      ? string
-        "logfile"   ? string
-        "port"      ? type_port
-        "assumekernel" ? string
+type ${project.artifactId}_component_xroot_options = {
         "ofsPlugin" ? string
         "config"    ? string
         "exportedVOs" ? string[]
@@ -105,6 +101,7 @@ type ${project.artifactId}_component_global_options = {
         "user"        ? string
         "group"       ? string
         "db"          ? ${project.artifactId}_component_db_conn_options
+        "xroot"       ? ${project.artifactId}_component_xroot_options
         "installDir"  ? string = '/opt/lcg'
         "gridmapfile" ? string
         "gridmapdir"  ? string
@@ -127,7 +124,7 @@ type ${project.artifactId}_component = {
         "srmv1"    ? ${project.artifactId}_component_node_config[]
         "srmv2"    ? ${project.artifactId}_component_node_config[]
         "srmv22"   ? ${project.artifactId}_component_node_config[]
-        "xroot"   ? ${project.artifactId}_component_xroot_config[]
+        "xroot"   ? ${project.artifactId}_component_node_config[]
 
         "pools"    ? ${project.artifactId}_component_pool_entry{}
         "vos"      ? ${project.artifactId}_component_vo_entry{}
