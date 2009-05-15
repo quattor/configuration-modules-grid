@@ -65,7 +65,7 @@ use Net::Domain qw(hostname hostfqdn hostdomain);
 # Define paths for convenience. 
 my $base = "/software/components/dpmlfc";
 my $dm_install_dir_default = "/opt/lcg";
-my $xroot_options_base = $base."/options/DPM/xroot";
+my $xroot_options_base = $base."/options/dpm/xroot";
 
 my $dpm_def_host;
 
@@ -2562,7 +2562,9 @@ sub generatePassword {
 }
 
 
-# Function to configure xrootd specific configuration files
+# Function to configure xrootd specific configuration files.
+# Based on YAIM.
+
 sub xrootdSpecificConfig () {
   my ($self) = @_;
   my $function_name = "xrootdSpecificConfig";
@@ -2572,7 +2574,7 @@ sub xrootdSpecificConfig () {
   # Retrieve xrootd configuration
   my $xroot_config;
   if ( $config->elementExists($xroot_options_base) ) {
-    $xroot_config = $self->getElement($xroot_options_base)->getTree();
+    $xroot_config = $config->getElement($xroot_options_base)->getTree();
   }else {
     $self->info('xroot options not defined. Using defaults.')
   }
@@ -2598,16 +2600,17 @@ sub xrootdSpecificConfig () {
                                   "# Keys reside in ".$xrootd_config_dir."\n" .
                                   "KEY VO:*       PRIVKEY:".$xroot_token_priv_key." PUBKEY:".$xroot_token_pub_key."\n\n" .
                                   "# Restrict the name space for export\n";
-  if ( $xroot_config{exportedVOs} ) {
-    for my $vo (@{$xroot_config{exportedVOs}} ) {
-      my $exported_vo_path = $exported_vo_path_root.'/'.$xrootd_exported_vo;      
+  if ( $xroot_config->{exportedVOs} ) {
+    for my $vo (@{$xroot_config->{exportedVOs}} ) {
+      my $exported_vo_path = $exported_vo_path_root.'/'.$vo;      
       $xroot_authz_conf_contents .= "EXPORT PATH:".$exported_vo_path." VO:*     ACCESS:ALLOW CERT:*\n";
     }
   } else {
     $self->warn("dpm-xroot: export enabled for all VOs. You should consider restrict to one VO only.");
     $xroot_authz_conf_contents .= "EXPORT PATH:".$exported_vo_path_root." VO:*     ACCESS:ALLOW CERT:*\n";
-  }  
-                                  
+  } 
+
+  $xroot_authz_conf_contents .= "\n# Define authorized and forbidden operations\n";
   if ( $xroot_headnode ) {
     $xroot_authz_conf_contents .= "RULE PATH:/ AUTHZ:delete|read|write|write-once| NOAUTHZ:| VO:*| CERT:*\n";
   } else {
