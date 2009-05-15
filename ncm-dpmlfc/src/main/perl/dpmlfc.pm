@@ -2614,7 +2614,7 @@ sub xrootdSpecificConfig () {
                                    mode => 0400
                                   );
       unless (defined($changes)) {
-        $self->error("error setting permissions on xrootd token key $key");
+        $self->error("Error setting permissions on xrootd token key $key");
       }
     } else {
         $self->warn("xrootd token key $key not found.");
@@ -2636,18 +2636,21 @@ sub xrootdSpecificConfig () {
     if ( !-x $link_target ) {
       $self->warn("$link_target missing or not executable. Check your DPM installation.");
     }
-    if ( -e $link_name ) {
-      if ( ! -l $link_name ) {
-        $self->error('$link_name already exists but is not a symlink.');
-        next;
-      }
+    if ( -l $link_name ) {
+      $self->debug(1,"$link_name already exists. Nothing done.");
     } else {
-      my $status = symlink $link_target, $link_name;
-      if ( $status == 1 ) {
-        $self->debug(1,"symlink $link_name defined as $link_target");
+      if ( -e $link_name ) {
+        $self->error("$link_name already exists but is not a symlink.");
+        next;
       } else {
-        $self->error("error defining symlink $link_name as $link_target");
+        my $status = symlink $link_target, $link_name;
+        if ( $status == 1 ) {
+          $self->info("Symlink $link_name defined as $link_target");
+        } else {
+          $self->error("Error defining symlink $link_name as $link_target");
+        }
       }
+    }
   }
   
   # Enable services according to node type and update the list
