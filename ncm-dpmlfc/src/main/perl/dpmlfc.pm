@@ -2569,6 +2569,7 @@ sub xrootdSpecificConfig () {
   my ($self) = @_;
   my $function_name = "xrootdSpecificConfig";
   my $xroot_role = 'xroot';
+  my $restart_services = 0;
   
   $self->info('Checking xroot configuration...');
   
@@ -2624,7 +2625,9 @@ sub xrootdSpecificConfig () {
                                 group => $self->getDaemonGroup(),
                                 mode => 0400,
                                );
-  unless ( $changes >= 0 ) {
+  if ( $changes > 0 ) {
+    $restart_services = 1;
+  } elsif ( $changes <> 0 ) {
     $self->error("Error updating xrootd authorization configuration ($xroot_authz_conf_file)");
   }
 
@@ -2670,6 +2673,7 @@ sub xrootdSpecificConfig () {
         my $status = symlink $link_target, $link_name;
         if ( $status == 1 ) {
           $self->info("Symlink $link_name defined as $link_target");
+          $restart_services = 1;
         } else {
           $self->error("Error defining symlink $link_name as $link_target");
         }
@@ -2688,7 +2692,7 @@ sub xrootdSpecificConfig () {
     push @xroot_service_list, $service_name;
   }
   $services{$xroot_role} = join (",", @xroot_service_list);
-  if ( $changes > 0 ) {
+  if ( $restart_services ) {
     $self->serviceRestartNeeded($xroot_role);
   }
 }
