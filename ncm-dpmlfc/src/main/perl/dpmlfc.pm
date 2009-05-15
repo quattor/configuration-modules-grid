@@ -2568,6 +2568,7 @@ sub generatePassword {
 sub xrootdSpecificConfig () {
   my ($self) = @_;
   my $function_name = "xrootdSpecificConfig";
+  my $xroot_role = 'xroot';
   
   $self->info('Checking xroot configuration...');
   
@@ -2686,7 +2687,10 @@ sub xrootdSpecificConfig () {
     $self->enableService($service_name);
     push @xroot_service_list, $service_name;
   }
-  $services{'xroot'} = join (",", @xroot_service_list);
+  $services{$xroot_role} = join (",", @xroot_service_list);
+  if ( $changes > 0 ) {
+    $self->serviceRestartNeeded($xroot_role);
+  }
 }
 
 1;      # Required for PERL modules

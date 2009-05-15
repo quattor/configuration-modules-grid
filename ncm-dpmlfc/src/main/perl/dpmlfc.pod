@@ -135,6 +135,42 @@ This option defines the userid used to connect to the database.
 Default : userid used to run daemons
 
 
+=head1 XROOT OPTIONS (DPM)
+
+If xroot protocol is enabled in DPM, this is possible to define some xroot parameters common to all nodes.
+
+=head2 /software/components/dpmlfc/options/dpm/xroot/config
+
+This option defines the name of the xroot daemon configuration file.
+
+Default : default value of XRDCONFIG variable in /etc/sysconfig/dpm-xrd.example
+
+
+=head2 /software/components/dpmlfc/options/dpm/xroot/exportedVOs (list of string)
+
+List of VOs exported through xrootd. Note that the list is currently restricted to one element.
+
+Default: All VOs (not recommended)
+
+=head2 /software/components/dpmlfc/options/dpm/xroot/ofsPlugin
+
+This option specified the Ofs plugin to use. Ofs plugin defines the type of authentication to use.
+
+Default: default value of XRDOFS variable in /etc/sysconfig/dpm-xrd.example
+
+=head2 /software/components/dpmlfc/options/dpm/xroot/tokenPrivateKey
+
+This option specifies the name of the file containing the private key to use with token-based authentication (Ofs plugin = TokenAuthzOfs).
+
+Default: pvkey.pem
+
+=head2 /software/components/dpmlfc/options/dpm/xroot/tokenPublicKey
+
+This option specifies the name of the file containing the public key to use with token-based authentication (Ofs plugin = TokenAuthzOfs).
+
+Default: pkey.pem
+
+
 =head1 DAEMON INSTANCE OPTIONS (DPM and LFC)
 
 Every daemon instance description accepts a subset of the following options (see the actual subset accepted by every daemon under RESSOURCES below).
@@ -198,6 +234,11 @@ This option is a list of 'srmv2' daemon instances. If 'host' is undefined in one
 =head2 /software/components/dpmlfc/srmv22
 
 This option is a list of 'srmv2.2' daemon instances. If 'host' is
+undefined in one instance, it defaults to 'dpm' daemon host.
+
+=head2 /software/components/dpmlfc/xroot
+
+This option is a list of 'xroot' daemon instances. If 'host' is
 undefined in one instance, it defaults to 'dpm' daemon host.
 
 
