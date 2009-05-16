@@ -77,6 +77,7 @@ type ${project.artifactId}_component_xroot_options = {
         "ofsPlugin" ? string
         "config"    ? string
         "exportedVOs" ? string[]
+        "MonALISAHost" ? string
         "tokenPrivateKey" ? string
         "tokenPublicKey" ? string
 };

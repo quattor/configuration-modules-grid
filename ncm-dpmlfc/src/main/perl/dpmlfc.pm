@@ -233,6 +233,7 @@ my %xroot_config_rules = (
         "DPM_HOST" => "host:dpm;$line_format_envvar",
         "DPNS_HOST" => "host:dpns;$line_format_envvar",
         "MANAGERHOST", => "host:dpm;$line_format_envvar",
+        "MONALISAHOST", => "xrootMonALISAHost:GLOBAL;$line_format_envvar",
         "XRDCONFIG", => "xrootConfig:GLOBAL;$line_format_envvar",
         "XRDOFS" => "xrootOfsPlugin:GLOBAL;$line_format_param",
         "XRDLOCATION" => "installDir:GLOBAL;$line_format_param",
@@ -320,7 +321,7 @@ my %services = (
     "srmv1" => "srmv1",
     "srmv2" => "srmv2",
     "srmv22" => "srmv2.2",
-    "xroot" => "dpm-xrd",
+    "xroot" => "",    # will be defined by xrootSpecificActions() according to node type
     "lfc" => "lfcdaemon",
     "lfc-dli" => "lfc-dli",
     "trusts" => "role:dpm,dpns,gsiftp,rfio,xroot",
@@ -459,9 +460,13 @@ sub Configure($$@) {
         $self->setGlobalOption("xrootOfsPlugin",$config->getElement($xroot_options_base."/ofsPlugin")->getValue());
         $self->debug(1,"Global option 'xrootOfsPlugin' defined to ".$self->getGlobalOption("xrootOfsPlugin"));
       }
-      if ( $config->elementExists($xroot_options_base."config") ) {
-        $self->setGlobalOption("xrootConfig",$config->getElement($xroot_options_base."config")->getValue());
+      if ( $config->elementExists($xroot_options_base."/config") ) {
+        $self->setGlobalOption("xrootConfig",$config->getElement($xroot_options_base."/config")->getValue());
         $self->debug(1,"Global option 'xrootConfig' defined to ".$self->getGlobalOption("xrootConfig"));
+      }
+      if ( $config->elementExists($xroot_options_base."/MonALISAHost") ) {
+        $self->setGlobalOption("xrootMonALISAHost",$config->getElement($xroot_options_base."/MonALISAHost")->getValue());
+        $self->debug(1,"Global option 'xrootMonALISAHost' defined to ".$self->getGlobalOption("xrootMonALISAHost"));
       }
       
     } else {
@@ -543,10 +548,12 @@ sub Configure($$@) {
     # Update configuration files for every configured role
     for my $role (@{$hosts_roles}) {
       if ( $self->hostHasRoles($role) ) {
-        $self->updateConfigFile($role);
+        # Do it before standard config as it defines some xroot parameters
+        # according to xroot node type.
         if ( $role eq 'xroot' ) {
-          $self->xrootdSpecificConfig();
+          $self->xrootSpecificConfig();
         }
+        $self->updateConfigFile($role);
         for my $service ($self->getRoleServices($role)) {
           $self->enableService($service);
         }
@@ -2565,9 +2572,9 @@ sub generatePassword {
 # Function to configure xrootd specific configuration files.
 # Based on YAIM.
 
-sub xrootdSpecificConfig () {
+sub xrootSpecificConfig () {
   my ($self) = @_;
-  my $function_name = "xrootdSpecificConfig";
+  my $function_name = "xrootSpecificConfig";
   my $xroot_role = 'xroot';
   my $restart_services = 0;
   
@@ -2681,14 +2688,13 @@ sub xrootdSpecificConfig () {
     }
   }
   
-  # Enable services according to node type and update the list
-  # of services associated with 'xroot' role accordingly.
+  # Define services associated with 'xroot' role according to xroot node type
+  # and check if a configuration change involves restarting the services.
   
   my @xroot_service_list;
   for my $service ('olb','xrd') {
     my $service_name = $prefix . $service;
-    $self->debug(1,"$function_name : enable service $service_name");
-    $self->enableService($service_name);
+    $self->debug(1,"$function_name : adding service $service_name to role '$xroot_role'");
     push @xroot_service_list, $service_name;
   }
   $services{$xroot_role} = join (",", @xroot_service_list);
