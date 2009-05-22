@@ -553,6 +553,7 @@ sub Configure($$@) {
     # Update configuration files for every configured role
     for my $role (@{$hosts_roles}) {
       if ( $self->hostHasRoles($role) ) {
+        $self->info("Checking configuration for ".$role);
         # Do it before standard config as it defines some xroot parameters
         # according to xroot node type.
         if ( $role eq 'xroot' ) {
@@ -2523,7 +2524,7 @@ sub updateConfigFile () {
     return 1;
   }
 
-  $self->info("Checking configuration for ".$role);
+  $self->debug(1,"$function_name: building configuration file for role ".uc($role));
 
   my $template_contents;
   my $template_ext = $config_template_ext{'DEFAULT'};
