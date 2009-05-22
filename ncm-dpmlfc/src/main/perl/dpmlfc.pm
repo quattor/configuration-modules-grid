@@ -426,7 +426,7 @@ my %xrootd_daemon_prefix = ('head' => 'dpm-manager-',
 # xrootd_services is used to track association between a daemon name
 # (the key) and its associatated service name
 my %xrootd_services = ('olbd' => 'olb',
-                       'xrootd => 'xrd','
+                       'xrootd' => 'xrd',
                       );
 
 ##########################################################################
@@ -2523,7 +2523,7 @@ sub updateConfigFile () {
     return 1;
   }
 
-  $self->info("Checking configuration for ".uc($role));
+  $self->info("Checking configuration for ".$role);
 
   my $template_contents;
   my $template_ext = $config_template_ext{'DEFAULT'};
