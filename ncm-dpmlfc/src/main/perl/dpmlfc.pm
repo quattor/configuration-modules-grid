@@ -423,6 +423,11 @@ my $xrootd_config_dir;
 my %xrootd_daemon_prefix = ('head' => 'dpm-manager-',
                             'disk' => 'dpm-',
                            );
+# xrootd_services is used to track association between a daemon name
+# (the key) and its associatated service name
+my %xrootd_services = ('olbd' => 'olb',
+                       'xrootd => 'xrd','
+                      );
 
 ##########################################################################
 sub Configure($$@) {
@@ -567,6 +572,7 @@ sub Configure($$@) {
     # Do necessary DB initializations (only if current host has one role needing
     # DB access
     if ( $self->hostHasRoles($db_roles{$product}) ) {
+      $self->info("Checking database configuration...");
       my $status = $self->initDb();
       # Negative status means success with changes requiring services restart
       if ( $status < 0 ) {
@@ -606,6 +612,7 @@ sub Configure($$@) {
   for my $product (@products) {
     $self->defineCurrentProduct($product);
     if ( $self->hostHasRoles($nameserver_role{$product}) ) {
+      $self->info("Checking namespace configuration for supported VOs...");
       $self->NSRootConfig();
       if (  $config->elementExists($vos_base) ) {
         my $vos_config = $config->getElement($vos_base);
@@ -2516,7 +2523,7 @@ sub updateConfigFile () {
     return 1;
   }
 
-  $self->debug(1,"$function_name : Building configuration file for role ".uc($role));
+  $self->info("Checking configuration for ".uc($role));
 
   my $template_contents;
   my $template_ext = $config_template_ext{'DEFAULT'};
@@ -2578,7 +2585,7 @@ sub xrootSpecificConfig () {
   my $xroot_role = 'xroot';
   my $restart_services = 0;
   
-  $self->info('Checking xroot configuration...');
+  $self->info('Checking xroot specific configuration...');
   
   # Retrieve xrootd configuration
   my $xroot_config;
@@ -2588,6 +2595,7 @@ sub xrootSpecificConfig () {
     $self->info('xroot options not defined. Using defaults.')
   }
   my $xroot_headnode = $self->hostHasRoles('dpns');
+  my $xroot_diskserver = $self->hostHasRoles('gsiftp');
 
   # Build authz.cf
   $self->debug(1,"$function_name : Checking authz.cf");
@@ -2655,34 +2663,42 @@ sub xrootSpecificConfig () {
     }  
   }
 
-  # Create symlinks to service daemons according to node type
-  
-  my $prefix;
+  # Build the list of daemons to run on the current node according to node type
+  #   - Disk server must run olbd (service olb) and xrootd (service xrd)
+  #   - DPM head node must run manager-olbd (service manager-olb) and manager-xrootd (service manager-xrd)
+  #   - A head node acting also as a disk server must run both
+  # This is managed by buildind a list of prefix to add before the daemon/service name.
+  my @xroot_daemon_prefixes;
   if ( $xroot_headnode ) {
-    $prefix = $xrootd_daemon_prefix{head};
-  } else {
-    $prefix = $xrootd_daemon_prefix{disk};      
+    push @xroot_daemon_prefixes,$xrootd_daemon_prefix{head};
+  }
+  if ( $xroot_diskserver ) {
+    push @xroot_daemon_prefixes,$xrootd_daemon_prefix{disk};      
   }
 
-  for my $daemon ('olbd','xrootd') {
-    my $link_name = $dm_bin_dir . '/' . $prefix . $daemon;
-    my $link_target = $dm_bin_dir . '/' . $daemon;
-    if ( !-x $link_target ) {
-      $self->warn("$link_target missing or not executable. Check your DPM installation.");
-    }
-    if ( -l $link_name ) {
-      $self->debug(1,"$link_name already exists. Nothing done.");
-    } else {
-      if ( -e $link_name ) {
-        $self->error("$link_name already exists but is not a symlink.");
-        next;
+  # Create symlinks to service daemons according to node type
+  
+  for my $prefix (@xroot_daemon_prefixes) {
+    for my $daemon (keys(%xrootd_services)) {
+      my $link_name = $dm_bin_dir . '/' . $prefix . $daemon;
+      my $link_target = $dm_bin_dir . '/' . $daemon;
+      if ( !-x $link_target ) {
+        $self->warn("$link_target missing or not executable. Check your DPM installation.");
+      }
+      if ( -l $link_name ) {
+        $self->debug(1,"$link_name already exists. Nothing done.");
       } else {
-        my $status = symlink $link_target, $link_name;
-        if ( $status == 1 ) {
-          $self->info("Symlink $link_name defined as $link_target");
-          $restart_services = 1;
+        if ( -e $link_name ) {
+          $self->error("$link_name already exists but is not a symlink.");
+          next;
         } else {
-          $self->error("Error defining symlink $link_name as $link_target");
+          my $status = symlink $link_target, $link_name;
+          if ( $status == 1 ) {
+            $self->info("Symlink $link_name defined as $link_target");
+            $restart_services = 1;
+          } else {
+            $self->error("Error defining symlink $link_name as $link_target");
+          }
         }
       }
     }
@@ -2692,14 +2708,17 @@ sub xrootSpecificConfig () {
   # and check if a configuration change involves restarting the services.
   
   my @xroot_service_list;
-  for my $service ('olb','xrd') {
-    my $service_name = $prefix . $service;
-    $self->debug(1,"$function_name : adding service $service_name to role '$xroot_role'");
-    push @xroot_service_list, $service_name;
-  }
-  $services{$xroot_role} = join (",", @xroot_service_list);
-  if ( $restart_services ) {
-    $self->serviceRestartNeeded($xroot_role);
+  for my $prefix (@xroot_daemon_prefixes) {
+    for my $daemon (keys(%xrootd_services)) {
+      my $service = $xrootd_services{$daemon};
+      my $service_name = $prefix . $service;
+      $self->debug(1,"$function_name : adding service $service_name to role '$xroot_role'");
+      push @xroot_service_list, $service_name;
+    }
+    $services{$xroot_role} = join (",", @xroot_service_list);
+    if ( $restart_services ) {
+      $self->serviceRestartNeeded($xroot_role);
+    }
   }
 }
 
