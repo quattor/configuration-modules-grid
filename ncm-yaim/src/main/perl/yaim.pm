@@ -319,7 +319,7 @@ sub getQueueConfig {
 
                 my @vals = split('\s',$list);
                 foreach my $val (@vals){
-                    $queues{$val} .= "$vo";        # add VO name to the queue
+                    $queues{$val} .= "$vo ";       # add VO name to the queue
                   
                     # If defined, the specific VOMS groups and roles
                     if ( $votree->{$key}->{'services'}->{'groupsroles'} ) {
