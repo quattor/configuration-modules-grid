@@ -2597,7 +2597,7 @@ sub xrootSpecificConfig () {
   }
   my $xroot_headnode = $self->hostHasRoles('dpns');
   my $xroot_diskserver = $self->hostHasRoles('gsiftp');
-  my $xroot_token_auth = defined($xroot_config{osfPlugin}) && $xroot_config{osfPlugin} eq 'TokenAuthzOfs';
+  my $xroot_token_auth = defined($xroot_config->{ofsPlugin}) && $xroot_config->{ofsPlugin} eq 'TokenAuthzOfs';
 
   if ( $xroot_token_auth ) {
     # Build authz.cf
