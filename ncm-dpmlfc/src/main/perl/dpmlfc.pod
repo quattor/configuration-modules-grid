@@ -170,6 +170,27 @@ This option specifies the name of the file containing the public key to use with
 
 Default: pkey.pem
 
+=head2 /software/components/dpmlfc/options/dpm/xroot/accessRules : list of nlist (optional)
+
+This option specifies the rules defining the operations requiring authentication and those permitted without 
+authentication (authentication will be used if present). This is a list where each element is a nlist with the
+following attributes:
+
+== over
+
+==item path Nampespace path the rule applies to. Mandatory, no default.
+
+==item authenticated list of operations requiring authentication. Possible values are: read, write, write-once, delete.
+Mandatory, no default.
+
+==item unauthenticated list of operations allowed without authentication. Possible values are: same as authenticated.
+Mandatory, no default.
+
+==item vo VO the rule applies to. Default: * (all VOs).
+
+==item cert DN the rule applies to. Default: * (all DNs)
+
+==back
 
 =head1 DAEMON INSTANCE OPTIONS (DPM and LFC)
 

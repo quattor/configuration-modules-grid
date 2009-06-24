@@ -2630,8 +2630,18 @@ sub xrootSpecificConfig () {
       $xroot_authz_conf_contents .= "EXPORT PATH:".$exported_vo_path_root." VO:*     ACCESS:ALLOW CERT:*\n";
     } 
   
-    $xroot_authz_conf_contents .= "\n# Define authorized and forbidden operations\n";
-    $xroot_authz_conf_contents .= "RULE PATH:/ AUTHZ:delete| NOAUTHZ:read|write|write-once| VO:* CERT:*\n";
+    $xroot_authz_conf_contents .= "\n# Define operations requiring authorization.\n";
+    $xroot_authz_conf_contents .= "# NOAUTHZ operations honour authentication if present but don't require it.\n";
+    if ( $xroot_config->{accessRules} ) {
+      for my $rule (@{$xroot_config->{accessRules}}) {
+        my $auth_ops = join '|', $rule->{authenticated}        
+        my $noauth_ops = join '|', $rule->{unauthenticated}        
+        $xroot_authz_conf_contents .= "RULE PATH:"+$rule->{path}+
+                                      " AUTHZ:$auth_ops| NOAUTHZ:$noauth_ops| VO:"+$rule->{vo}+" CERT:"+$rule->{cert}+"\n";
+      }
+    } else {
+      $xroot_authz_conf_contents .= "\n# WARNING: no access rules defined in quattor configuration.\n";
+    }
     my $changes = LC::Check::file($xroot_authz_conf_file,
                                   backup => $config_bck_ext,
                                   contents => encode_utf8($xroot_authz_conf_contents),

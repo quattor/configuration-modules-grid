@@ -72,7 +72,18 @@ type ${project.artifactId}_component_node_config = {
         "assumekernel" ? string
 };
 
-# xrood plugin daemons have several specific options
+# xrootd authentication plug-in allow to specify operations requiring
+# authentication and those allowed without authentication (authentication will be
+# used if present).
+type ${project.artifactId}_component_xroot_options = {
+  'path' : string
+  'authenticated' : string[]
+  'unauthenticated' : string[]
+  'vo' : string = '*'
+  'cert' : string = '*'
+}
+
+# xrootd has several specific options
 type ${project.artifactId}_component_xroot_options = {
         "ofsPlugin" ? string
         "config"    ? string
@@ -80,6 +91,7 @@ type ${project.artifactId}_component_xroot_options = {
         "MonALISAHost" ? string
         "tokenPrivateKey" ? string
         "tokenPublicKey" ? string
+        "accessRules" ? ${project.artifactId}_component_xroot_access_rules[]
 };
 
 type ${project.artifactId}_component_db_conn_options = {
