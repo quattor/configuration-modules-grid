@@ -75,13 +75,13 @@ type ${project.artifactId}_component_node_config = {
 # xrootd authentication plug-in allow to specify operations requiring
 # authentication and those allowed without authentication (authentication will be
 # used if present).
-type ${project.artifactId}_component_xroot_options = {
+type ${project.artifactId}_component_xroot_access_rules = {
   'path' : string
   'authenticated' : string[]
   'unauthenticated' : string[]
   'vo' : string = '*'
   'cert' : string = '*'
-}
+};
 
 # xrootd has several specific options
 type ${project.artifactId}_component_xroot_options = {

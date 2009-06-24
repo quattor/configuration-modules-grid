@@ -2634,8 +2634,8 @@ sub xrootSpecificConfig () {
     $xroot_authz_conf_contents .= "# NOAUTHZ operations honour authentication if present but don't require it.\n";
     if ( $xroot_config->{accessRules} ) {
       for my $rule (@{$xroot_config->{accessRules}}) {
-        my $auth_ops = join '|', $rule->{authenticated}        
-        my $noauth_ops = join '|', $rule->{unauthenticated}        
+        my $auth_ops = join '|', $rule->{authenticated};
+        my $noauth_ops = join '|', $rule->{unauthenticated};
         $xroot_authz_conf_contents .= "RULE PATH:"+$rule->{path}+
                                       " AUTHZ:$auth_ops| NOAUTHZ:$noauth_ops| VO:"+$rule->{vo}+" CERT:"+$rule->{cert}+"\n";
       }
