@@ -8,9 +8,9 @@ declaration template components/dpmlfc/schema;
 
 include { 'quattor/schema' };
 
-function component_dpmlfc_global_options_validation = {
+function component_dpmlfc_global_options_valid = {
   if ( !is_defined(SELF) ) {
-    error('Internal error: DPM/LFC global options undefied in validation function');
+    error('Internal error: DPM/LFC global options undefined in validation function');
     return(false);
   };
   
@@ -41,6 +41,26 @@ function component_dpmlfc_global_options_validation = {
   };
   
   true;  
+};
+
+# Validation of xroot access rules
+function component_dpmlfc_xroot_access_rules_valid = {
+  if ( !is_defined(SELF) ) {
+    error('Internal error: DPM xroot access rules undefined in validation function');
+    return(false);
+  };
+  
+  foreach (i;operation_type;list('authenticated','unauthenticated')) {
+    if ( is_defined(SELF[operation_type]) ) {
+      foreach (j;operation;SELF[operation_type]) {
+        if ( !match(operation,'delete|read|write|write_once') ) {
+          error('Invalid operation ('+operation+') specified in xroot access rules for '+operation_type+'operations');
+          return(false);
+        }; 
+      };
+    };
+  };
+  true;
 };
 
 type ${project.artifactId}_component_fs_entry = {
@@ -81,11 +101,11 @@ type ${project.artifactId}_component_xroot_access_rules = {
   'unauthenticated' : string[]
   'vo' : string = '*'
   'cert' : string = '*'
-};
+} with component_dpmlfc_xroot_access_rules_valid(SELF);
 
 # xrootd has several specific options
 type ${project.artifactId}_component_xroot_options = {
-        "ofsPlugin" ? string
+        "ofsPlugin" : string = 'Ofs'
         "config"    ? string
         "exportedVOs" ? string[]
         "MonALISAHost" ? string
@@ -120,7 +140,7 @@ type ${project.artifactId}_component_global_options = {
         "gridmapdir"  ? string
         "accessProtocols"   ? string[]
         "controlProtocols"   ? string[]
-} with component_dpmlfc_global_options_validation(SELF);
+} with component_dpmlfc_global_options_valid(SELF);
 
 type ${project.artifactId}_component_global_options_tree = {
         "dpm"     ? ${project.artifactId}_component_global_options
