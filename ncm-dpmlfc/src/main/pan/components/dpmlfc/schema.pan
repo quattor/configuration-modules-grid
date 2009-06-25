@@ -53,8 +53,8 @@ function component_dpmlfc_xroot_access_rules_valid = {
   foreach (i;operation_type;list('authenticated','unauthenticated')) {
     if ( is_defined(SELF[operation_type]) ) {
       foreach (j;operation;SELF[operation_type]) {
-        if ( !match(operation,'delete|read|write|write_once') ) {
-          error('Invalid operation ('+operation+') specified in xroot access rules for '+operation_type+'operations');
+        if ( !match(operation,'^(delete|read|write|write_once)$') ) {
+          error('Invalid operation ('+operation+') specified in xroot access rules for '+operation_type+' operations');
           return(false);
         }; 
       };
