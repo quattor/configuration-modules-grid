@@ -19,9 +19,9 @@ type ${project.artifactId}_component = {
 	include structure_component
 	'flavor' : string = 'edg' with match(SELF,'^edg|glite$')
 	'confFile' ? string = 'opt/edg/etc/edg-myproxy.conf'
-  'trustedDNs' ? string[]
-  'authorizedDNs' ? ${project.artifactId}_component_dn_types
-  'defaultDNs' ? ${project.artifactId}_component_dn_types
+        'Auth_Retriev' ? string[]
+        'Auth_RetrievRenew' ? string[]
+        'AuthTrust_Retriev' ? string[]
 };
 
 bind '/software/components/myproxy' = ${project.artifactId}_component;
