@@ -304,7 +304,7 @@ sub Configure($$@) {
       $self->info("Updating WN list and WN attributes...");
       if ( $pbsserver_config->{node}->{nodelist} ) {
         my $nodelist = $pbsserver_config->{node}->{nodelist};
-        for my $node (keys(%{$nodelist})) {
+        for my $node (sort(keys(%{$nodelist}))) {
           $definednodes{$node} = 1;
           $self->runCommand($qmgr, "create node $node") unless (defined($existingnodes{$node}));
 
