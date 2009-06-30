@@ -40,11 +40,19 @@ A structure containing the following items, each one being a list of string:
 
 =item renewers
 
+Clients authorized to renew credentials.
+
 =item retrievers
+
+Clients authorized to retrieve credentials after providing the username/password used when the proxy was created.
 
 =item keyRetrievers
 
+Clients authorized to retrieved credentials (including the private key) after providing the username/password used when the proxy was created.
+
 =item trustedRetrievers
+
+Clients authorized to retrieve credentials without providing a username/password.
 
 =back
 =head2 defaultDNs : list of string (optional)
@@ -73,7 +81,7 @@ Michel Jouvin <jouvin@lal.in2p3.fr>
 
 =head1 SEE ALSO
 
-ncm-ncd(1)
+ncm-ncd(1), myproxy-server.config(5)
 
 
 =cut
