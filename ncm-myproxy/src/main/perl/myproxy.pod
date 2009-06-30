@@ -27,10 +27,10 @@ Configuration file for MyProxy. In edg variant, this is an intermediate configur
 
 Default: /opt/edg/etc/edg-myproxy.conf
 
-=head2 trustedDNs : list of string (optional, deprecated)
+=head2 trustedDNs : list of string (optional, DEPRECATED)
 
-A list containing the list of DNs to trust for proxy renewal.  This is
-usually the DNs of all trusted resource brokers.
+A list containing the list of DNs to trust for proxy renewal and retrieval.  This is
+usually the DNs of all trusted resource brokers. When present, authorizedDNs and and defaultDNS must be ommitted.
 
 =head2 authorizedDNs :  (optional)
 

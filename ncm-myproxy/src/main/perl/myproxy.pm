@@ -21,6 +21,18 @@ use File::Path;
 
 local(*DTA);
 
+# Match between componenent properties and MyProxy configuration keywords.
+# For each properties, there may be several options needed thus the value is a list.
+my %proxy_options = ('defaultDNs-renewers' => ('default_renewers'),
+                     'defaultDNs-retrievers' => ('default_retrievers'),
+                     'defaultDNs-keyRetrievers' => ('default_key_retrievers'),
+                     'defaultDNs-trustedRetrievers' => ('default_trusted_retrievers'),
+                     'authorizedDNs-renewers' => ('authorized_renewers'),
+                     'authorizedDNs-retrievers' => ('authorized_retrievers'),
+                     'authorizedDNs-keyRetrievers' => ('authorized_key_retrievers'),
+                     'authorizedDNs-trustedRetrievers' => ('trusted_retrievers'),
+                    );
+
 
 ##########################################################################
 sub Configure($$@) {
@@ -43,17 +55,38 @@ sub Configure($$@) {
       $myproxy_config->{flavor} = 'edg';
     }
     
-    # Loop over all of the trusted DNs.
     my $new_config;
     if ( $myproxy_config->{flavor} eq 'glite' ) {
       $new_config .= "accepted_credentials \"*\"\n";
     }
-    for my $subject (@{$myproxy_config->{trustedDNs}}) {
-      if ( $myproxy_config->{flavor} eq 'glite' ) {
-        $new_config .= "authorized_renewers \"$subject\"\n";        
-        $new_config .= "authorized_retrievers \"$subject\"\n";        
-      } else {
-        $new_config .= "$subject\n";        
+    
+    # If present, loop over all of the trustedDNs (obsolete).
+    if ( $myproxy_config->{trustedDNs} ) {
+      for my $subject (@{$myproxy_config->{trustedDNs}}) {
+        if ( $myproxy_config->{flavor} eq 'glite' ) {
+          $new_config .= "authorized_renewers \"$subject\"\n";        
+          $new_config .= "authorized_retrievers \"$subject\"\n";        
+        } else {
+          $new_config .= "$subject\n";        
+        }
+      }
+    }
+    
+    # Loop over authorized and default DNs.
+    # For each of them, there are 4 categories : renewers, retrievers, key_retrievers and trusted_retrievers.
+    # Trusted retrievers are clients allowed to retrieve credentials without any additional authentication. They
+    # have to be configured as retrievers too.
+    # Cf man man myproxy-server.config
+
+    for my $policy_group ('defaultDNs', 'authorizedDNs') {
+      if ( $myproxy_config->{$policy_group} ) {
+        for my $auth_category (keys($myproxy_config->{$policy_group})) {
+          for my $dn (@{$myproxy_config->{$policy_group}->{auth_category}}) {
+            for my $option_keyword ($myproxy_options{$policy_group.'-'.$auth_category}) {
+              $new_config .= $option_keyword . " " . $dn;
+            }
+          }
+        }
       }
     }
 

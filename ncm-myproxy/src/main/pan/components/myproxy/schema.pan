@@ -8,6 +8,19 @@ declaration template components/myproxy/schema;
 
 include { 'quattor/schema' };
 
+# Function to validate component configuration, in particular
+# ensure than obsolete trustedDNs is not specified as the same
+# time as new authorizedDNs and defaultDNs.
+
+function component_myproxy_options_valid = {
+  if ( is_defined(SELF['trustedDNs']) &&
+       (is_defined(SELF['authorizedDNs']) || is_defined(SELF['defaultDNs'])) ) {
+    error('trustedDNs is obsolete and cannot be mixed with authorizedDNs and defaultDNs');  
+  };
+  true;
+};
+
+
 type ${project.artifactId}_component_dn_types = {
   'renewers' ? string[]
   'retrievers' ? string[]
@@ -22,7 +35,7 @@ type ${project.artifactId}_component = {
   'trustedDNs' ? string[]
   'authorizedDNs' ? ${project.artifactId}_component_dn_types
   'defaultDNs' ? ${project.artifactId}_component_dn_types
-};
+} with component_myproxy_options_valid(SELF);
 
 bind '/software/components/myproxy' = ${project.artifactId}_component;
 
