@@ -48,34 +48,12 @@ sub Configure($$@) {
     if ( $myproxy_config->{flavor} eq 'glite' ) {
       $new_config .= "accepted_credentials \"*\"\n";
     }
-
-  ##DN with authorized_retrievers method allowed (usually user using portal)
-    for my $subject (@{$myproxy_config->{Auth_Retriev}}) {
+    for my $subject (@{$myproxy_config->{trustedDNs}}) {
       if ( $myproxy_config->{flavor} eq 'glite' ) {
+        $new_config .= "authorized_renewers \"$subject\"\n";        
         $new_config .= "authorized_retrievers \"$subject\"\n";        
       } else {
         $new_config .= "$subject\n";        
-      }
-    }
-
-  ##DN with authorized_retrievers AND authorized_renewers method allowed (usually WMS)
-
-    for my $subject (@{$myproxy_config->{Auth_RetrievRenew}}) {
-      if ( $myproxy_config->{flavor} eq 'glite' ) {
-        $new_config .= "authorized_retrievers \"$subject\"\n";
-        $new_config .= "authorized_renewers \"$subject\"\n";        
-      } else {
-        $new_config .= "$subject\n";
-      }
-    }
-
-  ##DN with authorized_retrievers AND trusted_retrievers method allowed (usually Nagios BOX)
-    for my $subject (@{$myproxy_config->{AuthTrust_Retriev}}) {
-      if ( $myproxy_config->{flavor} eq 'glite' ) {
-        $new_config .= "authorized_retrievers \"$subject\"\n";
-        $new_config .= "trusted_retrievers \"$subject\"\n";        
-      } else {
-        $new_config .= "$subject\n";
       }
     }
 
