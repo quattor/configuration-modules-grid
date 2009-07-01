@@ -62,7 +62,9 @@ sub Configure($$@) {
     
     # If present, loop over all of the trustedDNs (obsolete).
     if ( $myproxy_config->{trustedDNs} ) {
+      $self->debug(1,"Deprecated trustedDNs found. Adding them as authorized renewers and retrievers...");
       for my $subject (@{$myproxy_config->{trustedDNs}}) {
+        $self->debug(2,"Adding DN $subject");
         if ( $myproxy_config->{flavor} eq 'glite' ) {
           $new_config .= "authorized_renewers \"$subject\"\n";        
           $new_config .= "authorized_retrievers \"$subject\"\n";        
@@ -80,9 +82,12 @@ sub Configure($$@) {
 
     for my $policy_group ('defaultDNs', 'authorizedDNs') {
       if ( $myproxy_config->{$policy_group} ) {
-        for my $auth_category (keys(%{$myproxy_config->{$policy_group}})) {
+        $self->debug(1,"Processing policy group $policy_group...");
+        for my $policy (keys(%{$myproxy_config->{$policy_group}})) {
+          $self->debug(1,"Processing policy $policy...");
           for my $dn (@{$myproxy_config->{$policy_group}->{auth_category}}) {
-            for my $option_keyword ($myproxy_options{$policy_group.'-'.$auth_category}) {
+            $self->debug(2,"Adding DN $dn");
+            for my $option_keyword ($myproxy_options{$policy_group.'-'.$policy}) {
               $new_config .= $option_keyword . " " . $dn;
             }
           }

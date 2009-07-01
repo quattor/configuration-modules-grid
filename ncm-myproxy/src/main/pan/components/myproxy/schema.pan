@@ -21,7 +21,7 @@ function component_myproxy_options_valid = {
 };
 
 
-type ${project.artifactId}_component_dn_types = {
+type ${project.artifactId}_component_policies = {
   'renewers' ? string[]
   'retrievers' ? string[]
   'keyRetrievers' ? string[]
@@ -33,8 +33,8 @@ type ${project.artifactId}_component = {
 	'flavor' : string = 'edg' with match(SELF,'^edg|glite$')
 	'confFile' ? string = 'opt/edg/etc/edg-myproxy.conf'
   'trustedDNs' ? string[]
-  'authorizedDNs' ? ${project.artifactId}_component_dn_types
-  'defaultDNs' ? ${project.artifactId}_component_dn_types
+  'authorizedDNs' ? ${project.artifactId}_component_policies
+  'defaultDNs' ? ${project.artifactId}_component_policies
 } with component_myproxy_options_valid(SELF);
 
 bind '/software/components/myproxy' = ${project.artifactId}_component;
