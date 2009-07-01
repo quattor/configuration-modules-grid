@@ -23,14 +23,14 @@ local(*DTA);
 
 # Match between componenent properties and MyProxy configuration keywords.
 # For each properties, there may be several options needed thus the value is a list.
-my %myproxy_options = ('defaultDNs-renewers' => ('default_renewers'),
-                     'defaultDNs-retrievers' => ('default_retrievers'),
-                     'defaultDNs-keyRetrievers' => ('default_key_retrievers'),
-                     'defaultDNs-trustedRetrievers' => ('default_trusted_retrievers'),
-                     'authorizedDNs-renewers' => ('authorized_renewers'),
-                     'authorizedDNs-retrievers' => ('authorized_retrievers'),
-                     'authorizedDNs-keyRetrievers' => ('authorized_key_retrievers'),
-                     'authorizedDNs-trustedRetrievers' => ('trusted_retrievers'),
+my %myproxy_options = ('defaultDNs-renewers' => ['default_renewers'],
+                     'defaultDNs-retrievers' => ['default_retrievers'],
+                     'defaultDNs-keyRetrievers' => ['default_key_retrievers'],
+                     'defaultDNs-trustedRetrievers' => ['default_trusted_retrievers','default_retrievers'],
+                     'authorizedDNs-renewers' => ['authorized_renewers'],
+                     'authorizedDNs-retrievers' => ['authorized_retrievers'],
+                     'authorizedDNs-keyRetrievers' => ['authorized_key_retrievers'],
+                     'authorizedDNs-trustedRetrievers' => ['trusted_retrievers','authorized_retrievers'],
                     );
 
 
@@ -87,7 +87,7 @@ sub Configure($$@) {
           $self->debug(1,"Processing policy $policy...");
           for my $dn (@{$myproxy_config->{$policy_group}->{$policy}}) {
             $self->debug(2,"Adding DN $dn");
-            for my $option_keyword ($myproxy_options{$policy_group.'-'.$policy}) {
+            for my $option_keyword (@{$myproxy_options{$policy_group.'-'.$policy}}) {
               $new_config .= $option_keyword . " " . $dn . "\n";
             }
           }
