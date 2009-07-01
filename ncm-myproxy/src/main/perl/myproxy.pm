@@ -23,7 +23,7 @@ local(*DTA);
 
 # Match between componenent properties and MyProxy configuration keywords.
 # For each properties, there may be several options needed thus the value is a list.
-my %proxy_options = ('defaultDNs-renewers' => ('default_renewers'),
+my %myproxy_options = ('defaultDNs-renewers' => ('default_renewers'),
                      'defaultDNs-retrievers' => ('default_retrievers'),
                      'defaultDNs-keyRetrievers' => ('default_key_retrievers'),
                      'defaultDNs-trustedRetrievers' => ('default_trusted_retrievers'),
@@ -80,7 +80,7 @@ sub Configure($$@) {
 
     for my $policy_group ('defaultDNs', 'authorizedDNs') {
       if ( $myproxy_config->{$policy_group} ) {
-        for my $auth_category (keys($myproxy_config->{$policy_group})) {
+        for my $auth_category (keys(%{$myproxy_config->{$policy_group}})) {
           for my $dn (@{$myproxy_config->{$policy_group}->{auth_category}}) {
             for my $option_keyword ($myproxy_options{$policy_group.'-'.$auth_category}) {
               $new_config .= $option_keyword . " " . $dn;
