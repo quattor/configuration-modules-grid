@@ -85,7 +85,7 @@ sub Configure($$@) {
         $self->debug(1,"Processing policy group $policy_group...");
         for my $policy (keys(%{$myproxy_config->{$policy_group}})) {
           $self->debug(1,"Processing policy $policy...");
-          for my $dn (@{$myproxy_config->{$policy_group}->{auth_category}}) {
+          for my $dn (@{$myproxy_config->{$policy_group}->{$policy}}) {
             $self->debug(2,"Adding DN $dn");
             for my $option_keyword ($myproxy_options{$policy_group.'-'.$policy}) {
               $new_config .= $option_keyword . " " . $dn;
