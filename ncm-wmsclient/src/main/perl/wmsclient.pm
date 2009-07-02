@@ -293,11 +293,11 @@ sub Configure($$@) {
             if ( $result ) {
                 $self->log("$fname updated");
             } else {
-              $self->debug(1,"$mw_variant UI configuration for VO ($fname) $vo up-to-date");
+              $self->debug(1,"$mw_variant UI configuration for VO $vo up-to-date ($fname)");
             };          
           }
         } else {
-          $self->debug(1,"glite UI configuration for VO ($fname) skipped (wmproxy variant also present)");
+          $self->debug(1,"glite UI configuration for VO $vo skipped (wmproxy variant also present)");
         }
   
       }
