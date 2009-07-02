@@ -36,16 +36,26 @@ my %mw_config_dir_defaults = (
                               "glite" => "/opt/glite/etc",
                               "wmproxy" => "/opt/glite/etc",
                              );
-                        
+
+# Per-VO configuration file used by submission tools. Can be a list to
+# accomodate the regular changes in the tools!  
+# In particular in gLite 3.2, support for WMS 3.0 was completely removed and
+# the name used by "glite" variant was reused by WMS 3.2. In 3.1, the name
+# was different to avoid clashed (file content is not the same).                      
 my %mw_vo_config_file_defaults = (
-                              "edg" => "edg_wl_ui.conf",
-                              "glite" => "glite_wmsui.conf",
-                              "wmproxy" => "glite_wms.conf",
+                              "edg" => {"edg_wl_ui.conf"},
+                              "glite" => {"glite_wmsui.conf"},
+                              "wmproxy" => {"glite_wmsui.conf","glite_wms.conf"},
                              );
+# cmd/gui_classads variables are used to define where to put
+# the configuration for Python-based utilities. In WMS 3.0 ("glite" variant)
+# and WMS 3.1 (first version of "wmproxy" variant), the glite_wmsui_cmd_var.conf file
+# used to be part of the RPM but this is no longer the case in 3.2 so build it
+# for "wmproxy" variant. 
 my %mw_cmd_classads_defaults_file = (
                                "edg", "edg_wl_ui_cmd_var.conf",
                                "glite", undef,
-                               "wmproxy", undef,
+                               "wmproxy", "glite_wmsui_cmd_var.conf",
                               );
 my %mw_cmd_classads_defaults_template = (
                                       "edg", "cmd-classads.template",
@@ -62,6 +72,7 @@ my %mw_gui_classads_defaults_template = (
                                       "glite", "gui-classads.template",
                                       "wmproxy", undef,
                                      );
+
 my %mw_install_dir_config = (
                              "edg" => "/system/edg/config/EDG_LOCATION",
                              "glite" => "/system/edg/config/GLITE_LOCATION",
@@ -265,18 +276,21 @@ sub Configure($$@) {
           next;
         }
         
-        # Buid VO specific configuration file.
+        # Buid VO specific configuration file : there can be several files to generate to
+        # accomodate regular changes in the name used by the tools to locate the file!
         # Ensure that the necessary directory exists.
-        # Do a content comparaison with existing configuration ignoring comments
+        # Do a content comparaison with existing configuration ignoring comments.
         mkpath($mw_config{$mw_variant}->{configDir},0,0755);
-        $fname = $mw_config{$mw_variant}->{configDir} . "/" . $vo_config{$vo}->{name} . "/" .
-                                                                      $mw_vo_config_file_defaults{$mw_variant};
-        $result = $self->updateConfigFile($fname,$contents);
-        if ( $result ) {
-            $self->log("$fname updated");
-        } else {
-          $self->debug(1,"$mw_variant UI configuration for VO ($fname) $vo up-to-date");
-        };
+        for my $vo_config_file (@{$mw_vo_config_file_defaults{$mw_variant}}) {
+          $fname = $mw_config{$mw_variant}->{configDir} . "/" . $vo_config{$vo}->{name} . "/" .
+                                                                        $vo_config_file;
+          $result = $self->updateConfigFile($fname,$contents);
+          if ( $result ) {
+              $self->log("$fname updated");
+          } else {
+            $self->debug(1,"$mw_variant UI configuration for VO ($fname) $vo up-to-date");
+          };          
+        }
   
       }
     }
