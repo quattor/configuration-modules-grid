@@ -260,36 +260,42 @@ sub Configure($$@) {
           $hlr = $vo_config{$vo}->{services}->{hlr};
         }
         
-
-        # Build config file contents. Will return undefined value on an error. 
-        my $contents;
-        $contents = $self->buildVOConfig($vo_config{$vo}->{name},
-                                         $default_contents,
-                                         $myproxy,
-                                         $hlr, 
-                                         $ui_config{lbhosts},
-                                         $ui_config{nshosts},
-                                         $ui_config{wmproxies},
-                                        );
-        unless ( defined($contents) ) {
-          $self->error("Error generating $mw_variant UI configuration for VO $vo");
-          next;
-        }
+        # VO-specific configuration
+        # Hack required when both glite and wmproxy variants are enabled as
+        # they use the same file with a different content. wmproxy variant
+        # is a superset of glite variant, so produce only this one.
         
-        # Buid VO specific configuration file : there can be several files to generate to
-        # accomodate regular changes in the name used by the tools to locate the file!
-        # Ensure that the necessary directory exists.
-        # Do a content comparaison with existing configuration ignoring comments.
-        mkpath($mw_config{$mw_variant}->{configDir},0,0755);
-        for my $vo_config_file (@{$mw_vo_config_file_defaults{$mw_variant}}) {
-          $fname = $mw_config{$mw_variant}->{configDir} . "/" . $vo_config{$vo}->{name} . "/" .
-                                                                        $vo_config_file;
-          $result = $self->updateConfigFile($fname,$contents);
-          if ( $result ) {
-              $self->log("$fname updated");
-          } else {
-            $self->debug(1,"$mw_variant UI configuration for VO ($fname) $vo up-to-date");
-          };          
+        if ( ($mw_variant ne 'glite') || !$mw_config{wmproxy}->{active} ) {
+          # Build config file contents. Will return undefined value on an error. 
+          my $contents;
+          $contents = $self->buildVOConfig($vo_config{$vo}->{name},
+                                           $default_contents,
+                                           $myproxy,
+                                           $hlr, 
+                                           $ui_config{lbhosts},
+                                           $ui_config{nshosts},
+                                           $ui_config{wmproxies},
+                                          );
+          unless ( defined($contents) ) {
+            $self->error("Error generating $mw_variant UI configuration for VO $vo");
+            next;
+          }
+          
+          # Buid VO specific configuration file : there can be several files to generate to
+          # accomodate regular changes in the name used by the tools to locate the file!
+          # Ensure that the necessary directory exists.
+          # Do a content comparaison with existing configuration ignoring comments.
+          mkpath($mw_config{$mw_variant}->{configDir},0,0755);
+          for my $vo_config_file (@{$mw_vo_config_file_defaults{$mw_variant}}) {
+            $fname = $mw_config{$mw_variant}->{configDir} . "/" . $vo_config{$vo}->{name} . "/" .
+                                                                          $vo_config_file;
+            $result = $self->updateConfigFile($fname,$contents);
+            if ( $result ) {
+                $self->log("$fname updated");
+            } else {
+              $self->debug(1,"$mw_variant UI configuration for VO ($fname) $vo up-to-date");
+            };          
+          }
         }
   
       }
