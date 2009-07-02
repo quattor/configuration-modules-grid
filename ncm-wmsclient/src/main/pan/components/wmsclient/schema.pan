@@ -45,6 +45,6 @@ type ${project.artifactId}_component = {
 	'wmproxy'       ? ${project.artifactId}_component_mw_entry
 };
 
-bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
+bind '/software/components/wmsclient' = ${project.artifactId}_component;
 
 
