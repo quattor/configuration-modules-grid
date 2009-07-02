@@ -43,9 +43,9 @@ my %mw_config_dir_defaults = (
 # the name used by "glite" variant was reused by WMS 3.2. In 3.1, the name
 # was different to avoid clashed (file content is not the same).                      
 my %mw_vo_config_file_defaults = (
-                              "edg" => {"edg_wl_ui.conf"},
-                              "glite" => {"glite_wmsui.conf"},
-                              "wmproxy" => {"glite_wmsui.conf","glite_wms.conf"},
+                              "edg" => ["edg_wl_ui.conf"],
+                              "glite" => ["glite_wmsui.conf"],
+                              "wmproxy" => ["glite_wmsui.conf","glite_wms.conf"],
                              );
 # cmd/gui_classads variables are used to define where to put
 # the configuration for Python-based utilities. In WMS 3.0 ("glite" variant)
