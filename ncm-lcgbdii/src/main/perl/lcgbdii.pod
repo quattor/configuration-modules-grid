@@ -193,7 +193,7 @@ Charles Loomis <charles.loomis@cern.ch>
 
 =head1 MAINTAINER
 
-Charles Loomis <charles.loomis@cern.ch>
+Charles Loomis <charles.loomis@cern.ch>, Michel Jouvin <jouvin@lal.in2p3.fr>
 
 =head1 VERSION
 
