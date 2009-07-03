@@ -15,6 +15,7 @@ BDII_PORTS_WRITE=<%portsWrite%>
 BDII_USER=<%user%>
 BDII_BIND=<%bind%>
 BDII_PASSWD=<%passwd%>
+BDII_ARCHIVE_SIZE=<%archiveSize%>
 BDII_SEARCH_FILTER=<%searchFilter%>
 BDII_SEARCH_TIMEOUT=<%searchTimeout%>
 BDII_READ_TIMEOUT=<%readTimeout%>
