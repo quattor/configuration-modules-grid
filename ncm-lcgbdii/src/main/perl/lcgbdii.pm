@@ -35,6 +35,7 @@ sub Configure($$@) {
     # Initializations
     my $date = localtime();
     my $changes = 0;
+    my $result;
 
     # Retrieve configuration in a hash
     my $lcgbdii_config = $config->getElement($base)->getTree();
@@ -61,7 +62,7 @@ sub Configure($$@) {
     # Fill template and get results.  Template substitution is simple
     # value replacement.  If a value doesn't exist, the line is not
     # output to the file.  
-    my $contents = fill_template($config, $base, $tfile);
+    my $contents = $self->fill_template($config, $base, $tfile);
 
     # Will return undefined value on an error. 
     if (!defined($contents)) {
@@ -72,7 +73,7 @@ sub Configure($$@) {
     # Now just create the new configuration file.  Be careful to save
     # a backup of the previous file if necessary. 
     # Already exists. Make backup and create new file. 
-    my $result = LC::Check::file($lcgbdii_config->{configFile},
+    $result = LC::Check::file($lcgbdii_config->{configFile},
                                  backup => ".old",
                                  contents => $contents,
                                 );
@@ -120,7 +121,7 @@ sub Configure($$@) {
     
     # Now just create the new configuration file.  Be careful to save
     # a backup of the previous file if necessary. 
-    my $result = LC::Check::file($fname,
+    $result = LC::Check::file($fname,
                                  backup => ".old",
                                  contents => $contents,
                                 );
@@ -163,7 +164,7 @@ sub Configure($$@) {
 
     # Now just create the new configuration file.  Be careful to save
     # a backup of the previous file if necessary. 
-    my $result = LC::Check::file($lcgbdii_config->{schemaFile},
+    $result = LC::Check::file($lcgbdii_config->{schemaFile},
                                  backup => ".old",
                                  contents => $contents,
                                 );
@@ -201,7 +202,7 @@ sub Configure($$@) {
 #
 sub fill_template {
 
-    my ($config, $base, $template) = @_;
+    my ($self,$config, $base, $template) = @_;
 
     my $translation = "";
 
@@ -214,12 +215,12 @@ sub fill_template {
             s/<%!date!%>/localtime()/eg;
 
             # Need quoted result (escape embedded quotes).
-            s!<%"\s*(/[\w/]+)\s*(?:\|\s*(.+?))?\s*"%>!quote(fill($config,$1,$2,\$err))!eg;
-            s!<%"\s*([\w]+[\w/]*)(?:\|\s*(.+?))?\s*"%>!quote(fill($config,"$base/$1",$2,\$err))!eg;
+            s!<%"\s*(/[\w/]+)\s*(?:\|\s*(.+?))?\s*"%>!quote($self->fill($config,$1,$2,\$err))!eg;
+            s!<%"\s*([\w]+[\w/]*)(?:\|\s*(.+?))?\s*"%>!quote($self->fill($config,"$base/$1",$2,\$err))!eg;
 
             # Normal result OK. 
-            s!<%\s*(/[\w/]+)\s*(?:\|\s*(.+?))?%>!fill($config,$1,$2,\$err)!eg;
-            s!<%\s*([\w]+[\w/]*)\s*(?:\|\s*(.+?))?%>!fill($config,"$base/$1",$2,\$err)!eg;
+            s!<%\s*(/[\w/]+)\s*(?:\|\s*(.+?))?%>!$self->fill($config,$1,$2,\$err)!eg;
+            s!<%\s*([\w]+[\w/]*)\s*(?:\|\s*(.+?))?%>!$self->fill($config,"$base/$1",$2,\$err)!eg;
 
             # Add the output line unless an error was signaled.  An
             # error occurs when an element doesn't exist.  In this
@@ -238,12 +239,12 @@ sub fill_template {
 
 # Escape quotes in a string value.
 sub fill {
-    my ($config,$path,$default,$errorRef) = @_;
+    my ($self,$config,$path,$default,$errorRef) = @_;
 
     my $value = "";
 
     if ($config->elementExists($path)) {
-        if ( $self->isType($self->LIST) ) {
+        if ( $config->getElement($path)->isType($self->LIST) ) {
             $value = join '"', @{$config->getElement($path)->getList()};          
         } else {
             $value = $config->getValue($path);
