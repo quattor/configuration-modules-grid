@@ -30,4 +30,4 @@ SLAPD=<%slapd%>
 SLAPD_CONF=<%slapdConf%>
 BDII_SLAPD_CONF=<%slapdConf%>
 SLAPADD=<%slapadd%>
-SLAPD_DEBUG_LEVEL=<%debugLevel%>
+SLAPD_DEBUG_LEVEL=<%slapdDebugLevel%>
