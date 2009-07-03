@@ -237,7 +237,10 @@ sub fill_template {
 }
 
 
+# Return the value to use.
+# If no value is defined, use the default value if it exists or return an error.
 # Escape quotes in a string value.
+# Return list as a quoted space-separated string.
 sub fill {
     my ($self,$config,$path,$default,$errorRef) = @_;
 
@@ -245,7 +248,8 @@ sub fill {
 
     if ($config->elementExists($path)) {
         if ( $config->getElement($path)->isType($config->getElement($path)->LIST) ) {
-            $value = join '"', @{$config->getElement($path)->getList()};          
+            $value = '"' . join()' ', @{$config->getElement($path)->getList()}) . '"';
+            $self->debug(2,"path is a list. Converted to string $value");          
         } else {
             $value = $config->getValue($path);
         }

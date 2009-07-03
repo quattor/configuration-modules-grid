@@ -18,19 +18,59 @@ Check schema for the full list of resources. Due to some changes in BDII configu
 some resources marked optional in the schema for backward compatibility are in fact required to properly
 configure recent BDII versions.
 
+=head2 archiveSize : long (optional)
+
+The number of updates that the changes should be logged (BDII v5 and later).
+
+=head2 autoUpdate : string (yes or no)
+
+Whether or not to auto-update.  Valid values are "yes" and "no".
+
+Default : no
+
+=head2 autoModify : string (yes or no)
+
+Whether or not to automatically modify this file.
+
+Default : no
+
+=head2 bind : string
+
+The binding string. 
+
+Default: "mds-vo-name=local,o=grid"
+
+=head2 breatheTime : long
+
+The time between LDAP queries.
+
+Default: 60
+
 =head2 configFile : string (required)
 
 The location of the LCG BDII configuration file.
 
 Default: /opt/bdii/etc/bdii.conf
 
-=head2 debugLevel : string (one of ERROR, WARNING, INFO, DEBUG, 0 and 1)
+=head2 dir
 
-Verbosity level. Starting with BDII v5, this is one of the string above. For backward compability
-with previous versions, 0 and 1 are also accepted but must be passed as string. Be sure to use
-a value appropriate to BDII version used. 
+The base directory for the BDII code and configuration files. 
 
-Default: ERROR
+Default: /opt/bdii
+
+=head2 fixGlue : string (yes or no, optional)
+
+Fixes some common schema errors like publishing duplicate attributes ()BDII v5 and later, recommeded value : yes).
+
+=head2 isCache : string (yes or no)
+
+Whether or not to reject entries which already match the binding string.
+
+Default : no
+
+=head2 ldifDir : string
+
+Location of GIP static ldfi files. New and required in BDII v5 and later.
 
 =head2 logFile : string (optional)
 
@@ -38,24 +78,21 @@ The location of the LCG BDII log file. This property is required for BDII v5.
 
 Default: none
 
-=head2 schemaFile
+=head2 logLevel : string (one of ERROR, WARNING, INFO, DEBUG)
 
-Name of file listing the schemas used by BDII.  This is required for LCG 2.5.0 or above.
+BDII verbosity level. New in BDII v5 (recommended value: ERROR)
 
-Default: /opt/bdii/etc/schemas
+Default: none.
 
-=head2 schemas : list of strings (required)
+=head2 modifyDN : string (yes or no)
 
-List of file names for the schema files used. 
+Whether or not this BDII fixes DNs to match binding string.
 
-Default: none
+Default : no
 
-=head2 urls (optional)
+=head2 pluginDir : string
 
-A hash containing all of the update URLs.  The keys are for
-documentation purposes only. 
-
-This resource is required for BDII v4 and later.
+Location of GIP plugins. New and required in BDII v5 and later.
 
 =head2 port : port number
 
@@ -75,87 +112,33 @@ The list of ports to write to (version <= 4).
 
 Default: none
 
-=head2 user : string
+=head2 providerDir : string
 
-The default user for running the BDII daemon.
-
-Default: edguser
-
-=head2 bind : string
-
-The binding string. 
-
-Default: "mds-vo-name=local,o=grid"
-
-=head2 searchFilter : string (optional)
-
-The LDAP filter.
+Location of GIP providers. New and required in BDII v5 and later.
 
 =head2 readTimeout : long (optional)
 
 Time to wait for LDAP sources to return. New in BDII v5 (typically 300).
 
+=head2 schemaFile
+
+Name of file listing the schemas used by BDII.  This is required for LCG 2.5.0 or above.
+
+Default: /opt/bdii/etc/schemas
+
+=head2 schemas : list of strings (required)
+
+List of file names for the schema files used. 
+
+Default: none
+
+=head2 searchFilter : string (optional)
+
+The LDAP filter.
+
 =head2 searchTimeout : long (optional)
 
 The LDAP timeout in seconds. Deprecated in BDII v5.
-
-=head2 breatheTime : long
-
-The time between LDAP queries.
-
-Default: 60
-
-=head2 archiveSize : long (optional)
-
-The number of updates that the changes should be logged (BDII v5 and later).
-
-=head2 autoUpdate : string (yes or no)
-
-Whether or not to auto-update.  Valid values are "yes" and "no".
-
-Default : no
-
-=head2 autoModify : string (yes or no)
-
-Whether or not to automatically modify this file.
-
-Default : no
-
-=head2 isCache : string (yes or no)
-
-Whether or not to reject entries which already match the binding string.
-
-Default : no
-
-=head2 modifyDN : string (yes or no)
-
-Whether or not this BDII fixes DNs to match binding string.
-
-Default : no
-
-=head2 fixGlue : string (yes or no, optional)
-
-Fixes some common schema errors like publishing duplicate attributes ()BDII v5 and later, recommeded value : yes).
-
-=head2 dir
-
-The base directory for the BDII code and configuration files. 
-
-Default: /opt/bdii
-
-=head2 updateUrl
-
-The URL for the update file. 
-
-=head2 updateLdif
-
-The URL for the update LDIF file.
-
-=head2 slapd : string
-
-The location of the slapd executable. Deprecated in BDII v5 and later.
-
-Default:  /opt/openldap/libexec/slapd
 
 =head2 slapadd : string
 
@@ -163,23 +146,42 @@ The location of the slapadd executable. Deprecated in BDII v5 and later.
 
 Default:  /opt/openldap/libexec/slapadd
 
+=head2 slapd : string
+
+The location of the slapd executable. Deprecated in BDII v5 and later.
+
+Default:  /opt/openldap/libexec/slapd
+
 =head2 slapdConf : string
 
 The location of slapd configuration file to use.
 
 Default:  /opt/bdii/etc/glue-slapd.conf
 
-=head2 ldifDir : string
+=head2 slapdDebugLevel : long (0 to 5)
 
-Location of GIP static ldfi files. New and required in BDII v5 and later.
+slapd verbosity level. Deprecated in BDII v5 and later.
 
-=head2 pluginDir : string
+=head2 updateLdif
 
-Location of GIP plugins. New and required in BDII v5 and later.
+The URL for the update LDIF file.
 
-=head2 providerDir : string
+=head2 updateUrl
 
-Location of GIP providers. New and required in BDII v5 and later.
+The URL for the update file. 
+
+=head2 urls (optional)
+
+A hash containing all of the update URLs.  The keys are for
+documentation purposes only. 
+
+This resource is required for BDII v4 and later.
+
+=head2 user : string
+
+The default user for running the BDII daemon.
+
+Default: edguser
 
 =head1 DEPENDENCIES
 

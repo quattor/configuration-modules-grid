@@ -40,7 +40,7 @@ type ${project.artifactId}_component = {
   'varDir'        : string = '/opt/bdii/var'
   'configFile'    : string = '/opt/bdii/bdii.conf'
   'logFile'       ? string
-  'debugLevel'    : string = "ERROR" with match(SELF,'ERROR|WARNING|INFO|DEBUG|0|1')
+  'logLevel'      : string = "ERROR" with match(SELF,'ERROR|WARNING|INFO|DEBUG')
 
   'schemaFile'    : string = '/opt/bdii/etc/schemas'
   'schemas'       : string[]
