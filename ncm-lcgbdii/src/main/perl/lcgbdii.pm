@@ -244,7 +244,7 @@ sub fill {
     my $value = "";
 
     if ($config->elementExists($path)) {
-        if ( $config->getElement($path)->isType($self->LIST) ) {
+        if ( $config->getElement($path)->isType($config->getElement($path)->LIST) ) {
             $value = join '"', @{$config->getElement($path)->getList()};          
         } else {
             $value = $config->getValue($path);
