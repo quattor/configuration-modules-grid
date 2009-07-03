@@ -201,7 +201,7 @@ Charles Loomis <charles.loomis@cern.ch>
 
 =head1 VERSION
 
-2.3.0
+2.4.0
 
 =head1 SEE ALSO
 
