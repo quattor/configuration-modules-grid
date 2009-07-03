@@ -248,8 +248,9 @@ sub fill {
 
     if ($config->elementExists($path)) {
         if ( $config->getElement($path)->isType($config->getElement($path)->LIST) ) {
-            $value = '"' . join(' ', @{$config->getElement($path)->getList()}) . '"';
-            $self->debug(2,"path is a list. Converted to string $value");          
+            $self->debug(2,"$path is a list. Converting to a space-separated string");
+            $value = '"' . join(' ', @{$config->getElement($path)->getTree()}) . '"';
+            $self->debug(2,"$path value converted to string $value");
         } else {
             $value = $config->getValue($path);
         }
