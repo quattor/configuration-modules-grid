@@ -32,24 +32,30 @@ sub Configure($$@) {
     my $base = "/software/components/lcgbdii";
     my $tfile = "/usr/lib/ncm/config/lcgbdii/lcgbdii.template";
 
-    # Save the date.
+    # Initializations
     my $date = localtime();
+    my $changes = 0;
+
+    # Retrieve configuration in a hash
+    my $lcgbdii_config = $config->getElement($base)->getTree();
+
+
+    #################################
+    # Build BDII configuration file #
+    #################################
 
     # The configuration file location.
-    my $fname;
-    if ($config->elementExists("$base/configFile")) {
-        $fname = $config->getValue("$base/configFile");
-    } else {
-	$self->error("configuration file name not specified");
-	return 1;
+    unless ( defined($lcgbdii_config->{configFile}) ) {
+       $self->error("configuration file name not specified");
+       return 1;
     }
 
     # Create the directory if necessary.
-    my $dir = dirname($fname);
+    my $dir = dirname($lcgbdii_config->{configFile});
     mkpath($dir,0,0755) unless (-e $dir);
     unless (-d $dir) {
-	$self->error("cannot create directory $dir");
-	return 1;
+        $self->error("cannot create directory $dir");
+        return 1;
     }
     
     # Fill template and get results.  Template substitution is simple
@@ -59,94 +65,70 @@ sub Configure($$@) {
 
     # Will return undefined value on an error. 
     if (!defined($contents)) {
-	$self->error("error filling template $tfile");
-	return 1;
+        $self->error("error filling template $tfile");
+        return 1;
     }
 
-    # Add the line with the list of BDII write ports.  Handled
-    # specially because the simple template processor doesn't handle
-    # lists. 
-    if ($config->elementExists("$base/portsWrite")) {
-        my @props = $config->getElement("$base/portsWrite")->getList();
-        my @ports;
-        foreach (@props) {
-            push @ports, $_->getValue();
-        }
-	$contents .= 'BDII_PORTS_WRITE="' . join(' ',@ports) . '"' . "\n";
-    }
-    
     # Now just create the new configuration file.  Be careful to save
     # a backup of the previous file if necessary. 
-    if ( ! -e $fname ) {
-        
-        # Configuration file doesn't exist yet.  Create it. 
-        open ( CONF,">$fname" );
-        print CONF $contents;
-        close (CONF);
-        $self->log("$fname created");
-        
-    } else {
-        
-        # Already exists. Make backup and create new file. 
-        my $result = LC::Check::file( $fname,
-                                      backup => ".old",
-                                      contents => $contents,
-                                      );
-        $self->log("$fname updated") if $result;
+    # Already exists. Make backup and create new file. 
+    my $result = LC::Check::file($lcgbdii_config->{configFile},
+                                 backup => ".old",
+                                 contents => $contents,
+                                );
+    if ( $result > 0 ) {
+        $self->log($lcgbdii_config->{configFile}." updated");
+        $changes += $result;
+    } elsif ( $result < 0 ) {
+        $self->error("Failed to update ".$lcgbdii_config->{configFile})
     }
 
     # Change the owner to the one running the daemon.
-    my $user = $config->getValue("$base/user");
-    chmod 0600, $fname;
-    chown((getpwnam($user))[2,3], glob($fname));
+    my $user = $lcgbdii_config->{user};
+    chmod 0600, $lcgbdii_config->{configFile};
+    chown((getpwnam($user))[2,3], glob($lcgbdii_config->{configFile}));
 
+
+    ############################################
+    # Build the BDII update configuration file #
+    ############################################
+    
     # The update configuration file location.
-    $fname = '';
-    if ($config->elementExists("$base/dir")) {
-        my $bdiiDir = $config->getValue("$base/dir");
-	$fname = "$bdiiDir/etc/bdii-update.conf";
-    } else {
-	$self->error("BDII base directory not specified");
-	return 1;
+    unless ( defined($lcgbdii_config->{dir}) ) {
+        $self->error("BDII base directory not specified");
+        return 1;
     }
+    my $bdiiDir = $lcgbdii_config->{dir};
+    my $fname = "$bdiiDir/etc/bdii-update.conf";
 
     # Create the directory if necessary.
     $dir = dirname($fname);
     mkpath($dir,0,0755) unless (-e $dir);
     unless (-d $dir) {
-	$self->error("cannot create directory $dir");
-	return 1;
+        $self->error("cannot create directory $dir");
+        return 1;
     }
 
     # Create the contents.
     $contents = "#\n# Created and maintained by ncm-lcgbdii. DO NOT EDIT.\n#\n";
     
-    if ($config->elementExists("$base/urls")) {
-	my %hash = $config->getElement("$base/urls")->getHash();
-	foreach (sort keys %hash) {
-	    my $url = $config->getValue("$base/urls/$_");
-	    $contents .= "$_ $url\n";
-	}
+    if ( defined($lcgbdii_config->{urls}) ) {
+        foreach (sort keys %{$lcgbdii_config->{urls}}) {
+            $contents .= $_ . " " . $lcgbdii_config->{urls}->{$_} . "\n";
+        }
     }
     
     # Now just create the new configuration file.  Be careful to save
     # a backup of the previous file if necessary. 
-    if ( ! -e $fname ) {
-	
-	# Configuration file doesn't exist yet.  Create it. 
-	open ( CONF,">$fname" );
-	print CONF $contents;
-	close (CONF);
-	$self->log("$fname created");
-	
-    } else {
-	
-	# Already exists. Make backup and create new file. 
-	my $result = LC::Check::file( $fname,
-				      backup => ".old",
-				      contents => $contents,
-				      );
-	$self->log("$fname updated") if $result;
+    my $result = LC::Check::file($fname,
+                                 backup => ".old",
+                                 contents => $contents,
+                                );
+    if ( $result > 0 ) {
+        $self->log($fname." updated");
+        $changes += $result;
+    } elsif ( $result < 0 ) {
+        $self->error("Failed to update ".$fname)
     }
 
     # The file really only needs to be owned (and write-enabled) when
@@ -154,42 +136,52 @@ sub Configure($$@) {
     chmod 0600, $fname;
     chown((getpwnam($user))[2,3], glob($fname));
 
+
+    #########################
+    # Build the schema file #
+    #########################
+    
     # The schema file location.
-    if ($config->elementExists("$base/schemaFile")) {
-        $fname = $config->getValue("$base/schemaFile");
+    unless ( defined($lcgbdii_config->{schemaFile}) && defined($lcgbdii_config->{schemas})  ) {
+        $self->error("BDII schema specification missing");
+        return 1;
+    }
 
-	# Create the directory if necessary.
-	my $dir = dirname($fname);
-	mkpath($dir,0,0755) unless (-e $dir);
-	unless (-d $dir) {	
-	    $self->error("cannot create directory $dir");
-	    return 1;
-	}
+    # Create the directory if necessary.
+    $dir = dirname($lcgbdii_config->{schemaFile});
+    mkpath($dir,0,0755) unless (-e $dir);
+    unless (-d $dir) {
+        $self->error("cannot create directory $dir");
+        return 1;
+    }
 
-	# Create the contents.  Just a list of the schema files.
-	$contents = '';
-	if ($config->elementExists("$base/schemas")) {
-	    my @schemas = $config->getElement("$base/schemas")->getList();
-	    foreach (@schemas) {
-		$contents .= $_->getValue() . "\n";
-	    }
-	}
+    # Create the contents.  Just a list of the schema files.
+    $contents = '';
+    foreach (@{$lcgbdii_config->{schemas}}) {
+        $contents .= $_ . "\n";
+    }
 
-	# Now just create the new configuration file.  Be careful to save
-	# a backup of the previous file if necessary. 
-	my $result = LC::Check::file( $fname,
-				      backup => ".old",
-				      contents => $contents,
-				      );
-	$self->log("$fname created or updated") if $result;
+    # Now just create the new configuration file.  Be careful to save
+    # a backup of the previous file if necessary. 
+    my $result = LC::Check::file($lcgbdii_config->{schemaFile},
+                                 backup => ".old",
+                                 contents => $contents,
+                                );
+    if ( $result > 0 ) {
+        $self->log($lcgbdii_config->{schemaFile}." updated");
+        $changes += $result;
+    } elsif ( $result < 0 ) {
+        $self->error("Failed to update ".$lcgbdii_config->{schemaFile})
     }
     
-    # Restart the server.
-    if (system("/sbin/service bdii stop")) {
-	$self->warn("init.d lcg-bdii stop failed: ". $?);
-    }
-    if (system("/sbin/service bdii start")) {
-	$self->error("init.d lcg-bdii start failed: ". $?);
+    # Restart the server if needed
+    if ( $changes ) {
+      if (system("/sbin/service bdii stop")) {
+          $self->warn("init.d lcg-bdii stop failed: ". $?);
+      }
+      if (system("/sbin/service bdii start")) {
+          $self->error("init.d lcg-bdii start failed: ". $?);
+      }
     }
     
 
@@ -214,8 +206,8 @@ sub fill_template {
     my $translation = "";
 
     if (-e "$template") {
-	open TMP, "<$template";
-	while (<TMP>) {
+    open TMP, "<$template";
+    while (<TMP>) {
             my $err = 0;
 
             # Special form for date.
@@ -234,10 +226,10 @@ sub fill_template {
             # case it is assumed that the value is optional and the
             # line is omitted.  
             $translation .= $_ unless $err;
-	}
-	close TMP;
+    }
+    close TMP;
     } else {
-	$translation = undef;
+    $translation = undef;
     }
 
     return $translation;
@@ -251,7 +243,11 @@ sub fill {
     my $value = "";
 
     if ($config->elementExists($path)) {
-        $value = $config->getValue($path);
+        if ( $self->isType($self->LIST) ) {
+            $value = join '"', @{$config->getElement($path)->getList()};          
+        } else {
+            $value = $config->getValue($path);
+        }
     } elsif (defined $default) {
         $value = $default;
     } else {

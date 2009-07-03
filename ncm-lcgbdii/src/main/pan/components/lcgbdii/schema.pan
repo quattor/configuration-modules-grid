@@ -24,7 +24,11 @@ function lcgbdii_check_params = {
   if ( (SELF['autoModify'] == 'yes') && !exists(SELF['updateLdif']) ) {
     error('Property updateLdif required when autoModify=yes');
   };
- 
+
+  if ( !is_defined(SELF['port']) && (!is_defined(SELF['portRead']) || !is_defined(SELF['portsWrite'])) ) {
+      error('Either port or portRead/portsWrite must be specified');
+  };
+  
   return(true);
 };
 
@@ -34,33 +38,45 @@ type ${project.artifactId}_component = {
 
   'dir'           : string = '/opt/bdii/'
   'varDir'        : string = '/opt/bdii/var'
-  'configFile'    : string = '/opt/bdii/var/lcg-bdii.conf'
-  'schemaFile'    ? string
-  'debugLevel'    : long = 4
+  'configFile'    : string = '/opt/bdii/bdii.conf'
+  'logFile'       ? string
+  'debugLevel'    : string = "ERROR" with match(SELF,'ERROR|WARNING|INFO|DEBUG|0|1')
 
-  'portRead'      : type_port = 2170
-  'portsWrite'    : type_port[] = list(2171,2172,2173)
-  'user'          : string = 'lcgbdii'
+  'schemaFile'    : string = '/opt/bdii/etc/schemas'
+  'schemas'       : string[]
+
+  'port'          ? type_port
+  'portRead'      ? type_port
+  'portsWrite'    ? type_port[]
+  'user'          : string = 'edguser'
   'bind'          : string = 'mds-vo-name=local,o=grid'
   'passwd'        : string
-  'searchFilter'  : string = "'*'"
-  'searchTimeout' : long(1..) = 30
+  'searchFilter'  ? string
+  'searchTimeout' ? long(1..)
+  'readTimeout'   ? long(1..)
   'breatheTime'   : long(1..) = 60
+  'archiveSize'   ? long
   'autoUpdate'    : string = 'no' with match (SELF, 'yes|no')
   'autoModify'    : string = 'no' with match (SELF, 'yes|no')
   'isCache'       : string = 'no' with match (SELF, 'yes|no')
   'modifyDN'      : string = 'no' with match (SELF, 'yes|no')
+  'fixGlue'       ? string with match (SELF, 'yes|no')
 
   'updateUrl'     ? type_absoluteURI
-  'updateLdif'    ? type_absoluteURI = 'http://lcg-fcr.cern.ch:8083/fcr-data/exclude.ldif'
+  'updateLdif'    ? type_absoluteURI
   'defaultLdif'   : string = '/opt/bdii/etc/default.ldif'
 
   'slapd'         : string = '/opt/openldap/libexec/slapd'
   'slapadd'       : string = '/opt/openldap/sbin/slapadd'
-  'salpdConf'     : string = '/opt/bdii/etc/glue-slapd.conf'
+  'slapdConf'     : string = '/opt/bdii/etc/glue-slapd.conf'
+  'slapdDebugLevel' ? long(0..5)
 
   'urls'          ? type_absoluteURI{}
-  'schemas'       ? string[]
+  
+  'ldifDir'       ? string
+  'pluginDir'     ? string
+  'providerDir'   ? string
+  
 } with lcgbdii_check_params(SELF);
 
 bind '/software/components/lcgbdii' = ${project.artifactId}_component;
