@@ -140,17 +140,13 @@ The LDAP filter.
 
 The LDAP timeout in seconds. Deprecated in BDII v5.
 
-=head2 slapadd : string
+=head2 slapadd : string (optional)
 
 The location of the slapadd executable. Deprecated in BDII v5 and later.
 
-Default:  /opt/openldap/libexec/slapadd
-
-=head2 slapd : string
+=head2 slapd : string (optional)
 
 The location of the slapd executable. Deprecated in BDII v5 and later.
-
-Default:  /opt/openldap/libexec/slapd
 
 =head2 slapdConf : string
 

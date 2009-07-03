@@ -66,8 +66,8 @@ type ${project.artifactId}_component = {
   'updateLdif'    ? type_absoluteURI
   'defaultLdif'   : string = '/opt/bdii/etc/default.ldif'
 
-  'slapd'         : string = '/opt/openldap/libexec/slapd'
-  'slapadd'       : string = '/opt/openldap/sbin/slapadd'
+  'slapd'         ? string
+  'slapadd'       ? string
   'slapdConf'     : string = '/opt/bdii/etc/glue-slapd.conf'
   'slapdDebugLevel' ? long(0..5)
 
