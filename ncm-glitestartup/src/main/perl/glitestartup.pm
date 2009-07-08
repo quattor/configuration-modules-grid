@@ -68,7 +68,7 @@ sub Configure {
   if ( defined($confighash->{initScript}) ) {
     $glite_startup_driver = $confighash->{initScript};
   }
-  if ( defined($confighash->{scriptsPath}) ) {
+  if ( defined($confighash->{scriptPaths}) ) {
     $glite_startup_scripts_paths = $confighash->{scriptPaths};
   }
   
