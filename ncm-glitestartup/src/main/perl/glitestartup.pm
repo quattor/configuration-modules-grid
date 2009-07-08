@@ -142,67 +142,69 @@ sub Configure {
  
   # Create a grid proxy for GLITE_USER
 
-  my $config_error = 0;
-  unless ( defined($glite_config->{GLITE_USER}) ) {
-    $self->error("GLITE_USER undefined : cannot configure proxy and start services");
-    $config_error = 1;
-  }
-  unless ( defined($glite_config->{GLITE_GROUP}) ) {
-    $self->error("GLITE_GROUP undefined : cannot configure proxy and start services");
-    $config_error = 1;
-  }
-  unless ( defined($glite_config->{GLITE_X509_PROXY}) ) {
-    $self->error("GLITE_X509_PROXY undefined : cannot configure proxy and start services");
-    $config_error = 1;
-  }
-  if ( $config_error ) {
-    return(4);
-  }
+  if ( $confighash->{createProxy} ) {
+    my $config_error = 0;
+    unless ( defined($glite_config->{GLITE_USER}) ) {
+      $self->error("GLITE_USER undefined : cannot configure proxy and start services");
+      $config_error = 1;
+    }
+    unless ( defined($glite_config->{GLITE_GROUP}) ) {
+      $self->error("GLITE_GROUP undefined : cannot configure proxy and start services");
+      $config_error = 1;
+    }
+    unless ( defined($glite_config->{GLITE_X509_PROXY}) ) {
+      $self->error("GLITE_X509_PROXY undefined : cannot configure proxy and start services");
+      $config_error = 1;
+    }
+    if ( $config_error ) {
+      return(4);
+    }
 
-  my ($username,$passwd,$uid,$gid,$quota,$comment,$gcos,$glite_homedir,$shell,$expire) = getpwnam($glite_config->{GLITE_USER});
-  if ( !defined($glite_homedir) || (length($glite_homedir)==0) ) {
-    $self->error("Error retrieving ".$glite_config->{GLITE_USER}." home directory");
-    return(4);
-  }
-  my $glite_cert_dir = $glite_homedir . '/.certs';
-  $self->debug(1,"Checking certificate in $glite_cert_dir...");
-  my $glite_x509_proxy = $glite_config->{GLITE_X509_PROXY};
-  my $cert_status;
-  $cert_status = LC::Check::directory($glite_cert_dir);
-  if ( $cert_status < 0 ) {
-    $self->error("Error creating $glite_cert_dir");
-    return(4);
-  }
-  $cert_status = LC::Check::status($glite_cert_dir,
-                                   mode => 0500,
-                                   owner => $glite_config->{GLITE_USER},
-                                   group => $glite_config->{GLITE_GROUP},
-                                  );
-  if ( $cert_status < 0 ) {
-    $self->error("Error setting owner/group and permissions on $glite_cert_dir");
-    return(4);
-  }
-  
-  for my $certfile ($glite_cert_name,$glite_key_name) {
-    my $certfile_src = $grid_security_dir . '/' . $certfile;
-    my $certfile_glite = $glite_cert_dir . '/' . $certfile;
-    $cert_status = LC::Check::file($certfile_glite,
-                                   source => $certfile_src,
-                                   mode => 0400,
-                                   owner => $glite_config->{GLITE_USER},
-                                   group => $glite_config->{GLITE_GROUP},
-                                  );
+    my ($username,$passwd,$uid,$gid,$quota,$comment,$gcos,$glite_homedir,$shell,$expire) = getpwnam($glite_config->{GLITE_USER});
+    if ( !defined($glite_homedir) || (length($glite_homedir)==0) ) {
+      $self->error("Error retrieving ".$glite_config->{GLITE_USER}." home directory");
+      return(4);
+    }
+    my $glite_cert_dir = $glite_homedir . '/.certs';
+    $self->debug(1,"Checking certificate in $glite_cert_dir...");
+    my $glite_x509_proxy = $glite_config->{GLITE_X509_PROXY};
+    my $cert_status;
+    $cert_status = LC::Check::directory($glite_cert_dir);
     if ( $cert_status < 0 ) {
-      $self->error("Error updating  $certfile_glite from $certfile_src");
+      $self->error("Error creating $glite_cert_dir");
       return(4);
-    }      
-  }
-  
-  $self->info("Initializing proxy for user ".$glite_config->{GLITE_USER}." ($glite_x509_proxy)");
-  $cert_status = qx%su - $glite_config->{GLITE_USER} -c "$grid_proxy_init -cert $glite_cert_dir/$glite_cert_name -key $glite_cert_dir/$glite_key_name -valid $proxy_validity -out $glite_x509_proxy"%;
-  if ( $? ) {
-      $self->error("Error creating grid proxy for user ".$glite_config->{GLITE_USER}." ($glite_x509_proxy)");
+    }
+    $cert_status = LC::Check::status($glite_cert_dir,
+                                     mode => 0500,
+                                     owner => $glite_config->{GLITE_USER},
+                                     group => $glite_config->{GLITE_GROUP},
+                                    );
+    if ( $cert_status < 0 ) {
+      $self->error("Error setting owner/group and permissions on $glite_cert_dir");
       return(4);
+    }
+    
+    for my $certfile ($glite_cert_name,$glite_key_name) {
+      my $certfile_src = $grid_security_dir . '/' . $certfile;
+      my $certfile_glite = $glite_cert_dir . '/' . $certfile;
+      $cert_status = LC::Check::file($certfile_glite,
+                                     source => $certfile_src,
+                                     mode => 0400,
+                                     owner => $glite_config->{GLITE_USER},
+                                     group => $glite_config->{GLITE_GROUP},
+                                    );
+      if ( $cert_status < 0 ) {
+        $self->error("Error updating  $certfile_glite from $certfile_src");
+        return(4);
+      }      
+    }
+    
+    $self->info("Initializing proxy for user ".$glite_config->{GLITE_USER}." ($glite_x509_proxy)");
+    $cert_status = qx%su - $glite_config->{GLITE_USER} -c "$grid_proxy_init -cert $glite_cert_dir/$glite_cert_name -key $glite_cert_dir/$glite_key_name -valid $proxy_validity -out $glite_x509_proxy"%;
+    if ( $? ) {
+        $self->error("Error creating grid proxy for user ".$glite_config->{GLITE_USER}." ($glite_x509_proxy)");
+        return(4);
+    }
   }
   
   # Update startup driver configuration file and restart services if needed.

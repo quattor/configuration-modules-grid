@@ -27,6 +27,7 @@ type ${project.artifactId}_component = {
   'restartEnv'      ? string[]
   'postRestart'     ? ${project.artifactId}_component_post_restart[]
   'restartServices' ? boolean
+  'createProxy'     : boolean = true
   'scriptPaths'     : string[] = list('/opt/glite/etc/init.d')
   'services'        : ${project.artifactId}_component_service{}
 };

@@ -27,6 +27,12 @@ Configuration file path/name for startup driver.
 
 Default : /opt/glite/etc/config/scripts/gLite.services
 
+=head2 /software/components/@COMP/createProxy : boolean
+
+If true, create a grid proxy for the gLite user used to run the service.
+
+Default : true
+
 =head2 /software/components/@COMP/initScript : string (required)
 
 Name of startup script for gLite services.
