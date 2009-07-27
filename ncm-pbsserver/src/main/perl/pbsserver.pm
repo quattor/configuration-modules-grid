@@ -349,7 +349,7 @@ sub Configure($$@) {
             $self->debug(1,"Removing node $node attributes not part of the configuration (manualconfig=false)");
             # First delete properties not part of the configuration
             foreach my $p (keys %defprops) {
-              $self->runCommand($qmgr, "set node $node properties -= $p");
+              $self->runCommand($qmgr, "set node $node properties -= '$p'");
             }
             # Delete attributes not part of the configuration, preserving special attributes
             # like state, status or ntype.
