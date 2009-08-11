@@ -152,7 +152,7 @@ sub Configure($$@) {
     my %existingqueues;
     for (@current_config) {
       chomp;
-      if (m/set server (\w+)/) {
+      if (m/set server ([\w\.]+)/) {
         # Mark the server attribute as set.
         $existingsatt{$1} = 1;
 
