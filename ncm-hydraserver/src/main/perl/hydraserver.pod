@@ -34,7 +34,7 @@ Christos Triantafyllidis <ctria@grid.auth.gr>
 
 =head1 VERSION
 
-0.0.1
+0.0.2
 
 =head1 SEE ALSO
 
