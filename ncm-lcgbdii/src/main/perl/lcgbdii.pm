@@ -46,8 +46,8 @@ sub Configure($$@) {
 
     # Retrieve BDII working directory and create/update owner
     # Create the directory if necessary.
-    my $dir = dirname($lcgbdii_config->{varDir});
-    $self->createAndChown($user,$dir);
+    my $varDir = dirname($lcgbdii_config->{varDir});
+    $self->createAndChown($user,$varDir);
     
 
     #################################
@@ -104,7 +104,7 @@ sub Configure($$@) {
         return 1;
     }
     my $bdiiDir = $lcgbdii_config->{dir};
-    $self->createAndChown($user,$bdiiDir)
+    $self->createAndChown($user,$bdiiDir);
     my $fname = "$bdiiDir/etc/bdii-update.conf";
 
     # Create the contents.
@@ -147,11 +147,7 @@ sub Configure($$@) {
 
     # Create the directory if necessary.
     $dir = dirname($lcgbdii_config->{schemaFile});
-    mkpath($dir,0,0755) unless (-e $dir);
-    unless (-d $dir) {
-        $self->error("cannot create directory $dir");
-        return 1;
-    }
+    $self->createDir($dir);
 
     # Create the contents.  Just a list of the schema files.
     $contents = '';
@@ -273,47 +269,60 @@ sub quote {
 # Create a directory if it doesn't exist and change ownership
 # of its contents recursively.
 sub createAndChownDir {
-
     my ($self, $user, $dir) = @_;
 
-    mkpath($dir,0,0755);
-    # If a file with the same name already existed, throw an error.
-    if ( !-d $dir ) {
-      if ( -e $dir ) {
-        error("$dir exists but is not a directory");
-      } else {
-        error("Failed to create directory $dir");
-      }
-      return 1;
-    }
-
-    my ($uid,$gid) = getpwnam($user))[2,3];
+    $self->createDir($dir);
+  
+    my ($uid,$gid) = (getpwnam($user))[2,3];
     unless ( defined($uid) ) {
-      error("Failed to retrieved uid for user $user");
+      $self->error("Failed to retrieved uid for user $user");
       return 1;
     }
     unless ( defined($gid) ) {
-      error("Failed to retrieved gid for user $user");
+      $self->error("Failed to retrieved gid for user $user");
       return 1;
     }
     
     $self->chownDir($uid,$gid,$dir);
 }
 
+sub createDir {
+    my ($self, $dir) = @_;
+
+    mkpath($dir,0,0755);
+    # If a file with the same name already existed, throw an error.
+    if ( !-d $dir ) {
+      if ( -e $dir ) {
+        $self->error("$dir exists but is not a directory");
+      } else {
+        $self->error("Failed to create directory $dir");
+      }
+      return 1;
+    }
+}
+
 # Change ownership of a directory and its contents, recursively
 sub chownDir {
-  my ($self, $uid, $gid, $dir) = @_;
+  my $self = shift;
+  if ( @_ != 3 ) {
+    $self->error('chownDir method requires 3 argments');
+    return 1;
+  }
+  my ($uid, $gid, $dir) = @_;
+  unless ( defined($dir) && (length($dir) > 0) ) {
+    $self->error('directory name not specified');
+  }
  
   my @files = glob("$dir/*");
   for my $file (@files) {
     if ( (-f $file || -d $file) && !-l $file ) {
-      debug(1,"Updating $file owner to uid=$uid, gid=$gid");
+      $self->debug(1,"Updating $file owner to uid=$uid, gid=$gid");
       chown($uid,$gid,$file);
       if ( -d $file && ($file ne $dir) ) {
         chownDir ($file);
       };
     } else {
-      debug(2,"$file is neither a directory nor a file. Ignoring...");
+      $self->debug(2,"$file is neither a directory nor a file. Ignoring...");
     }
   }
 }
