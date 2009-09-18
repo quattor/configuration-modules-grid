@@ -337,6 +337,9 @@ sub createDir {
       return 0;
     }
     
+    $self->debug(1,"Updating $dir owner to uid=$uid, gid=$gid");
+    chown($uid,$gid,$dir);
+
     return 1;
 }
 
