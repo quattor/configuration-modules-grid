@@ -61,10 +61,12 @@ sub Configure($$@) {
     
     # Retrieve BDII logging directory and create/update owner
     # Create the directory if necessary.
-    my $logDir = dirname($lcgbdii_config->{logFile});
-    unless ( $self->createAndChownDir($user,$logDir) ) {
-      return 1;
-    };
+    my $logFile = $lcgbdii_config->{logFile};
+    if ( $logFile ) {
+      unless ( $self->createAndChownDir($user,dirname($logFile) ) {
+        return 1;
+      };      
+    }
     
 
     #################################
