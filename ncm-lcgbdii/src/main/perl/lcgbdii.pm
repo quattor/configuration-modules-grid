@@ -357,20 +357,20 @@ sub chownDirAndChildren {
   chown($uid,$gid,$file);
 
   # If $file is a directory, process its contents recursively (files and directories only)
-  my $status = 1;    # Assume succes
   if ( -d $file ) {
     my @children = glob("$file/*");
     for my $child (@children) {
       if ( (-f $child || -d $child) && !-l $child && ($child ne $file) ) {
-        $status = $self->chownDir ($uid,$gid,$child);
+        unless ($self->chownDir ($uid,$gid,$child) ) {
+          return 0;
+        }
       } else {
         $self->debug(2,"$child is neither a directory nor a file. Ignoring...");
-        $status = 0;
       }
     }
   }
   
-  return $status;
+  return 1;
 }
 
 1;      # Required for PERL modules
