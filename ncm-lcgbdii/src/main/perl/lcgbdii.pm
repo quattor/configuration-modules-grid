@@ -63,7 +63,7 @@ sub Configure($$@) {
     # Create the directory if necessary.
     my $logFile = $lcgbdii_config->{logFile};
     if ( $logFile ) {
-      unless ( $self->createAndChownDir($user,dirname($logFile) ) {
+      unless ( $self->createAndChownDir($user,dirname($logFile)) ) {
         return 1;
       };      
     }
@@ -124,11 +124,11 @@ sub Configure($$@) {
         $self->error("BDII base directory not specified");
         return 1;
     }
-    my $bdiiDir = $lcgbdii_config->{dir};
-    unless ( $self->createAndChownDir($user,$bdiiDir) ) {
+    my $bdiiConfDir = $lcgbdii_config->{dir}.'/etc';
+    unless ( $self->createAndChownDir($user,$bdiiConfDir) ) {
       return 1;
     };
-    my $fname = "$bdiiDir/etc/bdii-update.conf";
+    my $fname = "$bdiiConfDir/etc/bdii-update.conf";
 
     # Create the contents.
     $contents = "#\n# Created and maintained by ncm-lcgbdii. DO NOT EDIT.\n#\n";
