@@ -314,7 +314,7 @@ sub createAndChownDir {
       return 0;
     }
     
-    unless ( $self->chownDir($uid,$gid,$dir) ) {
+    unless ( $self->chownDirAndChildren($uid,$gid,$dir) ) {
       return 0;
     };
     
@@ -337,37 +337,36 @@ sub createDir {
       return 0;
     }
     
-    $self->debug(1,"Updating $dir owner to uid=$uid, gid=$gid");
-    chown($uid,$gid,$dir);
-
     return 1;
 }
 
 # Change ownership of a directory and its contents, recursively
 # Returns 1 in case of success, else 0
-sub chownDir {
-  my ($self, $uid, $gid, $dir) = @_;
+sub chownDirAndChildren {
+  my ($self, $uid, $gid, $file) = @_;
   if ( @_ != 4 ) {
-    $self->error('chownDir method requires 3 argments');
+    $self->error('chownDirAndChildren method requires 3 argments');
     return 0;
   }
-  unless ( defined($dir) && (length($dir) > 0) ) {
-    $self->error('directory name not specified');
+  unless ( defined($file) && (length($file) > 0) ) {
+    $self->error('directory/file name not specified');
     return 0;
   }
  
+  $self->debug(1,"Updating $file owner to uid=$uid, gid=$gid");
+  chown($uid,$gid,$file);
+
+  # If $file is a directory, process its contents recursively (files and directories only)
   my $status = 1;    # Assume succes
-  my @files = glob("$dir/*");
-  for my $file (@files) {
-    if ( (-f $file || -d $file) && !-l $file ) {
-      $self->debug(1,"Updating $file owner to uid=$uid, gid=$gid");
-      chown($uid,$gid,$file);
-      if ( -d $file && ($file ne $dir) ) {
-        $status = $self->chownDir ($uid,$gid,$file);
-      };
-    } else {
-      $self->debug(2,"$file is neither a directory nor a file. Ignoring...");
-      $status = 0;
+  if ( -d $file ) {
+    my @children = glob("$file/*");
+    for my $child (@children) {
+      if ( (-f $child || -d $child) && !-l $child && ($child ne $file) ) {
+        $status = $self->chownDir ($uid,$gid,$child);
+      } else {
+        $self->debug(2,"$child is neither a directory nor a file. Ignoring...");
+        $status = 0;
+      }
     }
   }
   
