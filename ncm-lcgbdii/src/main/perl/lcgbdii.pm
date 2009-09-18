@@ -278,7 +278,8 @@ sub createAndChownDir {
          $dir eq '/var' ||
          $dir eq '/tmp' ||
          $dir eq '/opt' ) {
-      $self->error("$dir is a system directory and cannot be used as a BDII-specific direcotory.");       
+      $self->error("$dir is a system directory and cannot be used as a BDII-specific direcotory."); 
+      return 1;      
     }
 
     $self->createDir($dir);
@@ -328,7 +329,7 @@ sub chownDir {
       $self->debug(1,"Updating $file owner to uid=$uid, gid=$gid");
       chown($uid,$gid,$file);
       if ( -d $file && ($file ne $dir) ) {
-        $self->chownDir ($file);
+        $self->chownDir ($uid,$gid,$file);
       };
     } else {
       $self->debug(2,"$file is neither a directory nor a file. Ignoring...");
