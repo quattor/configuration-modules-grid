@@ -47,7 +47,7 @@ sub Configure($$@) {
     # Retrieve BDII working directory and create/update owner
     # Create the directory if necessary.
     my $varDir = dirname($lcgbdii_config->{varDir});
-    $self->createAndChown($user,$varDir);
+    $self->createAndChownDir($user,$varDir);
     
 
     #################################
@@ -62,7 +62,7 @@ sub Configure($$@) {
 
     # Create the directory if necessary.
     my $dir = dirname($lcgbdii_config->{configFile});
-    $self->createAndChown($user,$dir);
+    $self->createAndChownDir($user,$dir);
     
     # Fill template and get results.  Template substitution is simple
     # value replacement.  If a value doesn't exist, the line is not
@@ -104,7 +104,7 @@ sub Configure($$@) {
         return 1;
     }
     my $bdiiDir = $lcgbdii_config->{dir};
-    $self->createAndChown($user,$bdiiDir);
+    $self->createAndChownDir($user,$bdiiDir);
     my $fname = "$bdiiDir/etc/bdii-update.conf";
 
     # Create the contents.
@@ -303,12 +303,11 @@ sub createDir {
 
 # Change ownership of a directory and its contents, recursively
 sub chownDir {
-  my $self = shift;
-  if ( @_ != 3 ) {
+  my ($self, $uid, $gid, $dir) = @_;
+  if ( @_ != 4 ) {
     $self->error('chownDir method requires 3 argments');
     return 1;
   }
-  my ($uid, $gid, $dir) = @_;
   unless ( defined($dir) && (length($dir) > 0) ) {
     $self->error('directory name not specified');
   }
