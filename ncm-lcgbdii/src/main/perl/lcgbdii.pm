@@ -296,7 +296,7 @@ sub createAndChownDir {
     my ($self, $user, $dir) = @_;
     
     if ( defined($forbiddenDirs{$dir}) ) {
-      $self->error("$dir is a system directory and cannot be used as a BDII-specific direcotory."); 
+      $self->error("$dir is a system directory and cannot be used as a BDII-specific directory."); 
       return 0;      
     }
 
@@ -353,6 +353,11 @@ sub chownDirAndChildren {
     return 0;
   }
  
+  if ( defined($forbiddenDirs{$file}) ) {
+    $self->error("$file is a system directory: its permission cannot be changed to a BDII-specific one."); 
+    return 0;      
+  }
+
   $self->debug(1,"Updating $file owner to uid=$uid, gid=$gid");
   chown($uid,$gid,$file);
 
@@ -361,7 +366,7 @@ sub chownDirAndChildren {
     my @children = glob("$file/*");
     for my $child (@children) {
       if ( (-f $child || -d $child) && !-l $child && ($child ne $file) ) {
-        unless ($self->chownDir ($uid,$gid,$child) ) {
+        unless ($self->chownDirAndChildren ($uid,$gid,$child) ) {
           return 0;
         }
       } else {
