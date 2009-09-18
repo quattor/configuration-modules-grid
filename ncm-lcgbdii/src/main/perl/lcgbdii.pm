@@ -40,6 +40,15 @@ sub Configure($$@) {
     # Retrieve configuration in a hash
     my $lcgbdii_config = $config->getElement($base)->getTree();
 
+    # Retrieve user running BDII
+    my $user = $lcgbdii_config->{user};
+
+
+    # Retrieve BDII working directory and create/update owner
+    # Create the directory if necessary.
+    my $dir = dirname($lcgbdii_config->{varDir});
+    $self->createAndChown($user,$dir);
+    
 
     #################################
     # Build BDII configuration file #
@@ -53,11 +62,7 @@ sub Configure($$@) {
 
     # Create the directory if necessary.
     my $dir = dirname($lcgbdii_config->{configFile});
-    mkpath($dir,0,0755) unless (-e $dir);
-    unless (-d $dir) {
-        $self->error("cannot create directory $dir");
-        return 1;
-    }
+    $self->createAndChown($user,$dir);
     
     # Fill template and get results.  Template substitution is simple
     # value replacement.  If a value doesn't exist, the line is not
@@ -85,7 +90,6 @@ sub Configure($$@) {
     }
 
     # Change the owner to the one running the daemon.
-    my $user = $lcgbdii_config->{user};
     chmod 0600, $lcgbdii_config->{configFile};
     chown((getpwnam($user))[2,3], glob($lcgbdii_config->{configFile}));
 
@@ -100,15 +104,8 @@ sub Configure($$@) {
         return 1;
     }
     my $bdiiDir = $lcgbdii_config->{dir};
+    $self->createAndChown($user,$bdiiDir)
     my $fname = "$bdiiDir/etc/bdii-update.conf";
-
-    # Create the directory if necessary.
-    $dir = dirname($fname);
-    mkpath($dir,0,0755) unless (-e $dir);
-    unless (-d $dir) {
-        $self->error("cannot create directory $dir");
-        return 1;
-    }
 
     # Create the contents.
     $contents = "#\n# Created and maintained by ncm-lcgbdii. DO NOT EDIT.\n#\n";
@@ -273,13 +270,52 @@ sub quote {
     return $value;
 }
 
-# Change ownership by name.
+# Create a directory if it doesn't exist and change ownership
+# of its contents recursively.
 sub createAndChownDir {
 
-    my ($user, $dir) = @_;
+    my ($self, $user, $dir) = @_;
 
     mkpath($dir,0,0755);
-    chown((getpwnam($user))[2,3], glob($dir)) if (-d $dir);
+    # If a file with the same name already existed, throw an error.
+    if ( !-d $dir ) {
+      if ( -e $dir ) {
+        error("$dir exists but is not a directory");
+      } else {
+        error("Failed to create directory $dir");
+      }
+      return 1;
+    }
+
+    my ($uid,$gid) = getpwnam($user))[2,3];
+    unless ( defined($uid) ) {
+      error("Failed to retrieved uid for user $user");
+      return 1;
+    }
+    unless ( defined($gid) ) {
+      error("Failed to retrieved gid for user $user");
+      return 1;
+    }
+    
+    $self->chownDir($uid,$gid,$dir);
+}
+
+# Change ownership of a directory and its contents, recursively
+sub chownDir {
+  my ($self, $uid, $gid, $dir) = @_;
+ 
+  my @files = glob("$dir/*");
+  for my $file (@files) {
+    if ( (-f $file || -d $file) && !-l $file ) {
+      debug(1,"Updating $file owner to uid=$uid, gid=$gid");
+      chown($uid,$gid,$file);
+      if ( -d $file && ($file ne $dir) ) {
+        chownDir ($file);
+      };
+    } else {
+      debug(2,"$file is neither a directory nor a file. Ignoring...");
+    }
+  }
 }
 
 1;      # Required for PERL modules
