@@ -301,7 +301,7 @@ sub createAndChownDir {
     }
 
     unless ( $self->createDir($dir) ) {
-      return 1;
+      return 0;
     };
   
     my ($uid,$gid) = (getpwnam($user))[2,3];
@@ -315,10 +315,10 @@ sub createAndChownDir {
     }
     
     unless ( $self->chownDir($uid,$gid,$dir) ) {
-      return 1;
+      return 0;
     };
     
-    return 0;
+    return 1;
 }
 
 # Create a directory.
@@ -353,21 +353,22 @@ sub chownDir {
     return 0;
   }
  
+  my $status = 1;    # Assume succes
   my @files = glob("$dir/*");
   for my $file (@files) {
     if ( (-f $file || -d $file) && !-l $file ) {
       $self->debug(1,"Updating $file owner to uid=$uid, gid=$gid");
       chown($uid,$gid,$file);
       if ( -d $file && ($file ne $dir) ) {
-        $self->chownDir ($uid,$gid,$file);
+        $status = $self->chownDir ($uid,$gid,$file);
       };
     } else {
       $self->debug(2,"$file is neither a directory nor a file. Ignoring...");
-      return 0;
+      $status = 0;
     }
   }
   
-  return 1;
+  return $status;
 }
 
 1;      # Required for PERL modules
