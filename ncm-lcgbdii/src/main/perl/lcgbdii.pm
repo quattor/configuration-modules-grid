@@ -21,6 +21,15 @@ use File::Basename;
 
 local(*DTA);
 
+# List of directories invalid for BDII working directories.
+# Value is useless
+my %forbiddenDirs = ('/' => '',
+                     '/opt' => '',
+                     '/tmp' => '',
+                     '/usr' => '',
+                     '/var' => '',
+                     '/var/log' => '',
+                    );
 
 ##########################################################################
 sub Configure($$@) {
@@ -43,11 +52,19 @@ sub Configure($$@) {
     # Retrieve user running BDII
     my $user = $lcgbdii_config->{user};
 
-
     # Retrieve BDII working directory and create/update owner
     # Create the directory if necessary.
     my $varDir = $lcgbdii_config->{varDir};
-    $self->createAndChownDir($user,$varDir);
+    unless ( $self->createAndChownDir($user,$varDir) ) {
+      return 1;
+    };
+    
+    # Retrieve BDII logging directory and create/update owner
+    # Create the directory if necessary.
+    my $logDir = dirname($lcgbdii_config->{logFile});
+    unless ( $self->createAndChownDir($user,$logDir) ) {
+      return 1;
+    };
     
 
     #################################
@@ -62,7 +79,9 @@ sub Configure($$@) {
 
     # Create the directory if necessary.
     my $dir = dirname($lcgbdii_config->{configFile});
-    $self->createAndChownDir($user,$dir);
+    unless ( $self->createAndChownDir($user,$dir) ) {
+      return 1;
+    };
     
     # Fill template and get results.  Template substitution is simple
     # value replacement.  If a value doesn't exist, the line is not
@@ -104,7 +123,9 @@ sub Configure($$@) {
         return 1;
     }
     my $bdiiDir = $lcgbdii_config->{dir};
-    $self->createAndChownDir($user,$bdiiDir);
+    unless ( $self->createAndChownDir($user,$bdiiDir) ) {
+      return 1;
+    };
     my $fname = "$bdiiDir/etc/bdii-update.conf";
 
     # Create the contents.
@@ -270,33 +291,38 @@ sub quote {
 # of its contents recursively.
 # This method also checks that the directory is dedicated to BDII and is
 # not one of the standard directories.
+# Returns 1 in case of success, else 0
 sub createAndChownDir {
     my ($self, $user, $dir) = @_;
     
-    if ( $dir eq '/' ||
-         $dir eq '/usr' ||
-         $dir eq '/var' ||
-         $dir eq '/tmp' ||
-         $dir eq '/opt' ) {
+    if ( defined($forbiddenDirs{$dir}) ) {
       $self->error("$dir is a system directory and cannot be used as a BDII-specific direcotory."); 
-      return 1;      
+      return 0;      
     }
 
-    $self->createDir($dir);
+    unless ( $self->createDir($dir) ) {
+      return 1;
+    };
   
     my ($uid,$gid) = (getpwnam($user))[2,3];
     unless ( defined($uid) ) {
       $self->error("Failed to retrieved uid for user $user");
-      return 1;
+      return 0;
     }
     unless ( defined($gid) ) {
       $self->error("Failed to retrieved gid for user $user");
-      return 1;
+      return 0;
     }
     
-    $self->chownDir($uid,$gid,$dir);
+    unless ( $self->chownDir($uid,$gid,$dir) ) {
+      return 1;
+    };
+    
+    return 0;
 }
 
+# Create a directory.
+# Returns 1 in case of success, else 0
 sub createDir {
     my ($self, $dir) = @_;
 
@@ -308,19 +334,23 @@ sub createDir {
       } else {
         $self->error("Failed to create directory $dir");
       }
-      return 1;
+      return 0;
     }
+    
+    return 1;
 }
 
 # Change ownership of a directory and its contents, recursively
+# Returns 1 in case of success, else 0
 sub chownDir {
   my ($self, $uid, $gid, $dir) = @_;
   if ( @_ != 4 ) {
     $self->error('chownDir method requires 3 argments');
-    return 1;
+    return 0;
   }
   unless ( defined($dir) && (length($dir) > 0) ) {
     $self->error('directory name not specified');
+    return 0;
   }
  
   my @files = glob("$dir/*");
@@ -333,8 +363,11 @@ sub chownDir {
       };
     } else {
       $self->debug(2,"$file is neither a directory nor a file. Ignoring...");
+      return 0;
     }
   }
+  
+  return 1;
 }
 
 1;      # Required for PERL modules
