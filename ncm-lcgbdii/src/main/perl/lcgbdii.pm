@@ -46,7 +46,7 @@ sub Configure($$@) {
 
     # Retrieve BDII working directory and create/update owner
     # Create the directory if necessary.
-    my $varDir = dirname($lcgbdii_config->{varDir});
+    my $varDir = $lcgbdii_config->{varDir};
     $self->createAndChownDir($user,$varDir);
     
 
@@ -268,8 +268,18 @@ sub quote {
 
 # Create a directory if it doesn't exist and change ownership
 # of its contents recursively.
+# This method also checks that the directory is dedicated to BDII and is
+# not one of the standard directories.
 sub createAndChownDir {
     my ($self, $user, $dir) = @_;
+    
+    if ( $dir eq '/' ||
+         $dir eq '/usr' ||
+         $dir eq '/var' ||
+         $dir eq '/tmp' ||
+         $dir eq '/opt' ) {
+      $self->error("$dir is a system directory and cannot be used as a BDII-specific direcotory.");       
+    }
 
     $self->createDir($dir);
   
@@ -318,7 +328,7 @@ sub chownDir {
       $self->debug(1,"Updating $file owner to uid=$uid, gid=$gid");
       chown($uid,$gid,$file);
       if ( -d $file && ($file ne $dir) ) {
-        chownDir ($file);
+        $self->chownDir ($file);
       };
     } else {
       $self->debug(2,"$file is neither a directory nor a file. Ignoring...");
