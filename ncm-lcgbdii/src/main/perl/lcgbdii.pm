@@ -341,7 +341,8 @@ sub createDir {
 }
 
 # Change ownership of a directory and its contents, recursively
-# Returns 1 in case of success, else 0
+# This method also checks that the directory/file is not one of the standard directories.
+# Returns 1 in case of success, else 0.
 sub chownDirAndChildren {
   my ($self, $uid, $gid, $file) = @_;
   if ( @_ != 4 ) {
