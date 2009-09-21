@@ -10,17 +10,17 @@ include { 'quattor/schema' };
 include { 'pan/types' };
 
 type structure_apel_db_delete_processor = {
-	'cleanAll' : string with match(self, 'yes|no')
+	'cleanAll' : string with match(SELF, 'yes|no')
 };
 
 type structure_apel_cpu_processor = {
 	'GIIS' ? type_hostname
-	'DefaultCPUSpec' ? string with match(self, '^\d+:\d+$')
+	'DefaultCPUSpec' ? string with match(SELF, '^\d+:\d+$')
 };
 
 type structure_apel_event_log_processor = {
-	'searchSubDirs' ? string with match(self, 'yes|no')
-	'reprocess' ? string with match(self, 'yes|no')
+	'searchSubDirs' ? string with match(SELF, 'yes|no')
+	'reprocess' ? string with match(SELF, 'yes|no')
 	'Dir' : string
 	'ExtraFile' ? string[]
 	'Timezone' ? string
@@ -28,8 +28,8 @@ type structure_apel_event_log_processor = {
 
 type structure_apel_gk_log_processor = {
 	'SubmitHost' : type_hostname
-	'searchSubDirs' ? string with match(self, 'yes|no')
-	'reprocess' ? string with match(self, 'yes|no')
+	'searchSubDirs' ? string with match(SELF, 'yes|no')
+	'reprocess' ? string with match(SELF, 'yes|no')
 	'GKLogs' : string[]
 	'MessageLogs' : string[]
 };
@@ -38,22 +38,25 @@ type structure_apel_blahd_log_processor = {
 	'SubmitHost' : type_hostname
 	'BlahdLogPrefix' : string
 	'BlahdLogDir' : string[]
-	'searchSubDirs' : string with match(self, 'yes|no')
-	'reprocess' : string with match(self, 'yes|no')
+	'searchSubDirs' : string with match(SELF, 'yes|no')
+	'reprocess' : string with match(SELF, 'yes|no')
 };
 
 
 type structure_apel_join_processor = {
-	'publishGlobalUserName' : string with match(self, 'yes|no')
-	'Republish' : string with match(self, 'all|missing|nothing')
+	'publishGlobalUserName' : string with match(SELF, 'yes|no')
+	'Republish' : string with match(SELF, 'all|missing|nothing')
 };
 
 type structure_apel_file = {
-	'enableDebugLogging' ? string with match(self, 'yes|no')
-	'inspectTables' ? string with match(self, "yes|no")
+	'enableDebugLogging' ? string with match(SELF, 'yes|no')
+	'inspectTables' ? string with match(SELF, "yes|no")
 	'DBURL' : string
 	'DBUsername' : string
 	'DBPassword' : string
+        # Do not enforce a default for publishLimit in schema as this
+        # option is not supported by old version of publisher
+	'publishLimit' ? long
 	'SiteName' : string
 	'DBDeleteProcessor' ? structure_apel_db_delete_processor
 	'CPUProcessor' ? structure_apel_cpu_processor
@@ -69,4 +72,4 @@ type ${project.artifactId}_component = {
 	'configFiles' ? structure_apel_file{}
 };
 
-bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
+bind '/software/components/apel' = ${project.artifactId}_component;

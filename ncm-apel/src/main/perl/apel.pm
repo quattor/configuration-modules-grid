@@ -13,6 +13,9 @@ use vars qw(@ISA $EC);
 $EC=LC::Exception::Context->new->will_store_all;
 use NCM::Check;
 
+use LC::Check;
+use Encode qw(encode_utf8);
+
 use File::Path;
 use File::Basename;
 
@@ -30,6 +33,7 @@ sub Configure($$@) {
     my $base = "/software/components/apel";
 
     # Loop over all of the files.  (Each key is the encoded file name.)
+    # Ensure that the file is created with only user read and write access.
     if ($config->elementExists("$base/configFiles")) {
 	my $fileElement = $config->getElement("$base/configFiles");
 	while ($fileElement->hasNextElement()) {
@@ -38,27 +42,17 @@ sub Configure($$@) {
 	    my $path = "$base/configFiles/" . ($element->getName());
 	    my $contents = $self->createContents($config,$path);
 	    if (defined($contents)) {
-
-		# Ensure that the directory exists.
-		my $dir = dirname($name);
-		unless (-d $dir) {
-		    mkpath($dir, 0, 0755);
-		}
-		unless (-d $dir) {
-		    $self->error("can't create directory ($dir)");
-		    next;
-		}
-
-		# Write out the file.  This contains a database password.
-		# Ensure that the file is created with only user read and
-		# write access.
-		my $oumask = umask;
-		umask(0177);
-		open CONFIG, ">", "$name";
-		print CONFIG $contents;
-		close CONFIG;
-		$self->info("updated $name");
-		umask($oumask);
+              $self->info("Checking APEL configuration ($name)...");
+              my $changes = LC::Check::file($name,
+                                         backup   => ".apel",
+                                         contents => encode_utf8($contents),
+                                         mode     => '0400',
+                                         owner    => 'root',
+                                        );
+              if ( $changes < 0 ) {
+                $self->error("Error updating $name");
+                return(1);
+              }
 	    }
 	}
     }
@@ -85,6 +79,10 @@ sub createContents {
 	if ($config->elementExists("$path/inspectTables")) {
 		$inspectTables = $config->getValue("$path/inspectTables");
 	}
+    my $publishLimit;
+    if ($config->elementExists("$path/publishLimit")) {
+		$publishLimit = $config->getValue("$path/publishLimit");
+    }
     my $dbURL = $config->getValue("$path/DBURL");
     my $dbUser = $config->getValue("$path/DBUsername");
     my $dbPass = $config->getValue("$path/DBPassword");
@@ -100,6 +98,11 @@ sub createContents {
   <SiteName>$siteName</SiteName>
 EOF
 ;
+
+    # Check if publish limit has been specified
+    if ( defined($publishLimit) ) {
+        $contents .= "<Limit>".$publishLimit."</Limit>\n";
+    }
 
     # Check for the DBDeleteProcessor.
     $base = "$path/DBDeleteProcessor";
