@@ -101,7 +101,7 @@ EOF
 
     # Check if publish limit has been specified
     if ( defined($publishLimit) ) {
-        $contents .= "<Limit>".$publishLimit."</Limit>\n";
+        $contents .= "  <Limit>".$publishLimit."</Limit>\n";
     }
 
     # Check for the DBDeleteProcessor.
