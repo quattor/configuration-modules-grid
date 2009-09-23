@@ -43,7 +43,7 @@ type ${project.artifactId}_component = {
   'logLevel'      : string = "ERROR" with match(SELF,'ERROR|WARNING|INFO|DEBUG')
 
   'schemaFile'    : string = '/opt/bdii/etc/schemas'
-  'schemas'       : string[]
+  'schemas'       ? string[]
 
   'port'          ? type_port
   'portRead'      ? type_port

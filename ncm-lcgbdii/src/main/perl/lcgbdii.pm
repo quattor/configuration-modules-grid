@@ -158,40 +158,46 @@ sub Configure($$@) {
     chown((getpwnam($user))[2,3], glob($fname));
 
 
-    #########################
-    # Build the schema file #
-    #########################
+    ######################################
+    # Build the schema file if requested #
+    ######################################
     
-    # The schema file location.
-    unless ( defined($lcgbdii_config->{schemaFile}) && defined($lcgbdii_config->{schemas})  ) {
-        $self->error("BDII schema specification missing");
-        return 1;
+    if ( defined($lcgbdii_config->{schemas}) && (length(@{$lcgbdii_config->{schemas}}) > 0) ) {
+      # The schema file location.
+      unless ( defined($lcgbdii_config->{schemaFile}) ) {
+          $self->error("BDII schema file name not specified");
+          return 1;
+      }
+  
+      # Create the directory if necessary.
+      $dir = dirname($lcgbdii_config->{schemaFile});
+      $self->createDir($dir);
+  
+      # Create the contents.  Just a list of the schema files.
+      $contents = '';
+      foreach (@{$lcgbdii_config->{schemas}}) {
+          $contents .= $_ . "\n";
+      }
+  
+      # Now just create the new configuration file.  Be careful to save
+      # a backup of the previous file if necessary. 
+      $result = LC::Check::file($lcgbdii_config->{schemaFile},
+                                   backup => ".old",
+                                   contents => $contents,
+                                  );
+      if ( $result > 0 ) {
+          $self->log($lcgbdii_config->{schemaFile}." updated");
+          $changes += $result;
+      } elsif ( $result < 0 ) {
+          $self->error("Failed to update ".$lcgbdii_config->{schemaFile})
+      }
     }
 
-    # Create the directory if necessary.
-    $dir = dirname($lcgbdii_config->{schemaFile});
-    $self->createDir($dir);
 
-    # Create the contents.  Just a list of the schema files.
-    $contents = '';
-    foreach (@{$lcgbdii_config->{schemas}}) {
-        $contents .= $_ . "\n";
-    }
+    ################################    
+    # Restart the server if needed #
+    ################################    
 
-    # Now just create the new configuration file.  Be careful to save
-    # a backup of the previous file if necessary. 
-    $result = LC::Check::file($lcgbdii_config->{schemaFile},
-                                 backup => ".old",
-                                 contents => $contents,
-                                );
-    if ( $result > 0 ) {
-        $self->log($lcgbdii_config->{schemaFile}." updated");
-        $changes += $result;
-    } elsif ( $result < 0 ) {
-        $self->error("Failed to update ".$lcgbdii_config->{schemaFile})
-    }
-    
-    # Restart the server if needed
     if ( $changes ) {
       if (system("/sbin/service bdii stop")) {
           $self->warn("init.d lcg-bdii stop failed: ". $?);
