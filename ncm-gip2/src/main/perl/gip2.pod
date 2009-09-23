@@ -99,6 +99,12 @@ Account GIP runs under. Used to define user ownership of GIP directories and fil
 
 Default : none.
 
+=head2 /software/components/gip2/workDirs : list of strings (optional)
+
+List of working directories used by GIP that must be configured to be owned and writable by GIP user.
+
+Default : none.
+
 
 =head1 DEPENDENCIES
 

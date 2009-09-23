@@ -52,28 +52,31 @@ sub Configure($$@) {
     my $flavor =  $gip_config->{flavor};
 
     # Determine the base directory for the gip configuration.
-    my $baseDir = $gip_config->{basedir};
-
     # Ensure that this directory exists. 
+    my $baseDir = $gip_config->{basedir};
     if ( ! -d $baseDir ) {
       return 1;
     }
-
+    
     # Define the required subdirectories according to flavor.
     my $etcDir = "$baseDir/etc";
     my $ldifDir = "$baseDir/ldif";
     my $pluginDir = "$baseDir/plugin";
     my $providerDir = "$baseDir/provider";
-    my @workDirs = ("$baseDir/tmp");
+    my @workDirs = $gip_config->{workDirs};
     if ( $flavor eq 'glite' ) {
       $etcDir = "$baseDir/etc/gip";
       $ldifDir = "$etcDir/ldif";
       $pluginDir = "$etcDir/plugin";
       $providerDir = "$etcDir/provider";
-      @workDirs = ("$baseDir/var/tmp/gip",
-                   "$baseDir/var/lock/gip",
-                   "$baseDir/var/cache/gip",
-                  );
+      unless ( @workDirs ) {
+        @workDirs = ("varDir/tmp/gip",
+                     "varDir/lock/gip",
+                     "varDir/cache/gip",
+                    );        
+      }
+    } else {
+      @workDirs = ("baseDir/tmp") unless @workDirs;
     }
 
     # Build a list of all files managed by this component

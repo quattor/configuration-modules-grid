@@ -23,6 +23,7 @@ type ${project.artifactId}_component = {
         'group'             : string = 'root'
         'flavor'            : string = 'lcg' with match(SELF,'lcg|glite')
         'basedir'           : string
+        'workDirs'          ? string[]
         'staticInfoCmd'     : string
         'bdiiRestartAllowed' : boolean = true
 
