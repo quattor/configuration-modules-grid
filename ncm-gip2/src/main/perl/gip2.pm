@@ -63,20 +63,20 @@ sub Configure($$@) {
     my $ldifDir = "$baseDir/ldif";
     my $pluginDir = "$baseDir/plugin";
     my $providerDir = "$baseDir/provider";
-    my @workDirs = $gip_config->{workDirs};
+    my $workDirs = $gip_config->{workDirs};
     if ( $flavor eq 'glite' ) {
       $etcDir = "$baseDir/etc/gip";
       $ldifDir = "$etcDir/ldif";
       $pluginDir = "$etcDir/plugin";
       $providerDir = "$etcDir/provider";
-      unless ( @workDirs ) {
-        @workDirs = ("varDir/tmp/gip",
-                     "varDir/lock/gip",
-                     "varDir/cache/gip",
-                    );        
+      unless ( $workDirs ) {
+        $workDirs = ["$baseDir/tmp/gip",
+                     "$baseDir/lock/gip",
+                     "$baseDir/cache/gip",
+                    ];        
       }
     } else {
-      @workDirs = ("baseDir/tmp") unless @workDirs;
+      $workDirs = ["$baseDir/tmp"] unless $workDirs;
     }
 
     # Build a list of all files managed by this component
@@ -156,7 +156,7 @@ sub Configure($$@) {
     $rc = $self->createAndChownDir($user,$group,$ldifDir,0755);
     return 1 if ($rc);
 
-    for my $dir (@workDirs) {
+    for my $dir (@{$workDirs}) {
       $rc = $self->createAndChownDir($user,$group,$dir,0775);
       return 1 if ($rc);
     }
