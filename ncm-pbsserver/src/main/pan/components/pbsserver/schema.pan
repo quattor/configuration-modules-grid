@@ -81,6 +81,7 @@ type pbs_queue_attlist = {
     'resources_default.vmem' ? string
     'resources_default.pmem' ? string
     'resources_default.pvmem' ? string
+    'resources_default.neednodes' ? string
     'acl_group_enable'       ? boolean
     'acl_groups'             ? string
     'acl_host_enable'        ? boolean
