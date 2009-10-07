@@ -61,7 +61,6 @@ sub Configure($$) {
   }
   $contents = substr($contents, 0, - 1); 
   $contents  .= "\n";
-  $contents  .= $servers_string . "\n";
   $contents  .= $cache_mem . "\n";
   $contents  .= $cache_dir . "\n"; 
 
