@@ -48,6 +48,7 @@ type ${project.artifactId}_component_type = {
     "checkpoint_script" ? string
     "restart_script" ? string
     "checkpoint_run_exe" ? string
+    "remote_checkpoint_dirs" ? string
 };
 
 

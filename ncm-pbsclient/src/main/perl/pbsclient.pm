@@ -28,7 +28,7 @@ my ($pbsdir)="/var/spool/pbs";
 my ($pbsmomdir)="/var/spool/pbs/mom_priv";
 my ($pbsinitscript)="/etc/init.d/pbs";
 my ($masterlist, $restrictedlist, $logevent, $tmpdir, %resources);
-my ($checkpoint_interval,$checkpoint_script,$restart_script,$checkpoint_run_exe);
+my ($checkpoint_interval,$checkpoint_script,$restart_script,$checkpoint_run_exe,$remote_checkpoint_dirs);
 my ($resources, $cpuf, $wallf, $idealload, $maxload);
 my (%usecp, $prologalarm, $behaviour, $nodecheckscript);
 my ($nodecheckinterval);
@@ -225,6 +225,11 @@ sub Configure {
                   "/software/components/pbsclient/checkpoint_run_exe",0,
                   \$checkpoint_run_exe,undef);
 
+  # remote_checkpoint_dirs
+  $self->retrieve($config,
+                  "/software/components/pbsclient/remote_checkpoint_dirs",0,
+                  \$remote_checkpoint_dirs,undef);
+
 
 
   # additional usecp directives, list of lists(2)
@@ -289,6 +294,8 @@ sub Configure {
   $restart_script and $contents .= '$restart_script ' . $restart_script . "\n";
 
   $checkpoint_run_exe and $contents .= '$checkpoint_run_exe ' . $checkpoint_run_exe . "\n";
+
+  $remote_checkpoint_dirs and $contents .= '$remote_checkpoint_dirs ' . $remote_checkpoint_dirs . "\n";
 
 
   if ( $behaviour eq "Torque" ) { # add a $pbsservername line
