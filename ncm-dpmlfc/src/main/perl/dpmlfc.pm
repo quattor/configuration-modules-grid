@@ -668,14 +668,14 @@ sub DPMConfigurePool () {
   if ( @_ > 0 ) {
     $pool_name = shift;
   } else {
-    $self->error("$function_name : pool name argument missing.");
+    $self->error("$function_name: pool name argument missing.");
     return (1);
   }
   my %pool_args;
   if ( @_ > 0 ) {
     %pool_args = shift;
   } else {
-    $self->error("$function_name : pool properties argument missing.");
+    $self->error("$function_name: pool properties argument missing.");
     return (1);
   }
     
@@ -697,7 +697,7 @@ sub NSCheckDir () {
   if ( @_ > 0 ) {
     $directory = shift;
   } else {
-    $self->error("$function_name : directory argument missing.");
+    $self->error("$function_name: directory argument missing.");
     return (1);
   }
   
@@ -713,14 +713,14 @@ sub NSCheckDir () {
   }
   $cmd .= ' '.$directory;
 
-  $self->debug(1,"$function_name : checking if directory $directory exists in $product namespace");
+  $self->debug(1,"$function_name: checking if directory $directory exists in $product namespace");
 
   my $errormsg='';
   my $status = $self->execCmd($cmd, \$errormsg);
   if ( $status ) {
-    $self->debug(1,"$function_name : directory $directory not found ($cmd status=$status, error=$errormsg)");
+    $self->debug(1,"$function_name: directory $directory not found ($cmd status=$status, error=$errormsg)");
   } else {
-    $self->debug(1,"$function_name : directory $directory found");
+    $self->debug(1,"$function_name: directory $directory found");
   }
   
   return($status);
@@ -739,7 +739,7 @@ sub NSRootConfig () {
 
   my $root = $self->NSGetRoot();
 
-  $self->debug(1,"$function_name : checking NS root ($root) configuration for $product");
+  $self->debug(1,"$function_name: checking NS root ($root) configuration for $product");
 
   # Check if root already exists.
   # Do it recursively starting from DPM root up to top level parent.
@@ -754,9 +754,9 @@ sub NSRootConfig () {
     for (my $j=1; $j<=$tok_ok; $j++) {
       $path .= '/'.$root_toks[$j];
     }
-    $self->debug(2,"$function_name : checking $path");
+    $self->debug(2,"$function_name: checking $path");
     if ( $self->NSCheckDir($path) ) {
-      $self->debug(1,"$function_name : $path missing");
+      $self->debug(1,"$function_name: $path missing");
       $ns_root_ok = 0;
     } else {
       last;
@@ -805,7 +805,7 @@ sub NSConfigureVO () {
   if ( @_ > 0 ) {
     $vo_name = shift;
   } else {
-    $self->error("$function_name : VO name argument missing.");
+    $self->error("$function_name: VO name argument missing.");
     return (1);
   }
   my %vo_args;
@@ -817,12 +817,12 @@ sub NSConfigureVO () {
 
   my $vo_home = $self->NSGetRoot().'/'.$vo_name;
 
-  $self->debug(1,"$function_name : checking VO $vo_name NS configuration ($vo_home) for $product");
+  $self->debug(1,"$function_name: checking VO $vo_name NS configuration ($vo_home) for $product");
 
   # Check if VO home already exists. Create and configure it if not.
 
   if ( $self->NSCheckDir($vo_home) ) {
-    $self->debug(1,"$function_name : $vo_home missing");
+    $self->debug(1,"$function_name: $vo_home missing");
 
     my $gid_option = '';
     if ( defined($vo_args{gid}) ) {
@@ -866,7 +866,7 @@ sub NSGetRoot () {
   
   my $product = $self->getCurrentProduct();
 
-  $self->debug(2,"$function_name : returning namespace root for $product");
+  $self->debug(2,"$function_name: returning namespace root for $product");
 
   my $root;
   if ( $product eq 'DPM' ) {
@@ -889,7 +889,7 @@ sub execNSCmd () {
   if ( @_ > 0 ) {
     $ns_cmd = shift;
   } else {
-    $self->error("$function_name : command argument missing.");
+    $self->error("$function_name: command argument missing.");
     return (1);
   }
   
@@ -905,14 +905,14 @@ sub execNSCmd () {
   }
   $cmd .= $ns_cmd;
 
-  $self->debug(1,"$function_name : execution command '$cmd'");
+  $self->debug(1,"$function_name: execution command '$cmd'");
 
   my $errormsg='';
   my $status = $self->execCmd($cmd, \$errormsg);
   if ( $status ) {
-    $self->debug(1,"$function_name : error returned by executed command ($cmd status=$status, error=$errormsg)")
+    $self->debug(1,"$function_name: error returned by executed command ($cmd status=$status, error=$errormsg)")
   } else {
-    $self->debug(2,"$function_name : command completed successfully")    
+    $self->debug(2,"$function_name: command completed successfully")    
   }
   
   return($status);
@@ -931,7 +931,7 @@ sub execCmd () {
   if ( @_ > 0 ) {
     $cmd = shift;
   } else {
-    $self->error("$function_name : command argument missing.");
+    $self->error("$function_name: command argument missing.");
     return (1);
   }
   my $error;
@@ -939,7 +939,7 @@ sub execCmd () {
     $error = shift;
   }
   
-  $self->debug(1,"$function_name : executing command '$cmd'");
+  $self->debug(1,"$function_name: executing command '$cmd'");
 
   my ($verb, @args) = split /\s+/, $cmd;
   if ( ! -x $verb ) {
@@ -951,12 +951,12 @@ sub execCmd () {
   my $status = $? >> 8;
 
   if ( $status ) {
-    $self->debug(1,"$function_name : commad $verb failed (status=$status, error=".join("",@errormsg).")");
+    $self->debug(1,"$function_name: commad $verb failed (status=$status, error=".join("",@errormsg).")");
     if ( defined($error) ) {
       $$error = join("",@errormsg);
     }
   } else {
-    $self->debug(2,"$function_name : command $verb completed successfully")    
+    $self->debug(2,"$function_name: command $verb completed successfully")    
   }
   
   return($status);
@@ -974,12 +974,12 @@ sub defineCurrentProduct() {
   
   my $product = shift;
   unless ( $product ) {
-    $self->error("$function_name : 'product' argument missing");
+    $self->error("$function_name: 'product' argument missing");
     return 0;
   }
 
   $self->{CURRENTPRODUCT} = $product;
-  $self->debug(1,"$function_name : product context defined to $self->{CURRENTPRODUCT}");
+  $self->debug(1,"$function_name: product context defined to $self->{CURRENTPRODUCT}");
 }
 
 
@@ -991,7 +991,7 @@ sub getCurrentProduct() {
   my $function_name = "getCurrentProduct";
   my $self = shift;
   
-  $self->debug(2,"$function_name : returning product ($self->{CURRENTPRODUCT})");
+  $self->debug(2,"$function_name: returning product ($self->{CURRENTPRODUCT})");
   return $self->{CURRENTPRODUCT};
 }
 
@@ -1007,7 +1007,7 @@ sub hostFQDN () {
   
   my $host = shift;
   unless ( $host ) {
-    $self->error("$function_name : 'host' argument missing");
+    $self->error("$function_name: 'host' argument missing");
     return 0;
   }
 
@@ -1043,7 +1043,7 @@ sub checkSecurity () {
     $gridmapdir = $gridmapdir_def;
   }
   if ( -d $gridmapdir ) {
-    $self->debug(1,"$function_name : Checking permission on $gridmapdir");
+    $self->debug(1,"$function_name: Checking permission on $gridmapdir");
     $changes = LC::Check::status($gridmapdir,
          group => $daemon_group,
          mode => 01774
@@ -1063,7 +1063,7 @@ sub checkSecurity () {
   my $host_hostcert = $grid_security_dir."/".$hostcert;
   my $do_keycert_config = 1;
 
-  $self->debug(1,"$function_name : Checking existence of host key and certifiate");
+  $self->debug(1,"$function_name: Checking existence of host key and certifiate");
   unless ( -f $host_hostkey ) {
     $self->error("Host key ($host_hostkey) not found. Check your configuration");
     $do_keycert_config = 0;
@@ -1074,7 +1074,7 @@ sub checkSecurity () {
   }
 
   if ( $do_keycert_config ) {
-    $self->debug(1,"$function_name : Checking existence and permission of $daemon_security_dir");
+    $self->debug(1,"$function_name: Checking existence and permission of $daemon_security_dir");
     $changes = LC::Check::directory($daemon_security_dir
          );
     unless (defined($changes)) {
@@ -1091,7 +1091,7 @@ sub checkSecurity () {
       return 1;
     }
 
-    $self->debug(1,"$function_name : Copying host certificate ($hostcert) and key ($hostkey) to $daemon_security_dir");
+    $self->debug(1,"$function_name: Copying host certificate ($hostcert) and key ($hostkey) to $daemon_security_dir");
     my $daemon_hostkey .= $daemon_security_dir."/".lc($product)."key.pem";
     $changes = LC::Check::file($daemon_hostkey,
              source => $host_hostkey,
@@ -1128,12 +1128,12 @@ sub setGlobalOption () {
 
   my $option = shift;
   unless ( $option ) {
-    $self->error("$function_name : 'option' argument missing");
+    $self->error("$function_name: 'option' argument missing");
     return 0;
   }
   my $value = shift;
   unless ( defined($value) ) {
-    $self->error("$function_name : 'value' argument missing");
+    $self->error("$function_name: 'value' argument missing");
     return 0;
   }
 
@@ -1147,7 +1147,7 @@ sub setGlobalOption () {
 
   $self->{$options_set}->{$option} = $value;
 
-  $self->debug(2,"$function_name : global option '$option' set to '$value' for $product");
+  $self->debug(2,"$function_name: global option '$option' set to '$value' for $product");
 
 }
 
@@ -1162,7 +1162,7 @@ sub getGlobalOption () {
 
   my $option = shift;
   unless ( $option ) {
-    $self->error("$function_name : 'option' argument missing");
+    $self->error("$function_name: 'option' argument missing");
     return 0;
   }
 
@@ -1170,9 +1170,9 @@ sub getGlobalOption () {
 
   my $options_set = "GLOBALOPTS".$product;
   if ( defined($self->{$options_set}->{$option}) ) {
-    $self->debug(2,"$function_name : returning global option $option (value=$self->{$options_set}->{$option}) for $product");
+    $self->debug(2,"$function_name: returning global option $option (value=$self->{$options_set}->{$option}) for $product");
   } else {
-    $self->debug(2,"$function_name : global option '$option' not found for $product");
+    $self->debug(2,"$function_name: global option '$option' not found for $product");
   }
   return $self->{$options_set}->{$option};
 
@@ -1189,7 +1189,7 @@ sub loadGlobalOption () {
 
   my $option = shift;
   unless ( $option ) {
-    $self->error("$function_name : 'option' argument missing");
+    $self->error("$function_name: 'option' argument missing");
     return 0;
   }
 
@@ -1216,7 +1216,7 @@ sub getDbOption () {
 
   my $option = shift;
   unless ( $option ) {
-    $self->error("$function_name : 'option' argument missing");
+    $self->error("$function_name: 'option' argument missing");
     return 0;
   }
 
@@ -1249,7 +1249,7 @@ sub getDaemonUser () {
   my $daemon_user = $self->getGlobalOption("user");
   unless ( $daemon_user ) {
     $daemon_user = $users_def{$product};
-    $self->debug(1,"$function_name : daemon user set to default value ($daemon_user)");
+    $self->debug(1,"$function_name: daemon user set to default value ($daemon_user)");
   }
  
   return $daemon_user;
@@ -1268,7 +1268,7 @@ sub getDaemonGroup () {
   my $daemon_group = $self->getGlobalOption("group");
   unless ( $daemon_group ) {
     $daemon_group = $self->getDaemonUser();
-    $self->debug(1,"$function_name : daemon group set to default value ($daemon_group)");
+    $self->debug(1,"$function_name: daemon group set to default value ($daemon_group)");
   }
 
   return $daemon_group;
@@ -1292,10 +1292,10 @@ sub getDbAdminServer () {
     $self->error("Database server not defined");
   }
   if ( $db_admin_server eq $this_host_full ) {
-    $self->debug(2,"$function_name : database server is current host. Changing management server to localhost");
+    $self->debug(2,"$function_name: database server is current host. Changing management server to localhost");
     $db_admin_server = "localhost";
   } else {
-    $self->debug(2,"$function_name : database management server is $db_admin_server");
+    $self->debug(2,"$function_name: database management server is $db_admin_server");
   }
   return $db_admin_server;
 }
@@ -1313,7 +1313,7 @@ sub mysqlExecCmd () {
 
   my $command = shift;
   unless ( $command ) {
-    $self->error("$function_name : 'command' argument missing");
+    $self->error("$function_name: 'command' argument missing");
     return 0;
   }
 
@@ -1321,7 +1321,7 @@ sub mysqlExecCmd () {
   my $db_admin_pwd = $self->getGlobalOption("dbadminpwd");
   my $db_admin_server = $self->getDbAdminServer();
 
-  $self->debug(2,"$function_name : executing MySQL command '$command' on $db_admin_server (user:$db_admin_user, pwd:$db_admin_pwd)");
+  $self->debug(2,"$function_name: executing MySQL command '$command' on $db_admin_server (user:$db_admin_user, pwd:$db_admin_pwd)");
 
   my $status = system("mysql -h $db_admin_server -u '$db_admin_user' --password='$db_admin_pwd' $command > /dev/null 2>&1");
 
@@ -1347,7 +1347,7 @@ sub mysqlCheckAdminPwd() {
   my $db_admin_server = $self->getDbAdminServer();
   my $status = 1;  # Assume failure by default
 
-  $self->debug(1,"$function_name : Checking MySQL administrator on $db_admin_server (user=$db_admin_user, pwd=$db_admin_pwd)");
+  $self->debug(1,"$function_name: Checking MySQL administrator on $db_admin_server (user=$db_admin_user, pwd=$db_admin_pwd)");
 
   # First check if administrator account is working without password (try to use mysql dabase)
   my $admin_pwd_saved = $db_admin_pwd;
@@ -1359,13 +1359,13 @@ sub mysqlCheckAdminPwd() {
     # First check if administrator password is working (just trying to connect)
     $status = $self->mysqlExecCmd("</dev/null");
   } else {
-    $self->debug(1,"$function_name : MySQL administrator ($db_admin_server) password not set on $db_admin_server");
+    $self->debug(1,"$function_name: MySQL administrator ($db_admin_server) password not set on $db_admin_server");
     $status = 1;  # Force initialization of password
   }
 
   # If it fails, try to change it assuming a password has not yet been set
   if ( $status ) {
-    $self->debug(1,"$function_name : trying to set administrator password on $db_admin_server");
+    $self->debug(1,"$function_name: trying to set administrator password on $db_admin_server");
     
 #    # if oldpassword is set then try and use it
 #    if ($db_admin_pwd_old) {
@@ -1379,7 +1379,7 @@ sub mysqlCheckAdminPwd() {
     }
 #	  $self->setGlobalOption("dbadminpwd", $admin_pwd_saved);
   } else {
-    $self->debug(1,"$function_name : MySQL administrator password succeeded");
+    $self->debug(1,"$function_name: MySQL administrator password succeeded");
   }
 
   return $status;
@@ -1435,7 +1435,7 @@ sub mysqlAddUser() {
   
   my $status = 0;
   for my $host (@db_hosts) {
-    $self->debug(1,"$function_name : Adding MySQL connection account for $product ($db_user on $host)");
+    $self->debug(1,"$function_name: Adding MySQL connection account for $product ($db_user on $host)");
     $status = $self->mysqlExecCmd("--exec \"grant $db_rights on *.* to '$db_user'\@'$host' identified by '$db_pwd' with grant option\"");
     if ( $status ) {
       # Error already signaled by caller
@@ -1445,7 +1445,7 @@ sub mysqlAddUser() {
     
     # Backward compatibility for pre-4.1 clients, like perl-DBI-1.32
     if ( $short_pwd_hash ) {
-      $self->debug(1,"$function_name : Defining password short hash for $db_user on $host)");
+      $self->debug(1,"$function_name: Defining password short hash for $db_user on $host)");
       $status = $self->mysqlExecCmd("--exec \"set password for '$db_user'\@'$host' = OLD_PASSWORD('$db_pwd')\"");
       if ( $status ) {
         # Error already signaled by caller
@@ -1472,27 +1472,27 @@ sub mysqlAddDb() {
 
   my $database = shift;
   unless ( $database ) {
-    $self->error("$function_name : 'database' argument missing");
+    $self->error("$function_name: 'database' argument missing");
     return 0;
   }
   my $script = shift;
   unless ( $script ) {
-    $self->error("$function_name : 'script' argument missing");
+    $self->error("$function_name: 'script' argument missing");
     return 0;
   }
 
   my $product = $self->getCurrentProduct();
   my $status = 1;  # Assume failure by default
 
-  $self->debug(1,"$function_name : checking if database $database for $product already exists");
+  $self->debug(1,"$function_name: checking if database $database for $product already exists");
   $status = $self->mysqlExecCmd("--exec \"use $database\"");
 
 
   if ( $status ) {
-    $self->debug(1,"$function_name : creating database $database for $product");
+    $self->debug(1,"$function_name: creating database $database for $product");
     $status = $self->mysqlExecCmd("< $script");
   } else {
-    $self->debug(1,"$function_name : database $database found");
+    $self->debug(1,"$function_name: database $database found");
   }
 
   return $status;
@@ -1507,7 +1507,7 @@ sub initDb () {
   my $self = shift;
 
   my $product = $self->getCurrentProduct();
-  $self->debug(1,"$function_name : Checking database configuration for $product");
+  $self->debug(1,"$function_name: Checking database configuration for $product");
 
   my $db_config_base = $base."/options/".lc($product)."/db";
   unless ( $config->elementExists("$db_config_base") ) {
@@ -1531,7 +1531,7 @@ sub initDb () {
   my $db_user = $self->getDbOption("user");
   unless ( $db_user ) {
     $db_user = $daemon_user;
-    $self->debug(1,"$function_name : DB user default used ($db_user)");
+    $self->debug(1,"$function_name: DB user default used ($db_user)");
   }
   $self->setGlobalOption("dbuser",$db_user);
 
@@ -1545,7 +1545,7 @@ sub initDb () {
   my $db_server = $self->getDbOption("server");
   unless ( $db_server ) {
     $db_server = $this_host_full;
-    $self->debug(1,"$function_name : DB server not configured. Using $db_server");
+    $self->debug(1,"$function_name: DB server not configured. Using $db_server");
   }
   $db_server = $self->hostFQDN($db_server);
   if ( exists($db_servers{$db_server}) ) {
@@ -1566,7 +1566,7 @@ sub initDb () {
     $db_admin_user = $self->getDbOption("adminuser");
     unless ( $db_admin_user ) {
       $db_admin_user = "root";
-      $self->debug(1,"$function_name : DB admin user set to default ($db_admin_user)");
+      $self->debug(1,"$function_name: DB admin user set to default ($db_admin_user)");
     }
     $self->setGlobalOption("dbadminuser",$db_admin_user);
   } else {
@@ -1585,7 +1585,7 @@ sub initDb () {
     $db_info_user = $self->getDbOption("infoUser");
     unless ( $db_info_user ) {
       $db_info_user = "dminfo";
-      $self->debug(1,"$function_name : DB info user set to default ($db_info_user)");
+      $self->debug(1,"$function_name: DB info user set to default ($db_info_user)");
     }
     $self->setGlobalOption("dbinfouser",$db_info_user);
     $db_info_pwd = $self->getDbOption("infoPwd");
@@ -1630,7 +1630,7 @@ sub initDb () {
     next unless $database;
     my $db_creation_script = $mysql_db_scripts{$role};
     unless ( $database ) {
-      $self->debug(1,"$function_name : No script to create database $database for $product. Database configuration skipped");
+      $self->debug(1,"$function_name: No script to create database $database for $product. Database configuration skipped");
       $db_config_done = 0;
       last MYSQL;
     }
@@ -1700,17 +1700,17 @@ sub getRoleServices () {
 
   my $role = shift;
   unless ( $role ) {
-    $self->error("$function_name : 'role' argument missing");
+    $self->error("$function_name: 'role' argument missing");
     return 0;
   }
 
-  $self->debug(1,"$function_name : retrieving list of services associated with role $role");
+  $self->debug(1,"$function_name: retrieving list of services associated with role $role");
 
   my @services;
 
   my $service_list = $services{$role};
   unless ( $service_list ) {
-    $self->error("$function_name : no services associated with role '$role' (internal error)");
+    $self->error("$function_name: no services associated with role '$role' (internal error)");
     return @services;
   }
 
@@ -1720,7 +1720,7 @@ sub getRoleServices () {
 
   (my $role_flag, my $roles) = split /:/, $service_list;
   if ( ($role_flag ne "role") && $roles ) {
-    $self->error("$function_name : invalid flag ($role_flag) in list of services associated with role $role");
+    $self->error("$function_name: invalid flag ($role_flag) in list of services associated with role $role");
   }
 
   if ( $roles ) {
@@ -1734,10 +1734,10 @@ sub getRoleServices () {
       $enabled_services{$service}="";
     }
   } else {
-    $self->error("$function_name : no services associated with role '$role' (internal error)");
+    $self->error("$function_name: no services associated with role '$role' (internal error)");
   }
       } else {
-  $self->debug(1,"$function_name : host doesn't have role $role");
+  $self->debug(1,"$function_name: host doesn't have role $role");
       }
     }
     @services = keys %enabled_services;
@@ -1745,7 +1745,7 @@ sub getRoleServices () {
     if ( $self->hostHasRoles($role) ) {
       @services = split /\s*,\s*/, $service_list;
     } else {
-      $self->debug(1,"$function_name : host doesn't have role $role");
+      $self->debug(1,"$function_name: host doesn't have role $role");
     }
   }
 
@@ -1767,13 +1767,13 @@ sub serviceRestartNeeded () {
 
   my $roles = shift;
   unless ( $roles ) {
-    $self->error("$function_name : 'roles' argument missing");
+    $self->error("$function_name: 'roles' argument missing");
     return 0;
   }
 
   my $list;
   unless ( $list = $self->getServiceRestartList() ) {
-    $self->debug(1,"$function_name : Creating list of service needed to be restarted");
+    $self->debug(1,"$function_name: Creating list of service needed to be restarted");
     $self->{SERVICERESTARTLIST} = {};
     $list = $self->getServiceRestartList();
   }
@@ -1782,13 +1782,13 @@ sub serviceRestartNeeded () {
   for my $role (@roles) {
     for my $service ($self->getRoleServices($role)) {
       unless ( exists(${$list}{$service}) ) {
-        $self->debug(1,"$function_name : adding '$service' to the list of service needed to be restarted");
+        $self->debug(1,"$function_name: adding '$service' to the list of service needed to be restarted");
         ${$list}{$service} = "";
       }
     }
   }
 
-  $self->debug(2,"$function_name : restart list = '".join(" ",keys(%{$list}))."'");
+  $self->debug(2,"$function_name: restart list = '".join(" ",keys(%{$list}))."'");
 }
 
 
@@ -1798,10 +1798,10 @@ sub getServiceRestartList () {
   my $self = shift;
 
   if ( defined($self->{SERVICERESTARTLIST}) ) {
-    $self->debug(2,"$function_name : restart list = ".join(" ",keys(%{$self->{SERVICERESTARTLIST}})));
+    $self->debug(2,"$function_name: restart list = ".join(" ",keys(%{$self->{SERVICERESTARTLIST}})));
     return $self->{SERVICERESTARTLIST};
   } else {
-    $self->debug(2,"$function_name : list doesn't exist");
+    $self->debug(2,"$function_name: list doesn't exist");
     return undef
   }
 
@@ -1818,11 +1818,11 @@ sub enableService () {
 
   my $service = shift;
   unless ( $service ) {
-    $self->error("$function_name : 'service' argument missing");
+    $self->error("$function_name: 'service' argument missing");
     return 0;
   }
 
-  $self->debug(1,"$function_name : checking if service $service is enabled");
+  $self->debug(1,"$function_name: checking if service $service is enabled");
 
   unless ( -f "/etc/rc.d/init.d/$service" ) {
     $self->error("Startup script not found for service $service");
@@ -1836,7 +1836,7 @@ sub enableService () {
       $self->error("Failed to enable service $service");
     }
   } else {
-    $self->debug(2,"$function_name : $service already enabled");
+    $self->debug(2,"$function_name: $service already enabled");
   }
 }
 
@@ -1850,7 +1850,7 @@ sub restartServices () {
   my $self = shift;
   my $global_status = 0;
   
-  $self->debug(1,"$function_name : restarting services affected by configuration changes");
+  $self->debug(1,"$function_name: restarting services affected by configuration changes");
 
   # Need to do stop+start as dpm daemon generally doesn't restart properly with
   # 'restart'. Try to restart even if stop failed (can be just the daemon is 
@@ -1858,7 +1858,7 @@ sub restartServices () {
   # Use system() rather than LC::Process::run because LC::Process::run doesn't
   # return start/stop status properly.
   if ( my $list = $self->getServiceRestartList() ) {
-    $self->debug(1,"$function_name : list of services to restart : ".join(" ",keys(%{$list})));
+    $self->debug(1,"$function_name: list of services to restart : ".join(" ",keys(%{$list})));
     for my $service (keys %{$list}) {
       $self->info("Restarting service $service");
       if (system("service $service stop > /dev/null 2>&1")) {
@@ -1869,7 +1869,7 @@ sub restartServices () {
       my $attempt = 10;
       my $status;
       while ( $attempt && ($status = system("service $service start > /dev/null 2>&1"))) {
-        $self->debug(1,"$function_name : $service startup failed (probably not shutdown yet). Retrying ($attempt attempts remaining)");
+        $self->debug(1,"$function_name: $service startup failed (probably not shutdown yet). Retrying ($attempt attempts remaining)");
         sleep 5;
         $attempt--;
       }
@@ -1912,7 +1912,7 @@ sub createRoleHostsList () {
 
   my $role = shift;
   unless ( $role ) {
-    $self->error("$function_name : 'role' argument missing");
+    $self->error("$function_name: 'role' argument missing");
     return 0;
   }
 
@@ -1921,7 +1921,7 @@ sub createRoleHostsList () {
   my $roles_hosts_list;
   unless ( $roles_hosts_list = $self->getRolesHostsList() ) {
     my $roles_hosts_list_name = $self->getRolesHostsListName();
-    $self->debug(1,"$function_name : Creating roles hosts list ($roles_hosts_list_name) for product $product");
+    $self->debug(1,"$function_name: Creating roles hosts list ($roles_hosts_list_name) for product $product");
     $roles_hosts_list = $self->{$roles_hosts_list_name} = {};
   }
   
@@ -1942,7 +1942,7 @@ sub getRolesHostsList () {
 
   # Check absence of other arguments (to avoid confusion with getRoleHostsList())
   if ( @_ ) {
-    $self->error("$function_name : too many arguments. May be confusion with getRoleHostList()");
+    $self->error("$function_name: too many arguments. May be confusion with getRoleHostList()");
     return 1;
   }
 
@@ -1962,7 +1962,7 @@ sub getRoleHostsList () {
 
   my $role = shift;
   unless ( $role ) {
-    $self->error("$function_name : 'role' argument missing");
+    $self->error("$function_name: 'role' argument missing");
     return 0;
   }
 
@@ -1994,17 +1994,17 @@ sub addHostInRole () {
 
   my $role = shift;
   unless ( $role ) {
-    $self->error("$function_name : 'role' argument missing");
+    $self->error("$function_name: 'role' argument missing");
     return 0;
   }
   my $host = shift;
   unless ( $host ) {
-    $self->error("$function_name : 'host' argument missing");
+    $self->error("$function_name: 'host' argument missing");
     return 0;
   }
   my $host_config = shift;
   unless ( $host_config ) {
-    $self->error("$function_name : 'host_config' argument missing");
+    $self->error("$function_name: 'host_config' argument missing");
     return 0;
   }
 
@@ -2015,7 +2015,7 @@ sub addHostInRole () {
   # If it doesn't exist yet, create a hosts list for this role
   my $role_hosts_list = $self->getRoleHostsList($role);
   unless ( $role_hosts_list ) {
-    $self->debug(1,"$function_name : creating host list for product $product role ".uc($role)." (product=$product)");
+    $self->debug(1,"$function_name: creating host list for product $product role ".uc($role)." (product=$product)");
     $role_hosts_list = $self->createRoleHostsList($role);
   }
 
@@ -2039,7 +2039,7 @@ sub hostHasRoles () {
 
   my $roles = shift;
   unless ( $roles ) {
-    $self->error("$function_name : 'roles' argument missing");
+    $self->error("$function_name: 'roles' argument missing");
     return 0;
   }
 
@@ -2049,9 +2049,9 @@ sub hostHasRoles () {
   for my $role (@roles) {
     my $role_hosts_list = $self->getRoleHostsList($role);
     if ( $role_hosts_list ) {
-      $self->debug(2,"$function_name : checking for role $role (Hosts list=$role_hosts_list)");
+      $self->debug(2,"$function_name: checking for role $role (Hosts list=$role_hosts_list)");
     } else {
-      $self->debug(2,"$function_name : no host for role $role");
+      $self->debug(2,"$function_name: no host for role $role");
     }
     next if ! exists($role_hosts_list->{$this_host_full});
     $role_found = 1;
@@ -2071,7 +2071,7 @@ sub getHostsList () {
 
   my $role = shift;
   unless ( $role ) {
-    $self->error("$function_name : 'role' argument missing");
+    $self->error("$function_name: 'role' argument missing");
     return 1;
   }
 
@@ -2102,16 +2102,16 @@ sub formatHostsList () {
 
   my $list = shift;
   unless ( $list ) {
-    $self->error("$function_name : 'list' argument missing");
+    $self->error("$function_name: 'list' argument missing");
     return 1;
   }
   my $list_fmt = shift;
   unless ( defined($list_fmt) ) {
-    $self->error("$function_name : 'list_fmt' argument missing");
+    $self->error("$function_name: 'list_fmt' argument missing");
     return 1;
   }
 
-  $self->debug(2,"$function_name : formatting host list (line fmt=$list_fmt)");
+  $self->debug(2,"$function_name: formatting host list (line fmt=$list_fmt)");
 
   # Duplicates may exist as result of a join. Checkt it.
   my @hosts = split /\s+/, $list;
@@ -2147,17 +2147,17 @@ sub formatConfigLine () {
 
   my $keyword = shift;
   unless ( $keyword ) {
-    $self->error("$function_name : 'keyword' argument missing");
+    $self->error("$function_name: 'keyword' argument missing");
     return 1;
   }
   my $value = shift;
   unless ( defined($value) ) {
-    $self->error("$function_name : 'value' argument missing");
+    $self->error("$function_name: 'value' argument missing");
     return 1;
   }
   my $line_fmt = shift;
   unless ( defined($line_fmt) ) {
-    $self->error("$function_name : 'line_fmt' argument missing");
+    $self->error("$function_name: 'line_fmt' argument missing");
     return 1;
   }
 
@@ -2175,10 +2175,10 @@ sub formatConfigLine () {
     $config_line =~ s/\s\s+/ /g;
     $config_line =~ s/\s+$//;
   } else {
-    $self->error("$function_name : unsupported line format");
+    $self->error("$function_name: unsupported line format");
   }
 
-  $self->debug(1,"$function_name : Configuration line : >>$config_line<<");
+  $self->debug(1,"$function_name: Configuration line : >>$config_line<<");
   return $config_line;
 }
 
@@ -2194,12 +2194,12 @@ sub getHostConfig () {
 
   my $role = shift;
   unless ( $role ) {
-    $self->error("$function_name : 'role' argument missing");
+    $self->error("$function_name: 'role' argument missing");
     return 1;
   }
   my $host = shift;
   unless ( $host ) {
-    $self->error("$function_name : 'host' argument missing");
+    $self->error("$function_name: 'host' argument missing");
     return 1;
   }
 
@@ -2226,7 +2226,7 @@ sub createRulesMatchesList () {
 
   my $config_rules = shift;
   unless ( $config_rules ) {
-    $self->error("$function_name : 'config_rules' argument missing");
+    $self->error("$function_name: 'config_rules' argument missing");
     return 1;
   }
 
@@ -2252,7 +2252,7 @@ sub getRuleMatches () {
 
   my $rule_id = shift;
   unless ( defined($rule_id) ) {
-    $self->error("$function_name : 'rule_id' argument missing");
+    $self->error("$function_name: 'rule_id' argument missing");
     return 1;
   }
 
@@ -2272,21 +2272,21 @@ sub addInRulesMatchesList () {
 
   my $rule_id = shift;
   unless ( defined($rule_id) ) {
-    $self->error("$function_name : 'rule_id' argument missing");
+    $self->error("$function_name: 'rule_id' argument missing");
     return 1;
   }
   my $line_num = shift;
   unless ( defined($line_num) ) {
-    $self->error("$function_name : 'line_num' argument missing");
+    $self->error("$function_name: 'line_num' argument missing");
     return 1;
   }
   my $line_fmt = shift;
   unless ( defined($line_fmt) ) {
-    $self->error("$function_name : 'line_fmt' argument missing");
+    $self->error("$function_name: 'line_fmt' argument missing");
     return 1;
   }
 
-  $self->debug(1,"$function_name : adding line $line_num (line fmt=$line_fmt) to rule $rule_id list");
+  $self->debug(1,"$function_name: adding line $line_num (line fmt=$line_fmt) to rule $rule_id list");
   my $list = $self->getRuleMatches($rule_id);
   my %line;
   $line{LINENUM} = $line_num;
@@ -2307,12 +2307,12 @@ sub getRulesMatchesLineNum () {
 
   my $rule_id = shift;
   unless ( defined($rule_id) ) {
-    $self->error("$function_name : 'rule_id' argument missing");
+    $self->error("$function_name: 'rule_id' argument missing");
     return 1;
   }
   my $entry_num = shift;
   unless ( defined($entry_num) ) {
-    $self->error("$function_name : 'entry_num' argument missing");
+    $self->error("$function_name: 'entry_num' argument missing");
     return 1;
   }
 
@@ -2334,12 +2334,12 @@ sub getRulesMatchesLineFmt () {
 
   my $rule_id = shift;
   unless ( defined($rule_id) ) {
-    $self->error("$function_name : 'rule_id' argument missing");
+    $self->error("$function_name: 'rule_id' argument missing");
     return 1;
   }
   my $entry_num = shift;
   unless ( defined($entry_num) ) {
-    $self->error("$function_name : 'entry_num' argument missing");
+    $self->error("$function_name: 'entry_num' argument missing");
     return 1;
   }
 
@@ -2363,7 +2363,7 @@ sub buildConfigContents () {
 
   my $config_rules = shift;
   unless ( $config_rules ) {
-    $self->error("$function_name : 'config_rules' argument missing");
+    $self->error("$function_name: 'config_rules' argument missing");
     return 1;
   }
   my $template_contents = shift;
@@ -2469,7 +2469,7 @@ sub buildConfigContents () {
       if ( exists(${$server_config}{$attribute}) ) {
         $config_value .= ${$server_config}{$attribute}->getValue()." ";
       } else {
-        $self->debug(1,"$function_name : attribute $attribute not found for component ".uc($role));
+        $self->debug(1,"$function_name: attribute $attribute not found for component ".uc($role));
       }
           } else {
         $self->error("No host with role ".uc($role)." found");
@@ -2490,7 +2490,7 @@ sub buildConfigContents () {
     $config_value = $self->formatHostsList($config_value,$line_fmt) if $attribute eq "host";
     if ( $config_value ) {
       $newcontents[$line] = $self->formatConfigLine($keyword,$config_value,$line_fmt);
-      $self->debug(1,"$function_name : template line $file_line replaced");
+      $self->debug(1,"$function_name: template line $file_line replaced");
     }
     $entry_num++;
   }
@@ -2498,12 +2498,12 @@ sub buildConfigContents () {
   $config_value = $self->formatHostsList($config_value,$line_fmt) if $attribute eq "host";
   if ( $config_value ) {
     push @newcontents, $self->formatConfigLine($keyword,$config_value,$line_fmt);
-    $self->debug(1,"$function_name : configuration line added");
+    $self->debug(1,"$function_name: configuration line added");
   }
       }
     } else {
       push @newcontents, $self->formatConfigLine($keyword,"", $line_fmt);
-      $self->debug(1,"$function_name : configuration line added");
+      $self->debug(1,"$function_name: configuration line added");
     }
 
     $rule_id++;
@@ -2526,7 +2526,7 @@ sub updateConfigFile () {
 
   my $role = shift;
   unless ( $role ) {
-    $self->error("$function_name : 'role' argument missing");
+    $self->error("$function_name: 'role' argument missing");
     return 1;
   }
 
@@ -2552,15 +2552,15 @@ sub updateConfigFile () {
     }
   }
   if ( -e $template_file ) {
-    $self->debug(1,"$function_name : template file $template_file found, reading it");
+    $self->debug(1,"$function_name: template file $template_file found, reading it");
     $template_contents = file_contents($template_file);
-    $self->debug(3,"$function_name : template contents :\n$template_contents");
+    $self->debug(3,"$function_name: template contents :\n$template_contents");
   } else {
-    $self->debug(1,"Template file not found ($template_file). Building a new file from scratch...");
+    $self->debug(1,"$function_name: template file not found ($template_file). Building a new file from scratch...");
   }
 
   my $config_contents=$self->buildConfigContents($config_rules{$role}, $template_contents);
-  $self->debug(3,"$function_name : Configuration file new contents :\n$config_contents");
+  $self->debug(3,"$function_name: Configuration file new contents :\n$config_contents");
 
   # Update configuration file if content has changed
   my $changes = LC::Check::file(${$config_files{$role}}.$config_prod_ext,
@@ -2629,7 +2629,7 @@ sub xrootSpecificConfig () {
     my $xrootd_config_template = $xrootd_config_file . '.templ';
     if ( -f $xrootd_config_template ) {
       if ( !compare($xrootd_config_template,$xrootd_config_file) ) {
-        $self->debug(1,"xrootd configuration file ($xrootd_config_file) is up-to-date");
+        $self->debug(1,"$function_name: xrootd configuration file ($xrootd_config_file) is up-to-date");
       } else {
         $self->info("Updating xrootd configuration file ($xrootd_config_file) with template ($xrootd_config_template)");
         if ( copy ($xrootd_config_template,$xrootd_config_file) ) {
@@ -2639,7 +2639,7 @@ sub xrootSpecificConfig () {
         }
       }
     } else {
-      $self->debug(2,"xrootd configuration file template ($xrootd_config_template) not found. Configuration file ($xrootd_config_file) must be created manually.");
+      $self->debug(2,"$function_name: xrootd configuration file template ($xrootd_config_template) not found. Configuration file ($xrootd_config_file) must be created manually.");
     }
   }
   
@@ -2703,7 +2703,7 @@ sub xrootSpecificConfig () {
     # Set right permissions on token public/private keys
     for my $key ($xroot_token_priv_key,$xroot_token_pub_key) {
       if ( -f $key ) {
-        $self->debug(1,"$function_name : Checking permission on $key");
+        $self->debug(1,"$function_name: Checking permission on $key");
         $changes = LC::Check::status($key,
                                      owner => $self->getDaemonUser(),
                                      group => $self->getDaemonGroup(),
@@ -2741,7 +2741,7 @@ sub xrootSpecificConfig () {
         $self->warn("$link_target missing or not executable. Check your DPM installation.");
       }
       if ( -l $link_name ) {
-        $self->debug(1,"$link_name already exists. Nothing done.");
+        $self->debug(1,"$function_name: $link_name already exists. Nothing done.");
       } else {
         if ( -e $link_name ) {
           $self->error("$link_name already exists but is not a symlink.");
@@ -2767,7 +2767,7 @@ sub xrootSpecificConfig () {
     for my $daemon (keys(%xrootd_services)) {
       my $service = $xrootd_services{$daemon};
       my $service_name = $prefix . $service;
-      $self->debug(1,"$function_name : adding service $service_name to role '$xroot_role'");
+      $self->debug(1,"$function_name: adding service $service_name to role '$xroot_role'");
       push @xroot_service_list, $service_name;
     }
     $services{$xroot_role} = join (",", @xroot_service_list);
