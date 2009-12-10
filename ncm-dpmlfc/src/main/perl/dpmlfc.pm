@@ -70,7 +70,10 @@ my $xroot_options_base = $base."/options/dpm/xroot";
 
 my $dpm_def_host;
 
-# Entry DEFAULT is used for any role that has not an explicit entry
+# Entry DEFAULT is tried first for any role. 
+# If not found, the role-specific entry is tried: this is to handle
+# template files which used non-standard extensions in early versions,
+# like xrootd template file.
 my %config_template_ext = ('DEFAULT', '.templ',
                            'xroot', '.example',
                           );
@@ -2535,15 +2538,15 @@ sub updateConfigFile () {
   my $template_contents;
   
   # Load template configuration file.
-  # If a template file with the role-specific extension (if defined) is not found,
-  # try the default one. This is to accomodate non-standard extension eventually
-  # changed to the standard one.
+  # If a template file with the default extension is not found, try the role-specific extension (if defined).
+  # This is to accomodate non-standard extension eventually changed to the standard one, as with xrootd: in this
+  # case the old extension must be ignored if it still exists.
   my @template_ext;
   my $template_file;
+  push @template_ext, $config_template_ext{'DEFAULT'};
   if ( $config_template_ext{$role} ) {
     push @template_ext, $config_template_ext{$role};
   }
-  push @template_ext, $config_template_ext{'DEFAULT'};
   for my $ext (@template_ext) {
     $self->debug(2,"Checking if ".${$config_files{$role}}." template exists with extension $ext");
     $template_file = ${$config_files{$role}}.$ext;
