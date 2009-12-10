@@ -106,6 +106,7 @@ type ${project.artifactId}_component_xroot_access_rules = {
 # xrootd has several specific options
 type ${project.artifactId}_component_xroot_options = {
         "ofsPlugin" : string = 'Ofs'
+        "cmsDaemon" : string = 'cmsd' with match(SELF,'cmsd|olbd')
         "config"    ? string
         "exportedVOs" ? string[]
         "MonALISAHost" ? string

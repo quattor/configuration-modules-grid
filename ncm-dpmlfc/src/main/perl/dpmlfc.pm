@@ -424,10 +424,15 @@ my %xrootd_daemon_prefix = ('head' => 'dpm-manager-',
                             'disk' => 'dpm-',
                            );
 # xrootd_services is used to track association between a daemon name
-# (the key) and its associatated service name
-my %xrootd_services = ('olbd' => 'olb',
-                       'xrootd' => 'xrd',
+# (the key) and its associatated service name.
+# Because the daemon/service name of Cluster Management Service changed from olb to cms,
+# the appropriate CMS entry will be added to xrootd_services based on configuration property
+# 'cmsDaemon' (used as a selector in xrootd_cms_services).
+my %xrootd_services = ('xrootd' => 'xrd',
                       );
+my %xrootd_cms_services = ('olbd' => 'olb',
+                           'cmsd' => 'cms',
+                          );
 
 ##########################################################################
 sub Configure($$@) {
@@ -2588,7 +2593,7 @@ sub xrootSpecificConfig () {
   
   $self->info('Checking xroot specific configuration...');
   
-  # Retrieve xrootd configuration
+  # Retrieve xrootd configuration and update xrootd_services based on option 'cmsDaemon'
   my $xroot_config;
   if ( $config->elementExists($xroot_options_base) ) {
     $xroot_config = $config->getElement($xroot_options_base)->getTree();
@@ -2598,6 +2603,7 @@ sub xrootSpecificConfig () {
   my $xroot_headnode = $self->hostHasRoles('dpns');
   my $xroot_diskserver = $self->hostHasRoles('gsiftp');
   my $xroot_token_auth = defined($xroot_config->{ofsPlugin}) && $xroot_config->{ofsPlugin} eq 'TokenAuthzOfs';
+  $xrootd_services{$xroot_config->{cmsDaemon}} = $xrootd_cms_services{$xroot_config->{cmsDaemon}};
 
   if ( $xroot_token_auth ) {
     # Build authz.cf
