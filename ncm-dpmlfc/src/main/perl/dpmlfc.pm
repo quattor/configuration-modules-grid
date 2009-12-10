@@ -2613,7 +2613,7 @@ sub xrootSpecificConfig () {
     my $xrootd_config_file = $xrootd_config_dir . '/' . $xroot_config->{config};
     my $xrootd_config_template = $xrootd_config_file . '.templ';
     if ( -f $xrootd_config_template ) {
-      if ( compare($xrootd_config_template,$xrootd_config_file) ) {
+      if ( !compare($xrootd_config_template,$xrootd_config_file) ) {
         $self->debug(1,"xrootd configuration file ($xrootd_config_file) is up-to-date");
       } else {
         $self->info("Updating xrootd configuration file ($xrootd_config_file) with template ($xrootd_config_template)");
