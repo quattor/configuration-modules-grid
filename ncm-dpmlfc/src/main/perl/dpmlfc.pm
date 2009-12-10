@@ -48,6 +48,7 @@ use EDG::WP4::CCM::Element;
 
 use File::Path;
 use File::Copy;
+use File::Compare;
 use File::Basename;
 use File::stat;
 
@@ -2612,8 +2613,19 @@ sub xrootSpecificConfig () {
     my $xrootd_config_file = $xrootd_config_dir . '/ . '$xroot_config->{config};
     my $xrootd_config_template = $xrootd_config_file . '.templ';
     if ( -f $xrootd_config_template ) {
-      $self->debug(1,"Updating xrootd configuration file ($xrootd_config_file) with template ($xrootd_config_template)");
-      copy ($xrootd_config_template,$xrootd_config_file) || self->warn("Error creating xrootd configuration file ($xroot_config_file)");
+      if ( compare($xrootd_config_template,$xrootd_config_file) ) {
+        $self->debug(2,"xrootd configuration file ($xrootd_config_file) is up-to-date");
+      } else {
+        $self->debug(1,"Updating xrootd configuration file ($xrootd_config_file) with template ($xrootd_config_template)");
+        if ( copy ($xrootd_config_template,$xrootd_config_file) ) {
+          self->warn("Error creating xrootd configuration file ($xroot_config_file)");
+        } else {
+          $restart_services = 1;
+        };
+        }     
+      }
+    } else {
+      $self->debug(2,"xrootd configuration file template ($xrootd_config_template) not found. Configuration file ($xrootd_config_file) must be created manually.");
     }
   }
   
