@@ -2556,7 +2556,7 @@ sub updateConfigFile () {
     $template_contents = file_contents($template_file);
     $self->debug(3,"$function_name : template contents :\n$template_contents");
   } else {
-    $self->warn("Template file not found ($template_file). Building a new file from scratch...");
+    $self->debug(1,"Template file not found ($template_file). Building a new file from scratch...");
   }
 
   my $config_contents=$self->buildConfigContents($config_rules{$role}, $template_contents);
