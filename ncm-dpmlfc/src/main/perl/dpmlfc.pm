@@ -2611,7 +2611,10 @@ sub xrootSpecificConfig () {
     my $xrootd_config_dir = '/opt/lgc/etc';
     my $xrootd_config_file = $xrootd_config_dir . '/ . '$xroot_config->{config};
     my $xrootd_config_template = $xrootd_config_file . '.templ';
-    copy ($xrootd_config_template,$xrootd_config_file) || self->warn("Error creating xrootd configuration file ($xroot_config_file)");
+    if ( -f $xrootd_config_template ) {
+      $self->debug(1,"Updating xrootd configuration file ($xrootd_config_file) with template ($xrootd_config_template)");
+      copy ($xrootd_config_template,$xrootd_config_file) || self->warn("Error creating xrootd configuration file ($xroot_config_file)");
+    }
   }
   
   # Build Authz configuration file for token-based authz
