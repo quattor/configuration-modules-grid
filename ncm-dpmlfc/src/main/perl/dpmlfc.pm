@@ -2609,7 +2609,7 @@ sub xrootSpecificConfig () {
   # Build xrootd configuration file (based on template provided in distribution, if it exists).
   # The template was not present in the first version of DPM-xrootd.
   if ( defined($xroot_config->{config}) ) {
-    my $xrootd_config_dir = '/opt/lgc/etc';
+    my $xrootd_config_dir = '/opt/lcg/etc';
     my $xrootd_config_file = $xrootd_config_dir . '/' . $xroot_config->{config};
     my $xrootd_config_template = $xrootd_config_file . '.templ';
     if ( -f $xrootd_config_template ) {
@@ -2621,8 +2621,7 @@ sub xrootSpecificConfig () {
           $self->warn("Error creating xrootd configuration file ($xroot_config_file)");
         } else {
           $restart_services = 1;
-        };
-        }     
+        }
       }
     } else {
       $self->debug(2,"xrootd configuration file template ($xrootd_config_template) not found. Configuration file ($xrootd_config_file) must be created manually.");
