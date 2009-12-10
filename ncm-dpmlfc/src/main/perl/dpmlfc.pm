@@ -2618,9 +2618,9 @@ sub xrootSpecificConfig () {
       } else {
         $self->info("Updating xrootd configuration file ($xrootd_config_file) with template ($xrootd_config_template)");
         if ( copy ($xrootd_config_template,$xrootd_config_file) ) {
-          $self->warn("Error creating xrootd configuration file ($xroot_config_file)");
-        } else {
           $restart_services = 1;
+        } else {
+          $self->warn("Error creating xrootd configuration file ($xroot_config_file)");
         }
       }
     } else {
