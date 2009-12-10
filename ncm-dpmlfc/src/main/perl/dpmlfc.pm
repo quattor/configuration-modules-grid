@@ -2556,7 +2556,7 @@ sub updateConfigFile () {
     $template_contents = file_contents($template_file);
     $self->debug(3,"$function_name : template contents :\n$template_contents");
   } else {
-    $self->warning("Template file not found ($template_file). Building a new file from scratch...");
+    $self->warn("Template file not found ($template_file). Building a new file from scratch...");
   }
 
   my $config_contents=$self->buildConfigContents($config_rules{$role}, $template_contents);
@@ -2572,7 +2572,7 @@ sub updateConfigFile () {
     return;
   }
 
-  # Keep track of services need to be restarted if changes have been made
+  # Keep track of services that need to be restarted if changes have been made
   if ( $changes > 0 ) {
     $self->serviceRestartNeeded($role);
   }
