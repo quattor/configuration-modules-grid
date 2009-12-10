@@ -107,9 +107,10 @@ type ${project.artifactId}_component_xroot_access_rules = {
 type ${project.artifactId}_component_xroot_options = {
         "ofsPlugin" : string = 'Ofs'
         "cmsDaemon" : string = 'cmsd' with match(SELF,'cmsd|olbd')
-        "config"    ? string
+        "config"    : string = 'xrd.dpm.cf'
         "exportedVOs" ? string[]
         "MonALISAHost" ? string
+        "authzConf" : string = 'xrd.authz.cf'
         "tokenPrivateKey" ? string
         "tokenPublicKey" ? string
         "accessRules" ? ${project.artifactId}_component_xroot_access_rules[]

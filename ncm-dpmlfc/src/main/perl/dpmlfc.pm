@@ -2605,11 +2605,21 @@ sub xrootSpecificConfig () {
   my $xroot_token_auth = defined($xroot_config->{ofsPlugin}) && $xroot_config->{ofsPlugin} eq 'TokenAuthzOfs';
   $xrootd_services{$xroot_config->{cmsDaemon}} = $xrootd_cms_services{$xroot_config->{cmsDaemon}};
 
+  # Build xrootd configuration file (based on template provided in distribution, if it exists).
+  # The template was not present in the first version of DPM-xrootd.
+  if ( defined($xroot_config->{config}) ) {
+    my $xrootd_config_dir = '/opt/lgc/etc';
+    my $xrootd_config_file = $xrootd_config_dir . '/ . '$xroot_config->{config};
+    my $xrootd_config_template = $xrootd_config_file . '.templ';
+    copy ($xrootd_config_template,$xrootd_config_file) || self->warn("Error creating xrootd configuration file ($xroot_config_file)");
+  }
+  
+  # Build Authz configuration file for token-based authz
   if ( $xroot_token_auth ) {
     # Build authz.cf
     $self->info("Token-based authentication used: checking authz.cf");
     my $exported_vo_path_root = $self->NSGetRoot();
-    my $xroot_authz_conf_file = $xrootd_config_dir."/authz.cf";
+    my $xroot_authz_conf_file = $xrootd_config_dir."/".$xroot_config->{authzConf};
     my $xroot_token_priv_key;
     if ( defined($xroot_config->{tokenPrivateKey}) ) {
       $xroot_token_priv_key = $xrootd_config_dir . '/' . $xroot_config->{tokenPrivateKey};
