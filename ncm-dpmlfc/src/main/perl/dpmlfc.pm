@@ -2533,15 +2533,30 @@ sub updateConfigFile () {
   $self->debug(1,"$function_name: building configuration file for role ".uc($role));
 
   my $template_contents;
-  my $template_ext = $config_template_ext{'DEFAULT'};
+  
+  # Load template configuration file.
+  # If a template file with the role-specific extension (if defined) is not found,
+  # try the default one. This is to accomodate non-standard extension eventually
+  # changed to the standard one.
+  my @template_ext;
+  my $template_file;
   if ( $config_template_ext{$role} ) {
-    $template_ext = $config_template_ext{$role};
+    push @template_ext, $config_template_ext{$role};
   }
-  my $template_file = ${$config_files{$role}}.$template_ext;
+  push @template_ext, $config_template_ext{'DEFAULT'};
+  for my $ext (@template_ext) {
+    $self->debug(2,"Checking if ".${$config_files{$role}}." template exists with extension $ext");
+    $template_file = ${$config_files{$role}}.$ext;
+    if ( -e $template_file ) {
+      last;
+    }
+  }
   if ( -e $template_file ) {
     $self->debug(1,"$function_name : template file $template_file found, reading it");
     $template_contents = file_contents($template_file);
     $self->debug(3,"$function_name : template contents :\n$template_contents");
+  } else {
+    $self->warning("Template file not found ($template_file). Building a new file from scratch...");
   }
 
   my $config_contents=$self->buildConfigContents($config_rules{$role}, $template_contents);
