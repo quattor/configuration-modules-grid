@@ -233,6 +233,12 @@ sub Configure {
       }
     }
     $initCmd .= $confighash->{'initScript'} . ' restart';
+    if ( $confighash->{'disableOutput'} ) {
+      $initCmd .= ' > /dev/null';
+    }
+    if ( $confighash->{'disableError'} ) {
+      $initCmd .= ' 2> /dev/null';
+    }
     $self->debug(1,"Executing '$initCmd'...");
     my $status = qx%$initCmd%;
     unless ( $? == 0 ) {

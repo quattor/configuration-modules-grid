@@ -24,6 +24,8 @@ type ${project.artifactId}_component = {
 
   'configFile'      : string = '/opt/glite/etc/gLiteservices'
   'initScript'      : string = '/etc/rc.d/init.d/gLite'
+  'disableOutput'   ? boolean
+  'disableError'    ? boolean
   'restartEnv'      ? string[]
   'postRestart'     ? ${project.artifactId}_component_post_restart[]
   'restartServices' ? boolean

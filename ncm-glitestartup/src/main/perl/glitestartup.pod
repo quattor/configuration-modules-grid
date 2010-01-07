@@ -33,6 +33,15 @@ If true, create a grid proxy for the gLite user used to run the service.
 
 Default : true
 
+=head2 /software/components/@COMP/disableOutput : boolean (optional)
+
+If true, redirect script output to /dev/null. For special cases where the output can trigger problems
+(like those related to Python PIPE bugs).
+
+=head2 /software/components/@COMP/disableError : boolean (optional)
+
+Idem as disableOutput but for stderr.
+
 =head2 /software/components/@COMP/initScript : string (required)
 
 Name of startup script for gLite services.
@@ -78,8 +87,13 @@ Default : /opt/glite/etc/init.d
 =head2 /software/components/@COMP/services : nlist of string 
 
 Nlist with one entry per service to start. Key is the service name,
-value is startup script arguments (must be an empty string if no
-argument).
+value is an optional nlist. This nlist can contain the following element:
+
+=over
+
+=item args startup script arguments
+
+=back
 
 Default : none 
 
