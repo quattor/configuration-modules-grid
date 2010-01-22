@@ -111,6 +111,6 @@ type ${project.artifactId}_component_type = {
 };
 
 
-bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
+bind "/software/components/globuscfg" = ${project.artifactId}_component_type;
 
 

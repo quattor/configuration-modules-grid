@@ -200,7 +200,7 @@ sub Configure($$@) {
       if ( $globus_config->{gridftp}->{log} ) {
         my $logfile_opt;
         if ( $globus_version >= '4.0' ) {
-          $logfile_opt = 'log_simple';
+          $logfile_opt = 'log_single';
         } else {
           $logfile_opt = 'logfile';
         }
