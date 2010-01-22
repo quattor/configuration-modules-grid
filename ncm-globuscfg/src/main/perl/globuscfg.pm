@@ -150,8 +150,9 @@ sub Configure($$@) {
   if ( $globus_config_flavor eq "glite" ) {
     my $output = '';
     my $globus_version;
-    if ( -x  $globus_config->{'GLOBUS_LOCATION'}/etc/globus-version ) {
-      $globus_version = qx%$globus_config->{'GLOBUS_LOCATION'}/etc/globus-version%;
+    my $globus_version_bin = $globus_config->{'GLOBUS_LOCATION'}.'/etc/globus-version';
+    if ( -x $globus_version_bin ) {
+      $globus_version = qx/$globus_version_bin/;
     } else {
       $globus_version = '4.0';
       $self->warn('Unable to determine Globus version: check your configuration, assuming $globus_version.');
@@ -198,15 +199,15 @@ sub Configure($$@) {
       my $contents;
       if ( $globus_config->{gridftp}->{log} ) {
         my $logfile_opt;
-        if ( $gobus_version >= '4.0' ) {
+        if ( $globus_version >= '4.0' ) {
           $logfile_opt = 'log_simple';
         } else {
           $logfile_opt = 'logfile';
         }
-        $contents = $logfile_opt. $globus_config->{gridftp}->{log} ."\n";
+        $contents = $logfile_opt. ' ' . $globus_config->{gridftp}->{log} ."\n";
       }
       if ( $globus_config->{gridftp}->{maxConnections} ) {
-        if ( $gobus_version >= '4.0' ) {
+        if ( $globus_version >= '4.0' ) {
           $contents .= "connections_max " . $globus_config->{gridftp}->{maxConnections}
         } else {
           $self->warn('Globus < 4.0: maximum number of gridftp connections cannot be configured.');
