@@ -62,6 +62,7 @@ type globus_gridftp_type = {
 	"umask" ? string
 	"log" ? string
 	"user" ? string
+	"maxConnections" ? long
 	"options" ? string
 };
 
