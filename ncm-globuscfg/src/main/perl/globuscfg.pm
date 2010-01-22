@@ -150,7 +150,7 @@ sub Configure($$@) {
   if ( $globus_config_flavor eq "glite" ) {
     my $output = '';
     my $globus_version;
-    my $globus_version_bin = $globus_config->{'GLOBUS_LOCATION'}.'/etc/globus-version';
+    my $globus_version_bin = $globus_config->{'GLOBUS_LOCATION'}.'/bin/globus-version';
     if ( -x $globus_version_bin ) {
       $globus_version = qx/$globus_version_bin/;
     } else {
