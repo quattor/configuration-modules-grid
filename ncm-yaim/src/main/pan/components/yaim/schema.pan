@@ -166,7 +166,7 @@ type structure_yaim_conf = extensible {
     "CREAM_CE_STATE"                    ? string
 
     "WMS_EXPIRY_PERIOD"                 ? string
-    "WMS_MATCH_RETRY_PERIOD"="value2"   ? string
+    "WMS_MATCH_RETRY_PERIOD"            ? string
 };
 
 type structure_yaim_close_se = {
@@ -250,6 +250,23 @@ type structure_yaim_vo_services = {
 type structure_yaim_scas = {
     "SCAS_HOST"                         ? string
     "SCAS_PORT"                         ? long(1..65534)
+    "SCAS_CONFIG"                       ? string
+    "SCAS_DEBUG_LEVEL"                  ? long
+    "SCAS_GROUP"                        ? string
+    "SCAS_HOST_CERT"                    ? string
+    "SCAS_HOST_KEY"                     ? string
+    "SCAS_LCMAPS_CONFIG"                ? string
+    "SCAS_LCMAPS_DEBUG_LEVEL"  	        ? long
+    "SCAS_LCMAPS_DIR"                   ? string
+    "SCAS_LCMAPS_LOG_LEVEL"             ? long
+    "SCAS_LCAS_CONFIG"                  ? string 
+    "SCAS_LCAS_DEBUG_LEVEL"             ? long
+    "SCAS_LCAS_DIR"                     ? string
+    "SCAS_LCAS_LOG_LEVEL"               ? long
+    "SCAS_LOG_DIR"                      ? string
+    "SCAS_LOG_FILE"                     ? string
+    "SCAS_LOG_LEVEL"                    ? long
+    "SCAS_USER"                         ? string
 };
 
 type structure_yaim_glexec = {
