@@ -264,6 +264,23 @@ Assuming that /software/components/yaim/conf/CLASSIC_HOST is "se.mydomain.org" t
 Sets configuration specific for the SCAS server. Valid configuration keys:
   SCAS_HOST
   SCAS_PORT
+  SCAS_CONFIG
+  SCAS_DEBUG_LEVEL
+  SCAS_GROUP
+  SCAS_HOST_CERT
+  SCAS_HOST_KEY
+  SCAS_LCMAPS_CONFIG
+  SCAS_LCMAPS_DEBUG_LEVEL
+  SCAS_LCMAPS_DIR
+  SCAS_LCMAPS_LOG_LEVEL
+  SCAS_LCAS_CONFIG
+  SCAS_LCAS_DEBUG_LEVEL
+  SCAS_LCAS_DIR
+  SCAS_LCAS_LOG_LEVEL
+  SCAS_LOG_DIR
+  SCAS_LOG_FILE
+  SCAS_LOG_LEVEL
+  SCAS_USER
 
 =head2 /software/components/yaim/GLEXEC/<X>
 

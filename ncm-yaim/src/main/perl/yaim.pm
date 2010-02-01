@@ -30,16 +30,17 @@ use File::Basename;
 # run a given command and recover stdout and stderr.
 #
 sub run_command($) {
-    my ($self,$command)=@_;
+    my ($self,@command)=@_;
 
     my $error=0;
+    my $command = join(" ",@command);
     if ($NoAction) {
-        $self->info('(noaction mode) would run command: '.$command);
+        $self->info('(noaction mode) would run command: ' . $command);
         return 0;
     } else {
-        $self->info('running command: '.$command);
+        $self->info('running command: ' . $command);
         my ($stdout,$stderr);
-        my $execute_status = LC::Process::execute([$command],
+        my $execute_status = LC::Process::execute(\@command,
                                                   timeout => 90*60,
                                                   stdout => \$stdout,
                                                   stderr => \$stderr
