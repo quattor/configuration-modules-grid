@@ -2,18 +2,28 @@
 # ${developer-info}
 # ${author-info}
 # ${build-info}
+#
+############################################################
+#
+# type definition components/yaim_usersconf
+#
+#
+#
+#
+#
+############################################################
 
-declaration template components/${project.artifactId}/schema;
+declaration template components/yaim_usersconf/schema;
 
 include { 'quattor/schema' };
 
-type ${project.artifactId}_config = {
-    'dummy' : string = 'OK'
-} = nlist();
-
 type ${project.artifactId}_component = {
-    include structure_component
-    'config' : ${project.artifactId}_config
+    include component_type
+    "users_conf_file"  ? string # "location of users.conf file"
+    "groups_conf_file" ? string # "location of groups.conf file"
+
 };
 
-bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
+bind "/software/components/yaim_usersconf" = ${project.artifactId}_component;
+
+
