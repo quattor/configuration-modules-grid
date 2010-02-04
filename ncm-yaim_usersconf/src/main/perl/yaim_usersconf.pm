@@ -16,9 +16,10 @@ $EC=LC::Exception::Context->new->will_store_all;
 ##########################################################################
 # Global variables
 ##########################################################################
-
-my $usersconf  = "/software/components/yaim_usersconf/users_conf_file";
-my $groupsconf = "/software/components/yaim_usersconf/groups_conf_file";
+my $basedir    = "/software/components/yaim_usersconf";
+my $usersconf  = $basedir . "/users_conf_file";
+my $groupsconf = $basedir . "/groups_conf_file";
+my $infobyvo   = $basedir . "/vo";
 
 ##########################################################################
 sub Configure($$@) {
@@ -30,15 +31,15 @@ sub Configure($$@) {
     # users.conf
     #
     if ($config->elementExists($usersconf)){
-        my $vo = $config->getElement("/system/vo");
+        my $vo = $config->getElement("${infobyvo}");
         my $result = "";
         while ($vo->hasNextElement()) {
             my $voname = $vo->getNextElement()->getName();
-            if ($config->elementExists("/system/vo/$voname/gridusers")){
-                 my $user_list = $config->getElement("/system/vo/$voname/gridusers");
+            if ($config->elementExists("${infobyvo}/$voname/gridusers")){
+                 my $user_list = $config->getElement("${infobyvo}/$voname/gridusers");
                  while ($user_list->hasNextElement()) {
                      my $index = $user_list->getNextElement()->getName();
-                     my $path = "/system/vo/$voname/gridusers/$index";
+                     my $path = "${infobyvo}/$voname/gridusers/$index";
                      my $name = my $flag = undef;
                      if ($config->elementExists("$path/name")){
                          $name = $config->getValue("$path/name");
@@ -79,15 +80,15 @@ sub Configure($$@) {
     # groups.conf
     #
     if ($config->elementExists($groupsconf)){
-        my $vo = $config->getElement("/system/vo");
+        my $vo = $config->getElement("${infobyvo}");
         my $result = "";
         while ($vo->hasNextElement() ) {
             my $voname = $vo->getNextElement()->getName();
-            if ($config->elementExists("/system/vo/$voname/gridgroups")){
-                 my $group_list = $config->getElement("/system/vo/$voname/gridgroups");
+            if ($config->elementExists("${infobyvo}/$voname/gridgroups")){
+                 my $group_list = $config->getElement("${infobyvo}/$voname/gridgroups");
                  while ($group_list->hasNextElement()) {
                      my $index = $group_list->getNextElement()->getName();
-                     my $path = "/system/vo/$voname/gridgroups/$index";
+                     my $path = "${infobyvo}/$voname/gridgroups/$index";
                      my $role = my $flag = undef;
                      if ($config->elementExists("$path/role")){
                          $role = $config->getValue("$path/role");

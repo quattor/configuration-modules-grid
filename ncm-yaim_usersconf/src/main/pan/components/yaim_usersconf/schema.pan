@@ -17,10 +17,28 @@ declaration template components/yaim_usersconf/schema;
 
 include { 'quattor/schema' };
 
+type structure_yaim_usersconf_gridusers = {
+        "name" : string
+        "flag" ? string
+};
+
+type structure_yaim_usersconf_gridgroups = {
+        "role" : string # "VOMS path"
+        "flag" ? string
+};
+
+type structure_yaim_usersconf_vo = {
+    "name"      : string
+    "gridusers"   ? structure_yaim_usersconf_gridusers[]
+    "gridgroups"  ? structure_yaim_usersconf_gridgroups[]
+
+};
+
 type ${project.artifactId}_component = {
     include component_type
     "users_conf_file"  ? string # "location of users.conf file"
     "groups_conf_file" ? string # "location of groups.conf file"
+    "vo"               ? structure_yaim_usersconf_vo{}
 
 };
 
