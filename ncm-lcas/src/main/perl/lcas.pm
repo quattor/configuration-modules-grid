@@ -41,8 +41,8 @@ sub Configure($$@) {
     my %cfiles=();
 
     my $dbpath = "/opt/edg/etc/lcas/lcas.db";
-    if ( $config->{dbpath} ) {
-        $dbpath = $config->{dbpath};
+    if ( $lcas_config->{dbpath} ) {
+        $dbpath = $lcas_config->{dbpath};
     }
 
     $cfiles{$dbpath}="";
@@ -50,15 +50,15 @@ sub Configure($$@) {
     $cfiles{$dbpath}.="# DO NOT EDIT BY HAND -- edit node configuration instead.\n";
     $cfiles{$dbpath}.="#\n";
 
-    if ( $config->{module} ) {
+    if ( $lcas_config->{module} ) {
 
-        for my $mod_config (@{$config->{module}}) {
+        for my $mod_config (@{$lcas_config->{module}}) {
             # Path is mandatory in the schema
-            $modname = $mod_config->{path};
+            my $modname = $mod_config->{path};
             $self->debug(1,"LCAS: configuring module $modname");
 
             # Path is mandatory in the schema
-            $cfiles{$dbpath}.="pluginname=".$modname};
+            $cfiles{$dbpath}.="pluginname=".$modname;
 
             if ( $mod_config->{args} ) {
                 $cfiles{$dbpath}.=",pluginargs=".$mod_config->{args},
@@ -68,6 +68,7 @@ sub Configure($$@) {
             # optionally write the module configuration as well in a separate file
             if ( $mod_config->{conf} ) {
                 my $cfname=$mod_config->{conf}->{path};
+                $self->debug(1,"Building configuration for module $modname ($cfname)...");
                 $cfiles{$cfname}="";
 
                 # may I write a header here?
@@ -78,11 +79,13 @@ sub Configure($$@) {
                 };
 
 
-                if ( $mod_config->{conf}->{content}) ) {
+                if ( $mod_config->{conf}->{content} ) {
                     foreach my $line (@{$mod_config->{conf}->{content}}) {
                       $cfiles{$cfname}.=$line."\n";
                     }
                 }
+            } else {
+                $self->debug(1,"No specific configuration found for module $modname");
             }
         }
     }
