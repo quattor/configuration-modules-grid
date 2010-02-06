@@ -29,5 +29,5 @@ type ${project.artifactId}_component = {
   "module"	? lcas_modulespec_type[]
 };
 
-bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
+bin "/software/components/lcas" = ${project.artifactId}_component;
 
