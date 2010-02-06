@@ -43,7 +43,7 @@ sub Configure($$@) {
         $db_params->{dbpath} = $lcas_config->{dbpath};
         $db_params->{module} = $lcas_config->{module};
         $lcas_config->{db} = [];
-        push @{$lcas_config->{db}}, %db_params;
+        push @{$lcas_config->{db}}, $db_params;
     }
 
     foreach my $db_config (@{$lcas_config->{db}}) {
