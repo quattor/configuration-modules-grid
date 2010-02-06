@@ -39,9 +39,9 @@ sub Configure($$@) {
     # Move configuration under 'db': schema enforces there is nothing else under 'db'
     # in this case.
     if ( $lcas_config->{dbpath} ) {
-        my %db_params;
-        $db_params{dbpath} = $lcas_config->{dbpath};
-        $db_params{module} = $lcas_config->{module};
+        my $db_params = {};
+        $db_params->{dbpath} = $lcas_config->{dbpath};
+        $db_params->{module} = $lcas_config->{module};
         $lcas_config->{db} = [];
         push @{$lcas_config->{db}}, %db_params;
     }
