@@ -39,6 +39,7 @@ sub Configure($$@) {
     # Move configuration under 'db': schema enforces there is nothing else under 'db'
     # in this case.
     if ( $lcas_config->{dbpath} ) {
+        $self->info('Using deprecated LCAS configuration. Please upgrade to new one.');
         my $db_params = {};
         $db_params->{path} = $lcas_config->{dbpath};
         $db_params->{module} = $lcas_config->{module};

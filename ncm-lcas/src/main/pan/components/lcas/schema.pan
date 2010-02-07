@@ -49,7 +49,7 @@ type ${project.artifactId}_component_db = {
 
 type ${project.artifactId}_component = {
   include structure_component
-  "db"      ? ${project.artifactId}_component_db[];
+  "db"      ? ${project.artifactId}_component_db[]
   # Deprecated: use 'db' instead.
   "dbpath"	? string
   "module"	? ${project.artifactId}_component_modulespec[]
