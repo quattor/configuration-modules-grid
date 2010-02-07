@@ -14,47 +14,109 @@ lcas: NCM component to manage LCAS configuration file(s)
 
 The I<lcas> component writes the LCAS configuration file(s). The
 primary file is the LCAS database, listing the plugin modules
-to be called (in the specific order as specified in the list in
-the CDB).
+to be called (in the order specified in the profile).
 
 Optionally, it can write the module configuration files as well
 (as just plain files, one line for every entry in the content
 list). The header can be suppressed, if ever there is a module
 that chokes on the pound-sign comments at the top.
 
-=head1 RESOURCES
+The I<lcas> component can manage several different LCAS databases and associated module
+configuration files.
+
+=head1 MAIN RESOURCES
 
 =head2 /software/components/lcas/dbpath
 
-Location of the main LCAS database (list of plugin modules).
-Default: /opt/edg/etc/lcas/lcas.db
+Deprecated. Mutually exclusive with /software/components/lcas/db.
 
-=head2 /software/components/lcas/module/[]/path
+=head2 /software/components/lcas/module
 
-For each plugin module, specify the path (may be relative to the
-lcas search path).
+Deprecated. Mutually exclusive with /software/components/lcas/db.
 
-=head2 /software/components/lcas/module/[]/args
+=head2 /software/components/lcas/db : list (optional)
 
-Arguments to this module (like: the name of the module's config
-file). This resource is optional.
+List of LCAS databases and associated module configaration files to configure. For each database,
+the following attributes can be specified.
 
-=head2 /software/components/lcas/module/[]/conf
+=head3 path : string (required)
 
-Optional: write out the contents of the single configuration file
-for this plugin module. You must specify at least the path, and
-optionally some content as well.
+The database file name. This attribute is required for any database entry.
 
-=head2 /software/components/lcas/module/[]/conf/path
+Default: none.
 
-Location (absolute path) of the module configuration file.
+=head3 module : list (optional)
 
-=head2 /software/components/lcas/module/[]/conf/noheader
+A list of each module to configure in the database, with their arguments and optionally their
+associated configuration file. See next section for supported module attributes.
 
-When set to true: supporess the pound-signed header comments.
+Default: none
 
-=head2 /software/components/lcas/module/[]/conf/content[]
+=head1 MODULE RESOURCES
 
-Lines of content for this configuration file (one element per line).
+For each module, the following attributes can be specified.
+
+=head2 path : string (required)
+
+The plugin module file name. The path may be relative to the LCAS search path but it is
+recommended to specify a full path. This attribute is required for any module.
+
+Default: none
+
+=head2 args : string (optional)
+
+Arguments to this module (like: the name of the module's config file).
+
+Default: none
+
+=head2 conf : nlist (optional)
+
+Optional: write out the contents of a single configuration file
+for this plugin module. The following attributes (nlist keys) are available
+for the configuration file.
+
+=head3 path : string (required)
+
+Location (absolute path) of the module configuration file. This attribute
+is required if a configuration file is configured.
+
+Default: none
+
+=head2 noheader : boolean (required)
+
+When set to true, suppress the initial comments normally added at the head of the configuration file.
+This attribute is required if a configuration file is configured.
+
+Default: false (header added)
+
+=head2 content : list of string (optional)
+
+Configuration file content as a list of string. Each list element will be added to
+the file as a separate line, keeping the specified order.
+
+=head1 DEPENDENCIES
+
+None.
+
+=head1 BUGS
+
+None known.
+
+=head1 AUTHOR
+
+David Groep <davidg@nikhef.nl>
+
+=head1 MAINTAINER
+
+David Groep <davidg@nikhef.nl>, Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 VERSION
+
+1.0.0
+
+=head1 SEE ALSO
+
+ncm-ncd(1)
+
 
 =cut
