@@ -112,7 +112,7 @@ David Groep <davidg@nikhef.nl>, Michel Jouvin <jouvin@lal.in2p3.fr>
 
 =head1 VERSION
 
-1.0.0
+1.1.0
 
 =head1 SEE ALSO
 
