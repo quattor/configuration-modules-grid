@@ -49,7 +49,7 @@ sub Configure($$@) {
 
     foreach my $db_config (@{$lcas_config->{db}}) {
         my $dbpath = $db_config->{path};
-        $self->info("Processing LCMAPS database $dbpath...");
+        $self->info("Processing LCAS database $dbpath...");
 
         # we will be cautious and only write the set of configuration
         # files if we are entirely successful in generating all of them.

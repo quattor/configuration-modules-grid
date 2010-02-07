@@ -31,9 +31,9 @@ function component_lcas_valid = {
 
 
 type ${project.artifactId}_component_plainfile_content = {
-	"path"		 : string
-	"noheader" : boolean = false
-	"content"	 ? string[]
+  "path"     : string
+  "noheader" : boolean = false
+  "content"  ? string[]
 };
 
 type ${project.artifactId}_component_modulespec = {
@@ -43,7 +43,7 @@ type ${project.artifactId}_component_modulespec = {
 };
 
 type ${project.artifactId}_component_db = {
-  "path"  : string
+  "path"    : string
   "module"  ? ${project.artifactId}_component_modulespec[]
 };
 
@@ -51,8 +51,8 @@ type ${project.artifactId}_component = {
   include structure_component
   "db"      ? ${project.artifactId}_component_db[]
   # Deprecated: use 'db' instead.
-  "dbpath"	? string
-  "module"	? ${project.artifactId}_component_modulespec[]
+  "dbpath"  ? string
+  "module"  ? ${project.artifactId}_component_modulespec[]
 } with component_lcas_valid(SELF);
 
 bind "/software/components/lcas" = ${project.artifactId}_component;
