@@ -1,7 +1,3 @@
-  JdlDefaultAttributes = [
-    rank = <%CEAttrs/glue/rank|-other.GlueCEStateEstimatedResponseTime%>;
-    requirements = <%CEAttrs/glue/requirements|other.GlueCEStateStatus == "Production"%>;
-  ];
   rank = <%CEAttrs/glue/rank|-other.GlueCEStateEstimatedResponseTime%>;
   requirements = <%CEAttrs/glue/requirements|other.GlueCEStateStatus == "Production"%>;
   RetryCount = <%retryCount|3%>;

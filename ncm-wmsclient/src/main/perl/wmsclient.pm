@@ -267,6 +267,25 @@ sub Configure($$@) {
         
         if ( ($mw_variant ne 'glite') || !$mw_config{wmproxy}->{active} ) {
           # Build config file contents. Will return undefined value on an error. 
+          my $rank = undef;
+          my $requirements = undef;
+          my $retryCount = undef;
+          if ($config->elementExists($template_config."/defaultAttrs/CEAttrs/glue/rank")) {
+              $rank = $config->getValue($template_config."/defaultAttrs/CEAttrs/glue/rank");
+          } else {
+              $rank = "-other.GlueCEStateEstimatedResponseTime";
+          };
+          if ($config->elementExists($template_config."/defaultAttrs/CEAttrs/glue/requirements")) {
+              $requirements = $config->getValue($template_config."/defaultAttrs/CEAttrs/glue/requirements");
+          } else {
+              $requirements = "other.GlueCEStateStatus == \"Production\"";
+          };
+          if ($config->elementExists($template_config."/defaultAttrs/retryCount")) {
+              $retryCount = $config->getValue($template_config."/defaultAttrs/retryCount");
+          } else {
+              $retryCount = "3";
+          };
+          
           my $contents;
           $contents = $self->buildVOConfig($vo_config{$vo}->{name},
                                            $default_contents,
@@ -275,6 +294,9 @@ sub Configure($$@) {
                                            $ui_config{lbhosts},
                                            $ui_config{nshosts},
                                            $ui_config{wmproxies},
+                                           $rank,
+                                           $requirements,
+                                           $retryCount,
                                           );
           unless ( defined($contents) ) {
             $self->error("Error generating $mw_variant UI configuration for VO $vo");
@@ -376,10 +398,16 @@ sub updateConfigFile () {
 
 sub buildVOConfig {
 
-    my ($self,$voname, $default_contents, $myproxy, $hlr, $lbhosts, $nshosts, $wmproxies) = @_;
+    my ($self,$voname, $default_contents, $myproxy, $hlr, $lbhosts, $nshosts, $wmproxies, $rank, $requirements, $retryCount) = @_;
 
     my $contents = "[\n";
     $contents .= "  VirtualOrganisation = \"$voname\";\n";
+    $contents .= "  JdlDefaultAttributes = [\n";
+    $contents .= "    rank = \"$rank\";\n";
+    $contents .= "    requirements = \"$requirements\";\n";
+    $contents .= "    RetryCount = \"$retryCount\";\n";
+    $contents .= "    MyProxyServer = \"$myproxy\";\n" if defined($myproxy);
+    $contents .= "  ];";
     $contents .= "\n" . $default_contents . "\n";
     $contents .= "  MyProxyServer = \"$myproxy\";\n" if defined($myproxy);
     $contents .= "  HRLLocation = \"$hlr\";\n" if defined($hlr);
@@ -472,7 +500,7 @@ sub fill_template {
       s/<%!date!%>/localtime()/eg;
   
       # Need quoted result (escape embedded quotes).
-      s!<%"\s*(/[\w/]+)\s*(?:\|\s*(.+?))?\s*"%>!self->quote($self->fill($config,$1,$2,\$err))!eg;
+      s!<%"\s*(/[\w/]+)\s*(?:\|\s*(.+?))?\s*"%>!$self->quote($self->fill($config,$1,$2,\$err))!eg;
       s!<%"\s*([\w]+[\w/]*)(?:\|\s*(.+?))?\s*"%>!$self->quote($self->fill($config,"$base/$1",$2,\$err))!eg;
   
       # Normal result OK. 
