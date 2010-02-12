@@ -12,6 +12,10 @@ type ${project.artifactId}_component = {
 	include structure_component
 	'gridmapdir'       : string 
 	'poolaccounts'     : long(0..0){}
+	'sharedGridmapdir' ? string
+  'owner'            : string = 'root'
+  'group'            : string = 'root'
+  'perms'            : string = '0755';
 };
 
-bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
+bind '/software/components/gridmapdir' = ${project.artifactId}_component;

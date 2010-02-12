@@ -18,6 +18,7 @@ use EDG::WP4::CCM::Element;
 
 use File::Path;
 use File::Basename;
+use LC::Check;
 
 local(*DTA);
 
@@ -28,21 +29,61 @@ sub Configure($$@) {
     
     my ($self, $config) = @_;
 
-    # Define paths for convenience. 
-    my $base = "/software/components/gridmapdir";
+    # Load configuration in a perl hash
+    my $gridmapdir_config = $config->getElement('/software/components/gridmapdir')->getTree();
+    my $user_config = $config->getElement('/software/components/account/users')->getTree();
 
-    # Ensure that the gridmapdir is really a directory and that it
-    # exists. 
-    my $gridmapdir = $config->getValue("$base/gridmapdir");
-    if ($gridmapdir =~ m%(.*)/$%) {
-	$gridmapdir = $1;
-    }
-    mkpath($gridmapdir,0,0755) unless (-e $gridmapdir);
-    unless (-d $gridmapdir) {
-	$self->error("problem creating $gridmapdir directory");
-	return 1;
-    }
+    # Retrieve gridmapdir location and attributes and check if it is shared
+    my $gridmapdir = $gridmapdir_config->{gridmapdir};
+    my $gridmapdir_owner = $gridmapdir_config->{gridmapdir_owner};
+    my $gridmapdir_group = $gridmapdir_config->{gridmapdir_group};
+    my $gridmapdir_perms = $gridmapdir_config->{gridmapdir_perms};
+    my $sharedGridmapdirPath = $gridmapdir_config->{sharedGridmapdir};
 
+    # Check if gridmapdir exists and has the appropriate type.
+    # The type must be a directory if not shared or a symlink if shared.
+    # When shared, this component requires that the shared gridmapdir path already exists
+    # and will not create it.
+    # If shared and the existing gridmapdir type is a directory, rename it before creating the symlink.
+    # If the existing gridmapdir path is a symlink but gridmapdir is not shared remove symlink and create
+    # a new directory.
+
+    if ( -e $gridmapdir ) {
+      if ( -d $gridmapdir ) {
+        if ( $sharedGridmapdirPath ) {
+          $self->debug(1,"gridmapdir configured to be shared: renaming existing gridmapdir");
+          mv $gridmapdir, $gridmadir.".unshared";
+        } else {
+          my $status = LC::Check::status($gridmapdir,
+                                         'owner' => 'root',
+                                         'perm' => '0755',
+                                        );
+        }
+      } elsif ( -l $gridmapdir ) {
+        if ( ! $sharedGridmapdirPath ) {
+          $self->debug(1,"gridmapdir not shared: removing existing gridmapdir symlink");
+          unlink $gridmapdir;
+        };
+      };
+    }
+    
+    unless ( -e $gridmapdir ) {
+      if ( $sharedGridmapdirPath ) {
+        if ( -d $sharedGridmapdirPath ) {
+          $self->info("gridmapdir configured as shared ($sharedGridmapdirPath)");
+          symlink $sharedGridmapdirPath, $gridmapdir;
+        } else {
+          $self->error("Failed to configure shared gridmapdir ($sharedGridmapdirPath doesn't exist)");
+        }
+      } else {
+        mkpath($gridmapdir,0,0755) unless (-e $gridmapdir);
+        unless (-d $gridmapdir) {
+          $self->error("Failed to create $gridmapdir directory");
+          return 1;
+        }
+      }
+    }
+              
     # Read all of the files in that directory except the hidden
     # files. 
     opendir DIR, "$gridmapdir";
@@ -54,90 +95,87 @@ sub Configure($$@) {
     # names. 
     my %inodes = ();
     my %existing = ();
+
     foreach (@files) {
     
-	# Inode map.
-	my $inode = (stat($_))[1];
-	if (defined($inodes{$inode})) {
-	    my $lref = $inodes{$inode};
-	    push @$lref, $_;
-	} else {
-	    my @a;
-	    push @a, $_;
-	    $inodes{$inode} = \@a;
-	};
-	    
-	# Existing files.
-	$existing{$_} = $inode;
+      # Inode map.
+      my $inode = (stat($_))[1];
+      if (defined($inodes{$inode})) {
+          my $lref = $inodes{$inode};
+          push @$lref, $_;
+      } else {
+          my @a;
+          push @a, $_;
+          $inodes{$inode} = \@a;
+      };
+          
+      # Existing files.
+      $existing{$_} = $inode;
     }
 
     # Now create a hash of all of the desired files.
     my %desired = ();
-    if ($config->elementExists("$base/poolaccounts")) {
-	my %pools = $config->getElement("$base/poolaccounts")->getHash();
-	foreach my $prefix (sort keys %pools) {
+    foreach my $prefix (keys(%{$gridmapdir_config->{poolaccounts}})) {
+      my $pool_config = $gridmapdir_config->{poolaccounts}->{$prefix};
+      
+      # Base configuration for  these pool accounts from accounts component
+      my $poolStart = $user_config->{prefix}->{poolStart};
+      unless ( defined($poolStart) ) {
+        $poolStart = 0;
+      }
+      my $poolSize = $user_config->{prefix}->{poolSize};
+      unless ( defined($poolSize) ) {
+        $poolSize = 0;
+      }
+      my $poolEnd = $poolStart + $poolSize - 1;
+      my $poolDigits = $user_config->{prefix}->{poolDigits};
+      unless ( defined($poolDigits) ) {
+        $poolDigits = length("$poolEnd");
+      }
 
-	    # Base configuration for pool account in accounts component
-	    my $poolAccountBase = "/software/components/accounts/users/$prefix";
+      # Set up sprintf format specifier
+      my $field = "%0" . $poolDigits . "d";
 
-	    # Default value if not defined in configuration
-	    my $poolStart = 0;
-
-	    # Read poolStart from accounts configuration.
-	    if ($config->elementExists("$poolAccountBase/poolStart")) {
-		$poolStart = $config->getValue("$poolAccountBase/poolStart");
-	    }
-
-	    # Read poolSize from accounts configuration.  If poolSize isn't
-	    # specified, assume zero (and do nothing).
-	    my $poolSize = 0;
-	    if ($config->elementExists("$poolAccountBase/poolSize")) {
-		$poolSize = $config->getValue("$poolAccountBase/poolSize");
-	    }
-
-	    my $poolEnd = $poolStart+$poolSize-1;
-
-	    # Read the number of digits to pad pool accounts to
-	    my $poolDigits = length("$poolEnd");
-	    if ($config->elementExists("$poolAccountBase/poolDigits")) {
-		$poolDigits = $config->getValue("$poolAccountBase/poolDigits");
-	    }
-	    
-	    # Set up sprintf format specifier
-	    my $field = "%0" . $poolDigits . "d";
-
-	    foreach my $i ($poolStart .. $poolEnd) {
-		my $fname=sprintf($prefix.$field, $i);
-		$desired{"$gridmapdir/$fname"} = 1;
-	    }
-	}
+      foreach my $i ($poolStart .. $poolEnd) {
+        my $fname=sprintf($prefix.$field, $i);
+        $desired{"$gridmapdir/$fname"} = 1;
+      }
     }
 
     # Remove duplicates between the hashes.  These already exist and
     # are needed in the configuration, so nothing needs to be done. 
     foreach (keys %desired) {
-	if (defined($existing{$_})) {
-	    my $inode = $existing{$_};
-	    my $aref = $inodes{$inode};
-	    foreach (@$aref) {
-		delete($desired{$_}) if (exists($desired{$_}));
-		delete($existing{$_}) if (exists($existing{$_}));
-	    }
-	}
+      if (defined($existing{$_})) {
+        my $inode = $existing{$_};
+        my $aref = $inodes{$inode};
+        foreach (@$aref) {
+          delete($desired{$_}) if (exists($desired{$_}));
+          delete($existing{$_}) if (exists($existing{$_}));
+        }
+      }
     }
 
-    # Any files which remain in the existing hash are not wanted.
+    # Any files which remain in the 'existing' hash are not wanted.
     # Make sure that they are deleted.
     foreach (keys %existing) {
-	unlink $_;
+      unlink $_;
     }
 
-    # Now touch the files in the desired hash to make sure everything
-    # exists. 
+    # Now touch the files in the 'desired' hash to make sure everything
+    # exists.
+    my $created = 0; 
     foreach (keys %desired) {
-	open FILE, ">$_";
-	close FILE;
-	$self->warn("Error creating file: $_") if ($?);
+      open FILE, ">$_";
+      close FILE;
+      if ( $? ) {
+        $self->warn("Error creating file: $_");
+      } else {
+        $created += 1;
+      }
+    }
+
+    if ( $created ) {
+      $self->info("$created gridmapdir entries created");
     }
 
     return 1;
