@@ -98,8 +98,8 @@ sub Configure($$@) {
             my $status = move($gridmapdir_bck, $gridmapdir);
             if ( ! $status ) {
               $self->error("Failed to restore original gridmapdir: $_");
-              return 1;
             }
+            return 1;
           }
         }
       } else {
