@@ -44,11 +44,11 @@ Charles Loomis <charles.loomis@cern.ch>
 
 =head1 MAINTAINER
 
-Charles Loomis <charles.loomis@cern.ch>
+Michel Jouvin <jouvin@lal.in2p3.fr>
 
 =head1 VERSION
 
-1.0.2
+2.0.0
 
 =head1 SEE ALSO
 
