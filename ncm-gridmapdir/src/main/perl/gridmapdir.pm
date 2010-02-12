@@ -35,9 +35,9 @@ sub Configure($$@) {
 
     # Retrieve gridmapdir location and attributes and check if it is shared
     my $gridmapdir = $gridmapdir_config->{gridmapdir};
-    my $gridmapdir_owner = $gridmapdir_config->{gridmapdir_owner};
-    my $gridmapdir_group = $gridmapdir_config->{gridmapdir_group};
-    my $gridmapdir_perms = $gridmapdir_config->{gridmapdir_perms};
+    my $gridmapdir_owner = $gridmapdir_config->{owner};
+    my $gridmapdir_group = $gridmapdir_config->{group};
+    my $gridmapdir_perms = $gridmapdir_config->{perms};
     my $sharedGridmapdirPath = $gridmapdir_config->{sharedGridmapdir};
 
     # Check if gridmapdir exists and has the appropriate type.
@@ -55,8 +55,9 @@ sub Configure($$@) {
           mv ($gridmapdir, $gridmapdir.'.unshared');
         } else {
           my $status = LC::Check::status($gridmapdir,
-                                         'owner' => 'root',
-                                         'mode' => '0755',
+                                         'owner' => $gridmapdir_owner,
+                                         'group' => $gridmapdir_group,
+                                         'mode' => $gridmapdir_perms,
                                         );
         }
       } elsif ( -l $gridmapdir ) {
