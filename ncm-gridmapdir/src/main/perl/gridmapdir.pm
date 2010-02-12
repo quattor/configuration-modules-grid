@@ -47,12 +47,20 @@ sub Configure($$@) {
     # If shared and the existing gridmapdir type is a directory, rename it before creating the symlink.
     # If the existing gridmapdir path is a symlink but gridmapdir is not shared remove symlink and create
     # a new directory.
-
+    
+    my $restoreOnFailure = 0;
+    my $gridmadir_bck = $gridmapdir.'.unshared';
     if ( -e $gridmapdir ) {
       if ( -d $gridmapdir ) {
         if ( $sharedGridmapdirPath ) {
           $self->debug(1,"gridmapdir configured to be shared: renaming existing gridmapdir");
-          mv ($gridmapdir, $gridmapdir.'.unshared');
+          my $status = move($gridmapdir, $gridmadir_bck);
+          if ( $status ) {
+            $restoreOnFailure = 1;
+          } else {
+            $self->error("Failed to rename existing gridmapdir before configuring shared gridmapdir: $_");
+            return 1;
+          }
         } else {
           my $status = LC::Check::status($gridmapdir,
                                          'owner' => $gridmapdir_owner,
@@ -72,9 +80,20 @@ sub Configure($$@) {
       if ( $sharedGridmapdirPath ) {
         if ( -d $sharedGridmapdirPath ) {
           $self->info("gridmapdir configured as shared ($sharedGridmapdirPath)");
-          symlink $sharedGridmapdirPath, $gridmapdir;
+          my $status = symlink $sharedGridmapdirPath, $gridmapdir;
+          if ( ! $status ) {
+            $self->error("Failed to configure shared gridmapdir");
+            return 1;
+          }
         } else {
           $self->error("Failed to configure shared gridmapdir ($sharedGridmapdirPath doesn't exist)");
+          if ( $restoreOnFailure ) {
+          my $status = move($gridmapdir_bck, $gridmadir);
+            if ( ! $status ) {
+              $self->error("Failed to restore original gridmapdir: $_");
+              return 1;
+            }
+          }
         }
       } else {
         mkpath($gridmapdir,0,0755) unless (-e $gridmapdir);
