@@ -31,7 +31,7 @@ sub Configure($$@) {
 
     # Load configuration in a perl hash
     my $gridmapdir_config = $config->getElement('/software/components/gridmapdir')->getTree();
-    my $user_config = $config->getElement('/software/components/account/users')->getTree();
+    my $user_config = $config->getElement('/software/components/accounts/users')->getTree();
 
     # Retrieve gridmapdir location and attributes and check if it is shared
     my $gridmapdir = $gridmapdir_config->{gridmapdir};
@@ -52,11 +52,11 @@ sub Configure($$@) {
       if ( -d $gridmapdir ) {
         if ( $sharedGridmapdirPath ) {
           $self->debug(1,"gridmapdir configured to be shared: renaming existing gridmapdir");
-          mv $gridmapdir, $gridmadir.".unshared";
+          mv ($gridmapdir, $gridmapdir.'.unshared');
         } else {
           my $status = LC::Check::status($gridmapdir,
                                          'owner' => 'root',
-                                         'perm' => '0755',
+                                         'mode' => '0755',
                                         );
         }
       } elsif ( -l $gridmapdir ) {
@@ -95,6 +95,7 @@ sub Configure($$@) {
     # names. 
     my %inodes = ();
     my %existing = ();
+    $self->debug(1,"Collecting existing gridmapdir entries...");
 
     foreach (@files) {
     
@@ -112,6 +113,8 @@ sub Configure($$@) {
       # Existing files.
       $existing{$_} = $inode;
     }
+    
+    $self->debug(1,"Found ".scalar(keys($existing))." entries (".scalar(keys($inodes))." inodes)");
 
     # Now create a hash of all of the desired files.
     my %desired = ();
@@ -142,13 +145,14 @@ sub Configure($$@) {
       }
     }
 
+    $self->debug(1,"Total number of desired entries: ".scalar(keys($desired))." (some may already exist)");
+
     # Remove duplicates between the hashes.  These already exist and
     # are needed in the configuration, so nothing needs to be done. 
     foreach (keys %desired) {
       if (defined($existing{$_})) {
         my $inode = $existing{$_};
-        my $aref = $inodes{$inode};
-        foreach (@$aref) {
+        foreach (@{$inodes{$inode}}) {
           delete($desired{$_}) if (exists($desired{$_}));
           delete($existing{$_}) if (exists($existing{$_}));
         }
@@ -157,25 +161,24 @@ sub Configure($$@) {
 
     # Any files which remain in the 'existing' hash are not wanted.
     # Make sure that they are deleted.
-    foreach (keys %existing) {
-      unlink $_;
+    if ( %existing ) {
+      $self->info("Deleting no longer needed entries (".scalar(keys($existing)).")...");
+      foreach (keys %existing) {
+        unlink $_;
+      }
     }
 
     # Now touch the files in the 'desired' hash to make sure everything
     # exists.
-    my $created = 0; 
-    foreach (keys %desired) {
-      open FILE, ">$_";
-      close FILE;
-      if ( $? ) {
-        $self->warn("Error creating file: $_");
-      } else {
-        $created += 1;
+    if ( %desired ) { 
+      $self->info("Adding new entries (".scalar(keys($desired)).")...");
+      foreach (keys %desired) {
+        open FILE, ">$_";
+        close FILE;
+        if ( $? ) {
+          $self->warn("Error creating file: $_");
+        }
       }
-    }
-
-    if ( $created ) {
-      $self->info("$created gridmapdir entries created");
     }
 
     return 1;
