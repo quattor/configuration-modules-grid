@@ -49,12 +49,12 @@ sub Configure($$@) {
     # a new directory.
     
     my $restoreOnFailure = 0;
-    my $gridmadir_bck = $gridmapdir.'.unshared';
+    my $gridmapdir_bck = $gridmapdir.'.unshared';
     if ( -e $gridmapdir ) {
       if ( -d $gridmapdir ) {
         if ( $sharedGridmapdirPath ) {
           $self->debug(1,"gridmapdir configured to be shared: renaming existing gridmapdir");
-          my $status = move($gridmapdir, $gridmadir_bck);
+          my $status = move($gridmapdir, $gridmapdir_bck);
           if ( $status ) {
             $restoreOnFailure = 1;
           } else {
@@ -88,7 +88,8 @@ sub Configure($$@) {
         } else {
           $self->error("Failed to configure shared gridmapdir ($sharedGridmapdirPath doesn't exist)");
           if ( $restoreOnFailure ) {
-          my $status = move($gridmapdir_bck, $gridmadir);
+            $self->debug(1,"Restoring original gridmapdir...");
+            my $status = move($gridmapdir_bck, $gridmapdir);
             if ( ! $status ) {
               $self->error("Failed to restore original gridmapdir: $_");
               return 1;
