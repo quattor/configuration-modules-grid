@@ -120,20 +120,20 @@ sub Configure($$@) {
     my %desired = ();
     foreach my $prefix (keys(%{$gridmapdir_config->{poolaccounts}})) {
       # Base configuration for  these pool accounts from accounts component
-      my $poolStart = $user_config->{prefix}->{poolStart};
+      my $poolStart = $user_config->{$prefix}->{poolStart};
       unless ( defined($poolStart) ) {
         $poolStart = 0;
         $self->debug(2,"poolStart not defined for $prefix: use default value ($poolStart)");
       }
       # If poolSize undefined in accounts configuration, use the size from ncm-gridmapdir component.
       # This is considered as dangerous and deprecated, normally this is required to be 0 in the schema.
-      my $poolSize = $user_config->{prefix}->{poolSize};
+      my $poolSize = $user_config->{$prefix}->{poolSize};
       unless ( defined($poolSize) ) {
         $poolSize = $gridmapdir_config->{poolaccounts}->{$prefix};
         $self->debug(2,"poolSize not defined for $prefix: use default value ($poolSize)");
       }
       my $poolEnd = $poolStart + $poolSize - 1;
-      my $poolDigits = $user_config->{prefix}->{poolDigits};
+      my $poolDigits = $user_config->{$prefix}->{poolDigits};
       unless ( defined($poolDigits) ) {
         $poolDigits = length("$poolEnd");
         $self->debug(2,"poolDigits not defined for $prefix: use default value ($poolDigits)");
