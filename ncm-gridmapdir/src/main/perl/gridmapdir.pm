@@ -51,28 +51,34 @@ sub Configure($$@) {
     my $restoreOnFailure = 0;
     my $gridmapdir_bck = $gridmapdir.'.unshared';
     if ( -e $gridmapdir ) {
+      # If a symlink target is a directory, -d is also true: this allows to test that the symlink target is valid
       if ( -d $gridmapdir ) {
-        if ( $sharedGridmapdirPath ) {
-          $self->debug(1,"gridmapdir configured to be shared: renaming existing gridmapdir");
-          my $status = move($gridmapdir, $gridmapdir_bck);
-          if ( $status ) {
-            $restoreOnFailure = 1;
+        if ( -l $gridmapdir ) {        # A symlink to a directory: means it was previously configured as shared
+          if ( ! $sharedGridmapdirPath ) {
+            $self->debug(1,"gridmapdir not shared: removing existing gridmapdir symlink");
+            unlink $gridmapdir;
+          };
+        } else {   # A plain directory: rename if we need to transform to a symlink
+          if ( $sharedGridmapdirPath ) {
+            $self->debug(1,"gridmapdir configured to be shared: renaming existing gridmapdir");
+            my $status = move($gridmapdir, $gridmapdir_bck);
+            if ( $status ) {
+              $restoreOnFailure = 1;
+            } else {
+              $self->error("Failed to rename existing gridmapdir before configuring shared gridmapdir: $!");
+              return 1;
+            }
           } else {
-            $self->error("Failed to rename existing gridmapdir before configuring shared gridmapdir: $_");
-            return 1;
+            my $status = LC::Check::status($gridmapdir,
+                                           'owner' => $gridmapdir_owner,
+                                           'group' => $gridmapdir_group,
+                                           'mode' => $gridmapdir_perms,
+                                          );
           }
-        } else {
-          my $status = LC::Check::status($gridmapdir,
-                                         'owner' => $gridmapdir_owner,
-                                         'group' => $gridmapdir_group,
-                                         'mode' => $gridmapdir_perms,
-                                        );
         }
-      } elsif ( -l $gridmapdir ) {
-        if ( ! $sharedGridmapdirPath ) {
-          $self->debug(1,"gridmapdir not shared: removing existing gridmapdir symlink");
-          unlink $gridmapdir;
-        };
+      } else {
+        $self->error("$gridmapdir exists but is neither a directory nor a symlink to a directory");
+        return(1);
       };
     }
     
