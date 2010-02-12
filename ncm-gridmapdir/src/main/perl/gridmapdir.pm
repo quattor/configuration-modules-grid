@@ -114,30 +114,35 @@ sub Configure($$@) {
       $existing{$_} = $inode;
     }
     
-    $self->debug(1,"Found ".scalar(keys($existing))." entries (".scalar(keys($inodes))." inodes)");
+    $self->debug(1,"Found ".scalar(keys(%existing))." entries (".scalar(keys(%inodes))." inodes)");
 
     # Now create a hash of all of the desired files.
     my %desired = ();
     foreach my $prefix (keys(%{$gridmapdir_config->{poolaccounts}})) {
-      my $pool_config = $gridmapdir_config->{poolaccounts}->{$prefix};
-      
       # Base configuration for  these pool accounts from accounts component
       my $poolStart = $user_config->{prefix}->{poolStart};
       unless ( defined($poolStart) ) {
         $poolStart = 0;
+        $self->debug(2,"poolStart not defined for $prefix: use default value ($poolStart)");
       }
+      # If poolSize undefined in accounts configuration, use the size from ncm-gridmapdir component.
+      # This is considered as dangerous and deprecated, normally this is required to be 0 in the schema.
       my $poolSize = $user_config->{prefix}->{poolSize};
       unless ( defined($poolSize) ) {
-        $poolSize = 0;
+        $poolSize = $gridmapdir_config->{poolaccounts}->{$prefix};
+        $self->debug(2,"poolSize not defined for $prefix: use default value ($poolSize)");
       }
       my $poolEnd = $poolStart + $poolSize - 1;
       my $poolDigits = $user_config->{prefix}->{poolDigits};
       unless ( defined($poolDigits) ) {
         $poolDigits = length("$poolEnd");
+        $self->debug(2,"poolDigits not defined for $prefix: use default value ($poolDigits)");
       }
 
       # Set up sprintf format specifier
       my $field = "%0" . $poolDigits . "d";
+
+      $self->debug(1,"Adding pool accounts $prefix to desired entries (start=$poolStart, end=$poolEnd)...");
 
       foreach my $i ($poolStart .. $poolEnd) {
         my $fname=sprintf($prefix.$field, $i);
@@ -145,7 +150,7 @@ sub Configure($$@) {
       }
     }
 
-    $self->debug(1,"Total number of desired entries: ".scalar(keys($desired))." (some may already exist)");
+    $self->debug(1,"Total number of desired entries: ".scalar(keys(%desired))." (some may already exist)");
 
     # Remove duplicates between the hashes.  These already exist and
     # are needed in the configuration, so nothing needs to be done. 
@@ -162,7 +167,7 @@ sub Configure($$@) {
     # Any files which remain in the 'existing' hash are not wanted.
     # Make sure that they are deleted.
     if ( %existing ) {
-      $self->info("Deleting no longer needed entries (".scalar(keys($existing)).")...");
+      $self->info("Deleting no longer needed entries (".scalar(keys(%existing)).")...");
       foreach (keys %existing) {
         unlink $_;
       }
@@ -171,7 +176,7 @@ sub Configure($$@) {
     # Now touch the files in the 'desired' hash to make sure everything
     # exists.
     if ( %desired ) { 
-      $self->info("Adding new entries (".scalar(keys($desired)).")...");
+      $self->info("Adding new entries (".scalar(keys(%desired)).")...");
       foreach (keys %desired) {
         open FILE, ">$_";
         close FILE;
