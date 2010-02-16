@@ -57,8 +57,13 @@ sub Configure($$@) {
                          $self->warn("Cannot get group name belonging to group id \"$gid\", skipping...");
                          next;
                      }
-                     $flag ||= "";
-                     $result .= join(":",$uid,$name,$gid,$gnam,$voname,$flag) . ":\n";
+		     if ($flag && ($gid =~ /^\d+$/)){
+			 # special case: no secondary gid but flag defined so we reuse the primary
+			 $result .= join(":",$uid,$name,"${gid},${gid}","${gnam},${gnam}",$voname,$flag) . ":\n";
+		     } else {
+			 $flag ||= "";
+			 $result .= join(":",$uid,$name,$gid,$gnam,$voname,$flag) . ":\n";
+		     }
                  }
             }
         }
