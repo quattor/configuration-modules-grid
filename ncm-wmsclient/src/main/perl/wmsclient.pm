@@ -403,9 +403,9 @@ sub buildVOConfig {
     my $contents = "[\n";
     $contents .= "  VirtualOrganisation = \"$voname\";\n";
     $contents .= "  JdlDefaultAttributes = [\n";
-    $contents .= "    rank = \"$rank\";\n";
-    $contents .= "    requirements = \"$requirements\";\n";
-    $contents .= "    RetryCount = \"$retryCount\";\n";
+    $contents .= "    rank = $rank;\n";
+    $contents .= "    requirements = $requirements;\n";
+    $contents .= "    RetryCount = $retryCount;\n";
     $contents .= "    MyProxyServer = \"$myproxy\";\n" if defined($myproxy);
     $contents .= "  ];";
     $contents .= "\n" . $default_contents . "\n";
