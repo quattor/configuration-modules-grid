@@ -105,6 +105,9 @@ type ${project.artifactId}_component_service_ice_opts = {
   'bulk_query_size'                    ? long
   'lease_update_frequency'             ? long
   'InputType'                          ? string
+  'max_ice_mem'                        ? long
+  'ice_empty_threshold'                ? long
+
 };
 
 type ${project.artifactId}_component_service_ice = {

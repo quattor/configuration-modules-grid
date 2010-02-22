@@ -12,7 +12,7 @@ subscription_update_threshold_time = <%subscription_update_threshold_time|3600%>
 subscription_duration = <%subscription_duration|24*3600%>;
 poller_delay = <%poller_delay|2*60%>;
 poller_status_threshold_time = <%poller_status_threshold_time|30*60%>;
-start_job_killer = <%start_job_killer|true%>;
+start_job_killer = <%start_job_killer%>;
 job_cancellation_threshold_time = <%job_cancellation_threshold_time|5*60%>;
 start_proxy_renewer = <%start_proxy_renewer|true%>;
 start_lease_updater = <%start_lease_updater|true%>;
@@ -37,4 +37,7 @@ persist_dir = "<%persist_dir|${GLITE_LOCATION_VAR}/ice/ice_db%>";
 soap_timeout = <%soap_timeout|60%>;
 proxy_renewal_frequency = <%proxy_renewal_frequency|600%>;
 bulk_query_size = <%bulk_query_size|100%>;
-lease_update_frequency = <%lease_update_frequency|1800%>;
+lease_update_frequency = <%lease_update_frequency|20*60%>;
+max_ice_mem =  <%max_ice_mem|2096000%>;
+ice_empty_threshold =  <%ice_empty_threshold|600%>;
+
