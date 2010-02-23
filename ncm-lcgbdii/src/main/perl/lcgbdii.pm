@@ -128,7 +128,7 @@ sub Configure($$@) {
     unless ( $self->createAndChownDir($user,$bdiiConfDir) ) {
       return 1;
     };
-    my $fname = "$bdiiConfDir/etc/bdii-update.conf";
+    my $fname = "$bdiiConfDir/bdii-update.conf";
 
     # Create the contents.
     $contents = "#\n# Created and maintained by ncm-lcgbdii. DO NOT EDIT.\n#\n";
