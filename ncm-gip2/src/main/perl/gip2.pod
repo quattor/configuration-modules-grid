@@ -48,7 +48,8 @@ Default : none.
 
 =head3 LDIF ldifFile : string (required)
 
-Name of the LDIF file to produce.
+Name of the LDIF file to produce. It can be either a name or an absolute path. When using a name without a path,
+the file will be created in the LDIF directory (basedir/ldif).
 
 Default : none
 

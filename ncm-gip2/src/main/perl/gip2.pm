@@ -79,7 +79,8 @@ sub Configure($$@) {
       $workDirs = ["$baseDir/tmp"] unless $workDirs;
     }
 
-    # Build a list of all files managed by this component
+    # Build a list of all files managed by this component that will be
+    # used to determine if a file must be removed from GIP directories.
     my %managedFiles;
     for my $fileType ('ldif','plugin','provider','scripts','stubs') {
       $self->debug(1,"Adding $fileType files to list of managed files");
@@ -87,15 +88,24 @@ sub Configure($$@) {
       my @fileList;
       next if ! $gip_config->{$fileType};
       
+      # Scripts have no implicit file path, the script path is the key (escaped)
       if ( $fileType eq 'scripts' ) {
         for my $efile (keys(%{$gip_config->{$fileType}})) {
           push @fileList, unescape($efile);
         } 
+
+      # LDIF files are normally located in $ldifDir. It is also possible to
+      # have LDIF files at arbitrary locations using an absolute file path.
+      # Do not process them specifically here, the resulting entry will never
+      # match.
+      # The LDIF file is in ldifFile property of each entry.
       } elsif ( $fileType eq 'ldif' ) {
         $filePath = $ldifDir;
         for my $entry (keys(%{$gip_config->{$fileType}})) {
           push @fileList, $gip_config->{$fileType}->{$entry}->{ldifFile};
         }
+        
+      # Other file types: the key is the file name relative to the file type directory.
       } else {
         @fileList = keys %{$gip_config->{$fileType}};
         if ( $fileType eq 'plugin' ) {
@@ -134,8 +144,9 @@ sub Configure($$@) {
       foreach my $f (@delete) {
         my $file = "$dir/$f";
         if ( defined($managedFiles{$file}) ) {
-          $self->debug(1,"File $file managed by this component. Not removed.");
+          $self->debug(1,"File $file managed by ncm-gip2. Not removed.");
         } else {
+          $self->info(1,"File $file removed (not part ncm-gip2 configuration).");
           unlink $file;          
         }
       }
@@ -183,11 +194,19 @@ sub Configure($$@) {
 
       foreach my $file (sort keys %$files) {
         my $entry = $files->{$file};
-        my $template = $entry->{template};
+
+        # Get the output LDIF file name.
+        # It can be an absolute or relative path. If relative, prefix with $ldifDir.
+        my $ldifFile = $entry->{ldifFile};
+        if ( $ldifFile !~ /^\// ) {
+          $ldifFile = $ldifDir.'/'.$ldifFile;
+        }
+        $self->debug('Processing entry for LDIF file '.$ldifFile);
 
         # Ensure that the template file exists.
+        my $template = $entry->{template};
         if (! -f $template) {
-          $self->warn("$template does not exist; skipping...");
+          $self->warn("$template does not exist; skipping LDIF file ".$ldifFile."...");
           next;
         }
 
@@ -211,8 +230,7 @@ sub Configure($$@) {
         my $ldifFile = $entry->{ldifFile};
 
         # Write out the file.
-        my $changes = LC::Check::file(
-                                      "$etcDir/$file",
+        my $changes = LC::Check::file("$etcDir/$file",
                                       contents => encode_utf8($contents),
                                       mode => 0644,
                                      );
@@ -221,12 +239,12 @@ sub Configure($$@) {
         }
 
         # Run the command to generate the LDIF file.
-        my $cmd = "$staticInfoCmd -c $etcDir/$file -t $template > $ldifDir/$ldifFile";
+        my $cmd = "$staticInfoCmd -c $etcDir/$file -t $template > $ldifFile";
         `$cmd`;
         if ($?) {
           $self->error("error running command: $cmd");
         } else {
-          $self->info("updated file $ldifDir/$ldifFile");
+          $self->info("updated file $ldifFile");
         }
       }
     }
@@ -238,16 +256,17 @@ sub Configure($$@) {
       my $files = $gip_config->{plugin};
 
       foreach my $file (sort keys %$files) {
+        my $pluginFile = $pluginDir/$file;
+        $self->debug('Processing entry for plugin '.$pluginFile);
         my $contents = $files->{$file};
 
         # Write out the file.
-        my $changes = LC::Check::file(
-                                      "$pluginDir/$file",
+        my $changes = LC::Check::file($pluginFile,
                                       contents => encode_utf8($contents),
                                       mode => 0755,
                                      );
         if ( $changes < 0 ) {
-          $self->error("Error updadating $pluginDir/$file");
+          $self->error("Error updadating $pluginFile");
         }
       }  
     }
@@ -259,16 +278,17 @@ sub Configure($$@) {
       my $files = $gip_config->{provider};
 
       foreach my $file (sort keys %$files) {
+        my $providerFile = $pluginDir/$file;
+        $self->debug('Processing entry for provider '.$providerFile);
         my $contents = $files->{$file};
 
         # Write out the file.
-        my $changes = LC::Check::file(
-                                      "$providerDir/$file",
+        my $changes = LC::Check::file($providerFile,
                                       contents => encode_utf8($contents),
                                       mode => 0755,
                                      );
         if ( $changes < 0 ) {
-          $self->error("Error updadating $providerDir/$file");
+          $self->error("Error updadating $providerFile");
         }
       }
     }
@@ -283,6 +303,7 @@ sub Configure($$@) {
 
        # Extract the file name and contents from the configuration.
         my $file = unescape($efile);
+        $self->debug('Processing entry for script '.$file);
         my $contents = $files->{$efile};
  
         # Write out the file.
@@ -306,6 +327,7 @@ sub Configure($$@) {
 
         # Extract the file name and contents from the configuration.
         my $file = unescape($efile);
+        $self->debug('Processing entry for configuration file '.$file);
         my $contents = $files->{$efile};
 
         # Write out the file.
@@ -329,10 +351,12 @@ sub Configure($$@) {
     if ( $gip_config->{stubs} ) {
       my $files = $gip_config->{stubs};
 
-      foreach my $ldifFile (sort keys %$files) {
-        my $contents = '';
-        
-        my $ldifEntries = $files->{$ldifFile};
+      foreach my $stubFile (sort keys %$files) {
+        my $ldifEntries = $files->{$stubFile};
+        my $file = "$ldifDir/$stubFile";
+        $self->debug('Processing entry for stub '.$file);
+
+        my $contents = '';        
         for my $dn (sort keys %$ldifEntries) {
           $contents .= unescape($dn) ."\n";
           my $attrs = $ldifEntries->{$dn};
@@ -346,9 +370,7 @@ sub Configure($$@) {
         }
 
         # Write out the file.
-        my $file = "$ldifDir/$ldifFile";
-        my $changes = LC::Check::file(
-                                      "$file",
+        my $changes = LC::Check::file("$file",
                                       contents => encode_utf8($contents),
                                       mode => 0644,
                                      );
