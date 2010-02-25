@@ -201,7 +201,7 @@ sub Configure($$@) {
         if ( $ldifFile !~ /^\// ) {
           $ldifFile = $ldifDir.'/'.$ldifFile;
         }
-        $self->debug('Processing entry for LDIF file '.$ldifFile);
+        $self->debug(1,'Processing entry for LDIF file '.$ldifFile);
 
         # Ensure that the template file exists.
         my $template = $entry->{template};
@@ -225,9 +225,6 @@ sub Configure($$@) {
           }
           $contents .= "\n";
         }
-
-        # Get the output LDIF file name.
-        my $ldifFile = $entry->{ldifFile};
 
         # Write out the file.
         my $changes = LC::Check::file("$etcDir/$file",
@@ -256,8 +253,8 @@ sub Configure($$@) {
       my $files = $gip_config->{plugin};
 
       foreach my $file (sort keys %$files) {
-        my $pluginFile = $pluginDir/$file;
-        $self->debug('Processing entry for plugin '.$pluginFile);
+        my $pluginFile = $pluginDir."/".$file;
+        $self->debug(1,'Processing entry for plugin '.$pluginFile);
         my $contents = $files->{$file};
 
         # Write out the file.
@@ -278,8 +275,8 @@ sub Configure($$@) {
       my $files = $gip_config->{provider};
 
       foreach my $file (sort keys %$files) {
-        my $providerFile = $pluginDir/$file;
-        $self->debug('Processing entry for provider '.$providerFile);
+        my $providerFile = $providerDir."/".$file;
+        $self->debug(1,'Processing entry for provider '.$providerFile);
         my $contents = $files->{$file};
 
         # Write out the file.
@@ -303,7 +300,7 @@ sub Configure($$@) {
 
        # Extract the file name and contents from the configuration.
         my $file = unescape($efile);
-        $self->debug('Processing entry for script '.$file);
+        $self->debug(1,'Processing entry for script '.$file);
         my $contents = $files->{$efile};
  
         # Write out the file.
@@ -327,7 +324,7 @@ sub Configure($$@) {
 
         # Extract the file name and contents from the configuration.
         my $file = unescape($efile);
-        $self->debug('Processing entry for configuration file '.$file);
+        $self->debug(1,'Processing entry for configuration file '.$file);
         my $contents = $files->{$efile};
 
         # Write out the file.
@@ -353,8 +350,8 @@ sub Configure($$@) {
 
       foreach my $stubFile (sort keys %$files) {
         my $ldifEntries = $files->{$stubFile};
-        my $file = "$ldifDir/$stubFile";
-        $self->debug('Processing entry for stub '.$file);
+        my $file = $ldifDir."/".$stubFile;
+        $self->debug(1,'Processing entry for stub '.$file);
 
         my $contents = '';        
         for my $dn (sort keys %$ldifEntries) {
