@@ -202,6 +202,7 @@ sub Configure($$@) {
           $ldifFile = $ldifDir.'/'.$ldifFile;
         }
         $self->debug(1,'Processing entry for LDIF file '.$ldifFile);
+        my $ldifTmp = '/tmp/'.fileparse($ldifFile);
 
         # Ensure that the template file exists.
         my $template = $entry->{template};
@@ -226,22 +227,30 @@ sub Configure($$@) {
           $contents .= "\n";
         }
 
-        # Write out the file.
+        # Write out the configuration file.
         my $changes = LC::Check::file("$etcDir/$file",
                                       contents => encode_utf8($contents),
                                       mode => 0644,
                                      );
         if ( $changes < 0 ) {
-          $self->error("Error updadating $etcDir/$file");
+          $self->error("Error updadating LDIF configuration file $etcDir/$file");
         }
 
         # Run the command to generate the LDIF file.
-        my $cmd = "$staticInfoCmd -c $etcDir/$file -t $template > $ldifFile";
+        # A temporary LDIF file is produced and then the LDIF file is updated
+        # with the temporary file if the content was changed.
+        my $cmd = "$staticInfoCmd -c $etcDir/$file -t $template > $ldifTmp";
         `$cmd`;
         if ($?) {
-          $self->error("error running command: $cmd");
+          $self->error("Error generating LDIF file (commad=$cmd)");
         } else {
-          $self->info("updated file $ldifFile");
+          $changes = LC::Check::file($ldifFile,
+                                     source => $ldifTmp,
+                                     mode => 0644,
+                                    );          
+          if ( $changes < 0 ) {
+            $self->error("Error updadating $ldifFile");
+          }
         }
       }
     }
