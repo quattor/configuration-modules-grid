@@ -26,56 +26,47 @@ use Encode qw(encode_utf8);
 local(*DTA);
 
 
-use EDG::WP4::CCM::Element;
-
 ##########################################################################
-sub Configure($$) {
+sub Configure($$@) {
 ##########################################################################
   my ($self,$config)=@_;
   my $base     = "/software/components/frontiersquid/";
-  my $rpm_home = "/home/dbfrontier";
-  my $response_file = "/tmp/response_file.ncm-frontiersquid";
+  my $rpm_home = "/data/squid";
+  my $response_file = "/data/squid/squidconf";
 
   my $frontier_config = $config->getElement($base)->getTree();
 
-  my $home      = $frontier_config->{home};
-  my $username  = $frontier_config->{username};
-  my $group     = $frontier_config->{group};
-  my $networks  = $frontier_config->{networks};
-  my $servers   = $frontier_config->{servers};
+  # Check that networks is really defined.
+  my $networks = $frontier_config->{networks};
+  if (!defined($networks)) {
+     $self->error("entry with undefined networks");
+     return 0;
+  }
+
+  # Pull out the other values
+  my $username = $frontier_config->{username};
+  my $group = $frontier_config->{group};
   my $cache_mem = $frontier_config->{cache_mem};
   my $cache_dir = $frontier_config->{cache_dir};
 
-  my $squid_file = $home."/etc/squid.conf";
-
-  my $contents  = $home."\n";
-  $contents  .= $username . "\n";
-  $contents  .= $group . "\n";
-  for my $net (@{$networks}) {
-	$contents .= EDG::WP4::CCM::Element::unescape($net).",";
-  }
-  $contents = substr($contents, 0, - 1); 
-  $contents  .= "\n";
-  for my $serv (@{$servers}) {
-        $contents .= EDG::WP4::CCM::Element::unescape($serv).",";
-  }
-  $contents = substr($contents, 0, - 1); 
-  $contents  .= "\n";
-  $contents  .= $cache_mem . "\n";
-  $contents  .= $cache_dir . "\n"; 
+  my $contents  = "export FRONTIER_USER=".$username."\n";
+  $contents  .= "export FRONTIER_GROUP=".$group . "\n";
+  $contents  .= "export FRONTIER_NET_LOCAL='".$networks."'\n"; 
+  $contents  .= "export FRONTIER_CACHE_MEM=".$cache_mem . "\n";
+  $contents  .= "export FRONTIER_CACHE_DIR_SIZE=".$cache_dir . "\n"; 
 
   my $changes = LC::Check::file("$response_file",
                                 contents => encode_utf8($contents),
                                 mode => 0644,
-                               );
+                                );
   if ( $changes < 0 ) {
 	$self->warn("Error creating $response_file");
+        return 0;
   }
 
-  system($rpm_home."/etc/post_install <".$response_file);
+  system("export SCFILE=".$response_file.";".$rpm_home."/etc/post_install");
 
-  return; # return code is not checked.
-
+  return 1; # return code is not checked.
 }
 
 1; # Perl module requirement.

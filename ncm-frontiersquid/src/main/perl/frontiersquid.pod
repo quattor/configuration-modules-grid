@@ -6,7 +6,14 @@
 
 =head1 NAME
 
-NCM::frontiersquid - Components used to manage FroNTier squid server
+NCM::frontiersquid - Component used to manage FroNTier squid server
+
+=head1 DESCRIPTION
+
+Object to configure and start the squid server for FroNTier.
+It creates a file where environmental variables needed by the squid server
+post_install script are defined. The post_install script is then
+explicitely called to configure and start the squid server.
 
 =head1 SYNOPSIS
 
@@ -14,7 +21,9 @@ NCM::frontiersquid - Components used to manage FroNTier squid server
 
 =item Configure()
 
-TBD
+It reads the variables set by the system administrator and creates the
+squidconf file. Such a file is then sourced before executing the
+squid server post_install script.
 
 =item Unconfigure()
 
@@ -24,14 +33,44 @@ Not implemented.
 
 =head1 RESOURCES
 
-=over
+=head2 /software/components/frontiersquid/active : boolean
 
-=item /software/components/frontiersquid/active : boolean
+Activates/deactivates the component.
 
-activates/deactivates the component.
+=head2 /software/components/frontiersquid/username
 
-=back
+Defines the username of the account the squid server runs under. 
+The default is squid.
 
+=head2 /software/components/frontiersquid/group
+
+Defines the group of the account the squid server runs under.
+The default is squid.
+
+=head2 /software/components/frontiersquid/networks
+
+This argument is mandatory. It lists the set of networks enabled to
+send requests to the squid server. The format of such argument must
+be "network/submask network/submask". Please see the EXAMPLE section.
+
+=head2 /software/components/frontiersquid/cache_mem
+
+Defines the amount of physical memory dedicated to squid cache.
+It is expressed in MB. The default is 128.
+
+=head2 /software/components/frontiersquid/cache_dir
+
+Defines the amount of space on disk dedicated to the squid cache.
+It is expressed in MB. The default is 40000.
+
+=head1 EXAMPLES
+
+=begin text
+include { 'components/frontiersquid/config' };
+"/software/components/frontiersquid/username" = "atsquid";
+"/software/components/frontiersquid/group" = "zp";
+"/software/components/frontiersquid/networks" = "128.141.0.0/255.255.0.0 137.138.0.0/255.255.0.0 172.17.0.0/255.255.0.0 172.18.0.0/255.255.0.0";
+=end text
 
 =head1 DEPENDENCIES
 
@@ -43,20 +82,17 @@ none.
 
 none.
 
-
 =head1 FILES
 
-This component doesn't touch any file.
-
+This component creates the file /data/squid/squidconf.
 
 =head1 BUGS
 
 None.
 
-
 =head1 AUTHOR
 
-German Cancio <German.Cancio@cern.ch>
+Flavia Donno <Flavia.Donno@cern.ch>
 
 =head1 SEE ALSO
 
