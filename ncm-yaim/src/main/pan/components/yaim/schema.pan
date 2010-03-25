@@ -177,6 +177,7 @@ type structure_yaim_close_se = {
 type structure_yaim_ce = {
     "closeSE"                           ? structure_yaim_close_se{}
     "BATCH_SYS"                         ? string
+    "CAPABILITY"                        ? string
     "CPU_MODEL"                         ? string
     "CPU_VENDOR"                        ? string
     "CPU_SPEED"                         ? string
@@ -184,6 +185,7 @@ type structure_yaim_ce = {
     "OS_RELEASE"                        ? string
     "OS_ARCH"                           ? string
     "OS_VERSION"                        ? string
+    "OTHERDESCR"                        ? string
     "MINPHYSMEM"                        ? string
     "MINVIRTMEM"                        ? string
     "SMPSIZE"                           ? string
