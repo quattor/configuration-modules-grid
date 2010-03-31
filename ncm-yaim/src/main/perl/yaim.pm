@@ -630,6 +630,14 @@ sub write_configuration {
                 }
             }
 
+            # rename all VO files to *.old; this effectively enables removal of VOs from the config
+            my $vofiles = LC::File::rglob("$basedir/vo.d/*");
+            foreach my $file ( @{$vofiles} ) {
+                if ( $file !~ /\.old$/ ) {                  # skip existing .old files
+                    LC::File::move($file, $file.".old");    # rename file, overwriting existing .old
+		        }
+            }
+
             if ( $result != -1 ) {
                 # loop over all entries in %vo_d_cfg and write the contents to the individual files
                 foreach my $voname (keys %{$vo_d_ref}) {
