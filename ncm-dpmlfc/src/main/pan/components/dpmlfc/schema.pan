@@ -63,6 +63,19 @@ function component_dpmlfc_xroot_access_rules_valid = {
   true;
 };
 
+# Validation of node parameters
+function component_dpmlfc_node_config_valid = {
+  # Check 'requestMaxAge is a valid value. See man dpm.
+  if ( is_defined(SELF['requestMaxAge']) ) {
+    if ( !match(SELF['requestMaxAge'],'^[0-9]+[ymdh]*$') ) {
+      error("'requestMaxAge' must be a number optionally followed by 'y' (year), 'm' (month), 'd' (day) or 'h' (hour).");
+      return(false);
+    }
+  };
+  true;
+};
+
+
 type ${project.artifactId}_component_fs_entry = {
         "host"     ? string
         "name"     ? string
@@ -90,6 +103,12 @@ type ${project.artifactId}_component_node_config = {
         "logfile"   ? string
         "port"      ? type_port
         "assumekernel" ? string
+        "allowCoreDump" ? boolean
+} with component_dpmlfc_node_config_valid(SELF);
+
+type ${project.artifactId}_component_dpm_node_config = {
+        include ${project.artifactId}_component_node_config
+        "requestMaxAge" ? string
 };
 
 # xrootd authentication plug-in allow to specify operations requiring
@@ -152,14 +171,15 @@ type ${project.artifactId}_component_global_options_tree = {
 type ${project.artifactId}_component = {
 	include structure_component
 
-        "dpm"      ? ${project.artifactId}_component_node_config[]
+        "dpm"      ? ${project.artifactId}_component_dpm_node_config[]
         "dpns"     ? ${project.artifactId}_component_node_config[]
         "gsiftp"   ? ${project.artifactId}_component_node_config[]
         "rfio"     ? ${project.artifactId}_component_node_config[]
         "srmv1"    ? ${project.artifactId}_component_node_config[]
         "srmv2"    ? ${project.artifactId}_component_node_config[]
         "srmv22"   ? ${project.artifactId}_component_node_config[]
-        "xroot"   ? ${project.artifactId}_component_node_config[]
+        "xroot"    ? ${project.artifactId}_component_node_config[]
+        "copyd"    ? ${project.artifactId}_component_node_config[]
 
         "pools"    ? ${project.artifactId}_component_pool_entry{}
         "vos"      ? ${project.artifactId}_component_vo_entry{}

@@ -94,6 +94,7 @@ my $line_format_def = $line_format_param;
 # correctly apply defaults
 # Role names used here must be the same as key in other hashes.
 my @dpm_roles = (
+     "copyd",
      "dpm",
      "dpns",
      "gsiftp",
@@ -112,6 +113,7 @@ my @lfc_roles = (
 # Following hash define the maximum supported servers for each type of servers
 # Can be updated if redundancy is added for certain server types
 my %dpm_comp_max_servers = (
+          "copyd" => 1,
           "dpm" => 1,
           "dpns" => 1,
           "gsiftp" => 999,
@@ -148,6 +150,21 @@ my %lfc_comp_max_servers = (
 #
 # If there are several servers for a role the option value from all the servers# is used for 'host' option, and only the server corresponding to current host
 # for other options.
+my $copyd_config_file = "/etc/sysconfig/dpmcopyd";
+my %copyd_config_rules = (
+        "DPM_HOST" => "host:dpm;$line_format_envvar",
+        "DPNS_HOST" => "host:dpns;$line_format_envvar",
+        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;$line_format_param",
+        "DPMCOPYDLOGFILE" => "logfile:copyd;$line_format_param",
+        "DPMUSER" => "user:GLOBAL;$line_format_param",
+        "DPMGROUP" => "group:GLOBAL;$line_format_param",
+        "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
+        "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
+        "DPMCOPYD_PORT" => "port:copyd;$line_format_envvar",
+        "LD_ASSUME_KERNEL" =>"assumekernel:copyd;$line_format_envvar",
+        "ALLOW_COREDUMP" =>"allowCoreDump:copyd;$line_format_envvar",
+       );
+
 my $dpm_config_file = "/etc/sysconfig/dpm";
 my %dpm_config_rules = (
       "DPNS_HOST" => "host:dpns;$line_format_envvar",
@@ -159,6 +176,7 @@ my %dpm_config_rules = (
       "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
       "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
       "LD_ASSUME_KERNEL" =>"assumekernel:dpm;$line_format_envvar",
+      "ALLOW_COREDUMP" =>"allowCoreDump:dpm;$line_format_envvar",
            );
 
 my $dpns_config_file = "/etc/sysconfig/dpnsdaemon";
@@ -171,6 +189,7 @@ my %dpns_config_rules = (
        "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
        "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
        "LD_ASSUME_KERNEL" =>"assumekernel:dpns;$line_format_envvar",
+       "ALLOW_COREDUMP" =>"allowCoreDump:dpns;$line_format_envvar",
       );
 
 my $gsiftp_config_file = "/etc/sysconfig/dpm-gsiftp";
@@ -202,6 +221,7 @@ my %srmv1_config_rules = (
         "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
         "SRMV1_PORT" => "port:srmv1;$line_format_envvar",
         "LD_ASSUME_KERNEL" =>"assumekernel:srmv1;$line_format_envvar",
+        "ALLOW_COREDUMP" =>"allowCoreDump:srmv1;$line_format_envvar",
        );
 
 my $srmv2_config_file = "/etc/sysconfig/srmv2";
@@ -216,6 +236,7 @@ my %srmv2_config_rules = (
         "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
         "SRMV2_PORT" => "port:srmv2;$line_format_envvar",
         "LD_ASSUME_KERNEL" =>"assumekernel:srmv2;$line_format_envvar",
+        "ALLOW_COREDUMP" =>"allowCoreDump:srmv2;$line_format_envvar",
        );
 
 my $srmv22_config_file = "/etc/sysconfig/srmv2.2";
@@ -230,6 +251,7 @@ my %srmv22_config_rules = (
         "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
         "SRMV2_2_PORT" => "port:srmv22;$line_format_envvar",
         "LD_ASSUME_KERNEL" =>"assumekernel:srmv22;$line_format_envvar",
+        "ALLOW_COREDUMP" =>"allowCoreDump:srmv22;$line_format_envvar",
        );
 
 my $xroot_config_file = "/etc/sysconfig/dpm-xrd";
@@ -258,6 +280,7 @@ my %trust_config_rules = (
         "RFIOD XTRUST" => "rfio->host:dpm,rfio;$line_format_trust",
         "RFIOD FTRUST" => "rfio->host:dpm,rfio;$line_format_trust",
         "RFIO DAEMONV3_WRMT 1" => ";$line_format_trust",
+        "DPM REQCLEAN" => "dpm->requestMaxAge:dpm;$line_format_trust",
        );
 
 my $lfc_config_file = "/etc/sysconfig/lfcdaemon";
@@ -283,6 +306,7 @@ my %lfcdli_config_rules = (
         );
 
 my %config_files = (
+        "copyd" => \$copyd_config_file,
         "dpm" => \$dpm_config_file,
         "dpns" => \$dpns_config_file,
         "gsiftp" => \$gsiftp_config_file,
@@ -297,6 +321,7 @@ my %config_files = (
        );
 
 my %config_rules = (
+        "copyd" => \%copyd_config_rules,
         "dpm" => \%dpm_config_rules,
         "dpns" => \%dpns_config_rules,
         "gsiftp" => \%gsiftp_config_rules,
@@ -316,8 +341,10 @@ my %config_rules = (
 # multiple dependencies.
 # If service list is prefixed by 'role:', list is a name of role that is
 # present in this list (take care not to create a loop).
+# 'trusts' is a special entry associated with modifications of /etc/shift.conf.
 # Service will be restarted if configuration changes.
 my %services = (
+    "copyd" => "dpmcopyd",
     "dpm" => "dpm",
     "dpns" => "dpnsdaemon",
     "gsiftp" => "dpm-gsiftp",
@@ -328,7 +355,7 @@ my %services = (
     "xroot" => "",    # will be defined by xrootSpecificActions() according to node type
     "lfc" => "lfcdaemon",
     "lfc-dli" => "lfc-dli",
-    "trusts" => "role:dpm,dpns,gsiftp,rfio,xroot",
+    #"trusts" => "role:dpm,dpns,gsiftp,rfio,xroot",   # shift.conf modifications are automaticaly detected without a need to restart daemons
          );
 
 
@@ -348,7 +375,7 @@ my %nameserver_role = (
                        "LFC", "lfc",
                       );
 
-# Define roles needed access to database
+# Define roles needing access to database
 my %db_roles = (
     "DPM" => "dpm,dpns",
     "LFC" => "lfc",
@@ -395,7 +422,7 @@ my $gridmapdir_def = $grid_security_dir."/gridmapdir";
 my $hostkey = "hostkey.pem";
 my $hostcert = "hostcert.pem";
 my %nonroot_roles = (
-         "DPM" => "dpm,dpns,srmv1,srmv2,srmv22",
+         "DPM" => "copyd,dpm,dpns,srmv1,srmv2,srmv22",
          "LFC" => "lfc,lfc-dli",
         );
 
@@ -579,10 +606,13 @@ sub Configure($$@) {
       $self->updateConfigFile("trusts") if $self->hostHasRoles($trust_roles);
     }
 
+    # Build init script to control all enabled services
+    $self->buildEnabledServiceInitScript();
+
     # Do necessary DB initializations (only if current host has one role needing
     # DB access
     if ( $self->hostHasRoles($db_roles{$product}) ) {
-      $self->info("Checking database configuration...");
+      $self->info("Checking ".$self->getCurrentProduct()." database configuration...");
       my $status = $self->initDb();
       # Negative status means success with changes requiring services restart
       if ( $status < 0 ) {
@@ -1811,6 +1841,20 @@ sub getServiceRestartList () {
 }
 
 
+# Function returning name of hash handling the list of enabled services for to the current product
+#
+# Arguments :
+#  none
+sub getEnabledServiceListName () {
+  my $function_name = "getEnabledServiceListName";
+  my $self = shift;
+
+  my $product = $self->getCurrentProduct();
+
+  return "SERVICEENABLEDLIST".$product;
+}
+
+
 # Enable a service to be started during system startup
 #
 # Arguments :
@@ -1840,6 +1884,48 @@ sub enableService () {
     }
   } else {
     $self->debug(2,"$function_name: $service already enabled");
+  }
+
+  my $enabled_service_list_name = $self->getEnabledServiceListName();
+  unless ( defined($self->{$enabled_service_list_name}) ) {
+      $self->{$enabled_service_list_name} = {};
+  }
+  $self->{$enabled_service_list_name}->{$service} = 1;     # Value is useless
+
+}
+
+
+# Generate an init script to control (start/stop/restart) all enabled services.
+
+sub buildEnabledServiceInitScript () {
+  my $function_name = "buildEnabledServiceInitScript";
+  my $self = shift;
+
+  my $init_script_name = '/etc/init.d/'.lc($self->getCurrentProduct()).'-all-daemons';
+  my $enabled_service_list_name = $self->getEnabledServiceListName();
+  my $contents;
+
+  # The list should not be defined if it is empty...
+  if ( $self->{$enabled_service_list_name} ) {
+    $self->info("Checking init script used to control all ".$self->getCurrentProduct()." enabled services (".$init_script_name.")...");
+    $contents = "#!/bin/sh\n\n";
+    for my $service (keys(%{$self->{$enabled_service_list_name}})) {
+      if ( $self->{$enabled_service_list_name}->{$service} ) {
+        $contents .= "/etc/init.d/".$service." \$*\n";
+      }
+    }
+    
+    my $status = LC::Check::file($init_script_name,
+                                 contents => $contents,
+                                 owner => 'root',
+                                 group => 'root',
+                                 mode => 0755,
+                                 );
+    if ( $status < 0 ) {
+      $self->warn("Error creating init script to control all ".$self->getCurrentProduct()." services ($init_script_name)");
+    }
+  } else {
+    $self->debug(1,"$function_name: no service enabled for ".$self->getCurrentProduct().' ('.$init_script_name.')');
   }
 }
 
@@ -1889,7 +1975,7 @@ sub restartServices () {
 }
 
 
-# Function returning list of roles hosts name according to the current product
+# Function returning name of hash handling the list of  hosts per role for to the current product
 #
 # Arguments :
 #  none
