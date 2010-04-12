@@ -54,7 +54,7 @@ use File::stat;
 
 use LC::File qw(file_contents);
 use LC::Check;
-use LC::Process;
+use CAF::Process;
 
 use Encode qw(encode_utf8);
 
@@ -980,13 +980,13 @@ sub execCmd () {
     return(2);
   }
   
-  my @errormsg = qx%$cmd 2>&1%;
-  my $status = $? >> 8;
+  my $errormsg = CAF::Process->new([$cmd],log=>$self)->output();
+  my $status = $?;
 
   if ( $status ) {
-    $self->debug(1,"$function_name: commad $verb failed (status=$status, error=".join("",@errormsg).")");
+    $self->debug(1,"$function_name: commad $verb failed (status=$status, error=".$errormsg.")");
     if ( defined($error) ) {
-      $$error = join("",@errormsg);
+      $$error = $errormsg;
     }
   } else {
     $self->debug(2,"$function_name: command $verb completed successfully")    
@@ -1356,7 +1356,12 @@ sub mysqlExecCmd () {
 
   $self->debug(2,"$function_name: executing MySQL command '$command' on $db_admin_server (user:$db_admin_user, pwd:$db_admin_pwd)");
 
-  my $status = system("mysql -h $db_admin_server -u '$db_admin_user' --password='$db_admin_pwd' $command > /dev/null 2>&1");
+  my $cmd = "mysql -h $db_admin_server -u '$db_admin_user' --password='$db_admin_pwd' $command";
+  my $errormsg = CAF::Process->new([$cmd],log=>$self)->output();
+  my $status = $?;
+  if ( $? ) {
+    $self->debug(2,"MySQL command error: $errormsg");
+  }
 
   return $status
 }
@@ -1406,7 +1411,9 @@ sub mysqlCheckAdminPwd() {
 #   	  $self->setGlobalOption("dbadminpwd", "$db_admin_pwd_old");
 #    }
     
-    $status = system("mysqladmin -h $db_admin_server -u '$db_admin_user' password '$db_admin_pwd' > /dev/null 2>&1");
+    my $cmd = "mysqladmin -h $db_admin_server -u '$db_admin_user' password '$db_admin_pwd'";
+    my $errormsg = CAF::Process->new([$cmd],log=>$self)->output();
+    $status = $?;
     if ( $status && ($db_admin_server ne "localhost") ) {
       $self->warn("Remote database server ($db_admin_server) : check access is allowed with full privileges from $db_admin_user on $this_host_full");
     }
@@ -1878,10 +1885,14 @@ sub enableService () {
     return 1;
   }
 
-  if (system("chkconfig $service > /dev/null 2>&1")) {
-    # No need to do chkconfig --ad first, done by default
-    $self->info("\tEnabling service $service at startup");
-    if ( system("chkconfig $service on") ) {
+  my @cmd = ["/sbin/chkconfig", $service];
+  CAF::Process->new(@cmd,log=>$self)->run();
+  if ( $? ) {
+    # No need to do chkconfig --add first, done by default
+    $self->info("Enabling service $service at startup");
+    my @cmd = ["/sbin/chkconfig", $service, "on"];
+    CAF::Process->new(@cmd,log=>$self)->run();
+    if ( $? ) {
       $self->error("Failed to enable service $service");
     }
   } else {
@@ -1943,26 +1954,32 @@ sub restartServices () {
   
   $self->debug(1,"$function_name: restarting services affected by configuration changes");
 
-  # Need to do stop+start as dpm daemon generally doesn't restart properly with
+  # Need to do stop+start as sometimes dpm daemon doesn't restart properly with
   # 'restart'. Try to restart even if stop failed (can be just the daemon is 
   # already stopped)
-  # Use system() rather than LC::Process::run because LC::Process::run doesn't
-  # return start/stop status properly.
   if ( my $list = $self->getServiceRestartList() ) {
     $self->debug(1,"$function_name: list of services to restart : ".join(" ",keys(%{$list})));
     for my $service (keys %{$list}) {
       $self->info("Restarting service $service");
-      if (system("service $service stop > /dev/null 2>&1")) {
+      my @cmd = ["/sbin/service", $service, "stop"];
+      CAF::Process->new(@cmd,log=>$self)->run();
+      if ( $? ) {
         # Service can be stopped, don't consider failure to stop as an error
         $self->warn("\tFailed to stop $service");
       }
       sleep 5;    # Give time to the daemon to shut down
       my $attempt = 10;
       my $status;
-      while ( $attempt && ($status = system("service $service start > /dev/null 2>&1"))) {
+      @cmd = ["/sbin/service", $service, "start"];
+      my $command = CAF::Process->new(@cmd,log=>$self);
+      $command->run();
+      $status = $?;
+      while ( $attempt && $status ) {
         $self->debug(1,"$function_name: $service startup failed (probably not shutdown yet). Retrying ($attempt attempts remaining)");
         sleep 5;
         $attempt--;
+        $command->run();
+        $status = $?;
       }
       if ( $status ) {
         $global_status++;
