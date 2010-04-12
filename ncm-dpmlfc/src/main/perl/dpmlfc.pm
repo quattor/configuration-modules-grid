@@ -1660,11 +1660,15 @@ sub initDb () {
     $db_config_done = 0;
     last MYSQL;
   }
-  if ( $self->mysqlAddUser($db_info_user,$db_info_pwd,'select',1) ) {
-    $self->error("Failure to add database user $db_info_user for $product. Database configuration skipped");
-    $db_config_done = 0;
-    last MYSQL;
+
+  if ( $db_info_user ) {
+    if ( $self->mysqlAddUser($db_info_user,$db_info_pwd,'select',1) ) {
+      $self->error("Failure to add database user $db_info_user for $product. Database configuration skipped");
+      $db_config_done = 0;
+      last MYSQL;
+    }
   }
+  
   my $product_db_roles = $db_roles{$product};
   my @product_db_roles = split /\s*,\s*/, $product_db_roles;
   for my $role (@product_db_roles) {
@@ -1705,7 +1709,7 @@ sub initDb () {
 
   # Update DB connection configuration file for information user if content has changed
   # No service needs to be restarted.
-  if ( $db_info_file ) {
+  if ( $db_info_user ) {
     $config_contents = "$db_info_user/$db_info_pwd\@$db_server";
     my $info_changes = LC::Check::file($db_info_file.$config_prod_ext,
                                   backup => $config_bck_ext,
