@@ -1616,23 +1616,25 @@ sub initDb () {
   if ( $config->elementExists($gip_user_path) ) {
     $gip_user = $config->getElement($gip_user_path)->getValue();
     $db_info_user = $self->getDbOption("infoUser");
-    unless ( $db_info_user ) {
-      $db_info_user = "dminfo";
-      $self->debug(1,"$function_name: DB info user set to default ($db_info_user)");
-    }
-    $self->setGlobalOption("dbinfouser",$db_info_user);
-    $db_info_pwd = $self->getDbOption("infoPwd");
-    if ( $db_info_pwd ) {
-      $self->setGlobalOption("dbinfopwd",$db_info_pwd);
+    if ( $db_info_user ) {
+      $self->setGlobalOption("dbinfouser",$db_info_user);
+      $db_info_pwd = $self->getDbOption("infoPwd");
+      if ( $db_info_pwd ) {
+        $self->setGlobalOption("dbinfopwd",$db_info_pwd);
+      } else {
+        $db_info_pwd = $self->generatePassword();
+        $self->info("DB info user's password not configured : generating a new one.");
+      }
+      $db_info_file= $self->getDbOption("infoFile");
+      unless ( $db_info_file ) {
+        $db_info_file = $product . "INFO";
+        $self->info("DB info connection file not configured. Set to default ($db_info_file)");
+      }
     } else {
-      $db_info_pwd = $self->generatePassword();
-      $self->info("DB info user's password not configured : generating a new one.");
+      $self->debug(1,"$function_name: DB infoUser not defined, DB configuration for GIP ignored.");
     }
-    $db_info_file= $self->getDbOption("infoFile");
-    unless ( $db_info_file ) {
-      $db_info_file = $product . "INFO";
-      $self->info("DB info connection file not configured. Set to default ($db_info_file)");
-    }
+  } else {
+    $self->debug(1,"GIP no configured on this node. Skipping $product DB configuration for GIP.");
   }
   
   my $db_config_done = 1;    # Assume failure
@@ -1696,7 +1698,7 @@ sub initDb () {
 
   # Update DB connection configuration file for information user if content has changed
   # No service needs to be restarted.
-  if ( $gip_user ) {
+  if ( $db_info_file ) {
     $config_contents = "$db_info_user/$db_info_pwd\@$db_server";
     my $info_changes = LC::Check::file($db_info_file.$config_prod_ext,
                                   backup => $config_bck_ext,
@@ -1743,7 +1745,7 @@ sub getRoleServices () {
 
   my $service_list = $services{$role};
   unless ( $service_list ) {
-    $self->error("$function_name: no services associated with role '$role' (internal error)");
+    $self->debug(1,"$function_name: no services associated with role '$role'");
     return @services;
   }
 

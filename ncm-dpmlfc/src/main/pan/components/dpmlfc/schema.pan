@@ -147,7 +147,7 @@ type ${project.artifactId}_component_db_conn_options = {
         "adminpwd"      : string
 #        "oldadminpwd"   ? string  # to be used when changing password
         "infoFile"      ? string
-        "infoUser"      : string = "dminfo"
+        "infoUser"      ? string
         "infoPwd"       ? string
 };
 
