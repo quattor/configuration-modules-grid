@@ -258,9 +258,10 @@ my $xroot_config_file = "/etc/sysconfig/dpm-xrd";
 my %xroot_config_rules = (
         "DPM_HOST" => "host:dpm;$line_format_envvar",
         "DPNS_HOST" => "host:dpns;$line_format_envvar",
-        "MANAGERHOST", => "host:dpm;$line_format_envvar",
-        "MONALISAHOST", => "xrootMonALISAHost:GLOBAL;$line_format_envvar",
-        "XRDCONFIG", => "xrootConfig:GLOBAL;$line_format_envvar",
+        "MANAGERHOST" => "host:dpm;$line_format_envvar",
+        "MONALISAHOST" => "xrootMonALISAHost:GLOBAL;$line_format_envvar",
+        "TTOKENAUTHZ_AUTHORIZATIONFILE" => "xrootAuthzConf:GLOBAL;$line_format_envvar",
+        "XRDCONFIG" => "xrootConfig:GLOBAL;$line_format_envvar",
         "XRDOFS" => "xrootOfsPlugin:GLOBAL;$line_format_param",
         "XRDLOCATION" => "installDir:GLOBAL;$line_format_param",
         "XRDLOGDIR" => "logfile:xroot;$line_format_param",
@@ -450,7 +451,6 @@ my $dm_install_dir;
 my $dm_bin_dir;
 
 # xroot related global variables
-my $xrootd_config_dir;
 my %xrootd_daemon_prefix = ('head' => 'dpm-manager-',
                             'disk' => 'dpm-',
                            );
@@ -494,22 +494,6 @@ sub Configure($$@) {
     if ( $product eq "DPM" ) {
       $hosts_roles = \@dpm_roles;
       $comp_max_servers = \%dpm_comp_max_servers;
-
-      # Some xroot-specific initializations. Useless in LFC context...
-      $xrootd_config_dir = $dm_install_dir . "/etc/xrootd";
-      if ( $config->elementExists($xroot_options_base."/ofsPlugin") ) {
-        $self->setGlobalOption("xrootOfsPlugin",$config->getElement($xroot_options_base."/ofsPlugin")->getValue());
-        $self->debug(1,"Global option 'xrootOfsPlugin' defined to ".$self->getGlobalOption("xrootOfsPlugin"));
-      }
-      if ( $config->elementExists($xroot_options_base."/config") ) {
-        $self->setGlobalOption("xrootConfig",$config->getElement($xroot_options_base."/config")->getValue());
-        $self->debug(1,"Global option 'xrootConfig' defined to ".$self->getGlobalOption("xrootConfig"));
-      }
-      if ( $config->elementExists($xroot_options_base."/MonALISAHost") ) {
-        $self->setGlobalOption("xrootMonALISAHost",$config->getElement($xroot_options_base."/MonALISAHost")->getValue());
-        $self->debug(1,"Global option 'xrootMonALISAHost' defined to ".$self->getGlobalOption("xrootMonALISAHost"));
-      }
-      
     } else {
       $hosts_roles = \@lfc_roles;
       $comp_max_servers = \%lfc_comp_max_servers;
@@ -2730,14 +2714,35 @@ sub xrootSpecificConfig () {
   }
   my $xroot_headnode = $self->hostHasRoles('dpns');
   my $xroot_diskserver = $self->hostHasRoles('gsiftp');
-  my $xroot_token_auth = defined($xroot_config->{ofsPlugin}) && $xroot_config->{ofsPlugin} eq 'TokenAuthzOfs';
+  my $xroot_token_auth = defined($xroot_config->{authzConf});
   $xrootd_services{$xroot_config->{cmsDaemon}} = $xrootd_cms_services{$xroot_config->{cmsDaemon}};
 
+  # Load a few options from DPM/xroot config
+  if ( $xroot_config->{ofsPlugin} ) {
+    $self->setGlobalOption("xrootOfsPlugin",$xroot_config->{ofsPlugin});
+    $self->debug(1,"Global option 'xrootOfsPlugin' defined to ".$self->getGlobalOption("xrootOfsPlugin"));
+  }
+  if ( $xroot_config->{MonALISAHost} ) {
+    $self->setGlobalOption("xrootMonALISAHost",$xroot_config->{MonALISAHost});
+    $self->debug(1,"Global option 'xrootMonALISAHost' defined to ".$self->getGlobalOption("xrootMonALISAHost"));
+  }
+      
   # Build xrootd configuration file (based on template provided in distribution, if it exists).
   # The template was not present in the first version of DPM-xrootd.
+  my $xrootd_config_dir = $xroot_config->{configDir};
+  unless ( $xrootd_config_dir =~ /^\s*\// ) {
+    $xrootd_config_dir = $dm_install_dir . '/etc/' . $xrootd_config_dir;
+  }
   if ( defined($xroot_config->{config}) ) {
-    my $xrootd_config_dir = '/opt/lcg/etc';
-    my $xrootd_config_file = $xrootd_config_dir . '/' . $xroot_config->{config};
+    my $xrootd_config_file = $xroot_config->{config};
+    unless ( $xrootd_config_file =~ /^\s*\// ) {
+      $xrootd_config_file = $dm_install_dir . '/etc/' . $xroot_config->{config};
+    }
+    # Global option tracks only the file name without its path as the sysconfig file requires only the name.
+    if ( $xroot_config->{config} ) {
+      $self->setGlobalOption("xrootConfig",basename($xrootd_config_file));
+      $self->debug(1,"Global option 'xrootConfig' defined to ".$self->getGlobalOption("xrootConfig"));
+    }
     my $xrootd_config_template = $xrootd_config_file . '.templ';
     if ( -f $xrootd_config_template ) {
       if ( !compare($xrootd_config_template,$xrootd_config_file) ) {
@@ -2751,7 +2756,7 @@ sub xrootSpecificConfig () {
         }
       }
     } else {
-      $self->debug(2,"$function_name: xrootd configuration file template ($xrootd_config_template) not found. Configuration file ($xrootd_config_file) must be created manually.");
+      $self->debug(1,"$function_name: xrootd configuration file template ($xrootd_config_template) not found. Configuration file ($xrootd_config_file) must be created manually.");
     }
   }
   
@@ -2760,7 +2765,12 @@ sub xrootSpecificConfig () {
     # Build authz.cf
     $self->info("Token-based authentication used: checking authz.cf");
     my $exported_vo_path_root = $self->NSGetRoot();
-    my $xroot_authz_conf_file = $xrootd_config_dir."/".$xroot_config->{authzConf};
+    my $xroot_authz_conf_file = $xroot_config->{authzConf};
+    unless ( $xroot_authz_conf_file =~ /^\s*\// ) {
+      $xroot_authz_conf_file = $xrootd_config_dir . "/" . $xroot_authz_conf_file;
+    };
+    $self->setGlobalOption("xrootAuthzConf",$xroot_authz_conf_file);
+    $self->debug(1,"Global option 'xrootAuthzConf' defined to ".$self->getGlobalOption("xrootAuthzConf"));
     my $xroot_token_priv_key;
     if ( defined($xroot_config->{tokenPrivateKey}) ) {
       $xroot_token_priv_key = $xrootd_config_dir . '/' . $xroot_config->{tokenPrivateKey};
@@ -2828,6 +2838,8 @@ sub xrootSpecificConfig () {
           $self->warn("xrootd token key $key not found.");
       }  
     }
+  } else {
+    $self->debug(1,"Token-based authentication disabled.");
   }
 
   # Build the list of daemons to run on the current node according to node type

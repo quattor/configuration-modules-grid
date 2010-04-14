@@ -142,11 +142,27 @@ Default : userid used to run daemons
 
 If xroot protocol is enabled in DPM, this is possible to define some xroot parameters common to all nodes.
 
+=head2 /software/components/dpmlfc/options/dpm/xroot/authzConf
+
+This option defines the name of the authz configuration file. The name can be a path relative to 
+'configDir' or an absolute path.
+
+Default : xrd.authz.cf (in 'configDir')
+
+
 =head2 /software/components/dpmlfc/options/dpm/xroot/config
 
 This option defines the name of the xroot daemon configuration file.
 
 Default : default value of XRDCONFIG variable in /etc/sysconfig/dpm-xrd.example
+
+
+=head2 /software/components/dpmlfc/options/dpm/xroot/configDir (string)
+
+This option defines the location of xroot configuration files. It can be a path relative to /opt/lcg/etc
+(or the directory where DPM is installed) or an absolute path.
+
+Default : xroot (relative to /etc under DPM installation path)
 
 
 =head2 /software/components/dpmlfc/options/dpm/xroot/exportedVOs (list of string)
