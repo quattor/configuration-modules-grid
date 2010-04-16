@@ -28,7 +28,7 @@ my ($pbsdir)="/var/spool/pbs";
 my ($pbsmomdir)="/var/spool/pbs/mom_priv";
 my ($pbsinitscript)="/etc/init.d/pbs";
 my ($masterlist, $restrictedlist, $logevent, $tmpdir, %resources);
-my ($checkpoint_interval,$checkpoint_script,$restart_script,$checkpoint_run_exe,$remote_checkpoint_dirs);
+my ($checkpoint_interval,$checkpoint_script,$restart_script,$checkpoint_run_exe,$remote_checkpoint_dirs,$max_conn_timeout_micro_sec);
 my ($resources, $cpuf, $wallf, $idealload, $maxload);
 my (%usecp, $prologalarm, $behaviour, $nodecheckscript);
 my ($nodecheckinterval);
@@ -230,6 +230,10 @@ sub Configure {
                   "/software/components/pbsclient/remote_checkpoint_dirs",0,
                   \$remote_checkpoint_dirs,undef);
 
+  # max_conn_timeout_micro_sec
+  $self->retrieve($config,
+                  "/software/components/pbsclient/max_conn_timeout_micro_sec",0,
+                  \$max_conn_timeout_micro_sec,undef);
 
 
   # additional usecp directives, list of lists(2)
@@ -297,6 +301,7 @@ sub Configure {
 
   $remote_checkpoint_dirs and $contents .= '$remote_checkpoint_dirs ' . $remote_checkpoint_dirs . "\n";
 
+  $max_conn_timeout_micro_sec and $contents .= '$max_conn_timeout_micro_sec ' . $max_conn_timeout_micro_sec . "\n";
 
   if ( $behaviour eq "Torque" ) { # add a $pbsservername line
     # assume first master is the real one

@@ -49,6 +49,7 @@ type ${project.artifactId}_component_type = {
     "restart_script" ? string
     "checkpoint_run_exe" ? string
     "remote_checkpoint_dirs" ? string
+    "max_conn_timeout_micro_sec" ? long
 };
 
 
