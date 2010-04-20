@@ -37,21 +37,32 @@ Not implemented.
 
 Activates/deactivates the component.
 
+=head2 /software/components/frontiersquid/rpmhome
+
+Defines the directory where the rpm is installed. 
+The default is "/".
+
+=head2 /software/components/frontiersquid/postinstall
+
+Defines the name of the postinstall file.
+The default is "/etc/squid/postinstall".
+
 =head2 /software/components/frontiersquid/username
 
 Defines the username of the account the squid server runs under. 
-The default is squid.
+The default is "squid".
 
 =head2 /software/components/frontiersquid/group
 
 Defines the group of the account the squid server runs under.
-The default is squid.
+The default is "squid".
 
 =head2 /software/components/frontiersquid/networks
 
-This argument is mandatory. It lists the set of networks enabled to
+It lists the set of networks enabled to
 send requests to the squid server. The format of such argument must
 be "network/submask network/submask". Please see the EXAMPLE section.
+The default is "'0.0.0.0/32'"
 
 =head2 /software/components/frontiersquid/cache_mem
 
@@ -61,7 +72,7 @@ It is expressed in MB. The default is 128.
 =head2 /software/components/frontiersquid/cache_dir
 
 Defines the amount of space on disk dedicated to the squid cache.
-It is expressed in MB. The default is 40000.
+It is expressed in MB. The default is 10000.
 
 =head1 EXAMPLES
 
@@ -84,7 +95,7 @@ none.
 
 =head1 FILES
 
-This component creates the file /data/squid/squidconf.
+This component creates the file <rpmhome>/etc/squid/squidconf.
 
 =head1 BUGS
 

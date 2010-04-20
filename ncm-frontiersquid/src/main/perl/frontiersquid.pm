@@ -31,19 +31,29 @@ sub Configure($$@) {
 ##########################################################################
   my ($self,$config)=@_;
   my $base     = "/software/components/frontiersquid/";
-  my $rpm_home = "/data/squid";
-  my $response_file = "/data/squid/squidconf";
 
   my $frontier_config = $config->getElement($base)->getTree();
 
   # Check that networks is really defined.
-  my $networks = $frontier_config->{networks};
-  if (!defined($networks)) {
-     $self->error("entry with undefined networks");
-     return 0;
-  }
+  #my $networks = $frontier_config->{networks};
+  #if (!defined($networks)) {
+  #   $self->error("entry with undefined networks");
+  #   return 0;
+  #}
 
   # Pull out the other values
+  my $rpmhome = $frontier_config->{rpmhome};
+  if (!defined($rpmhome)) {
+     my $rpmhome = "/data/squid";
+  }
+  my $postinstall = $frontier_config->{postinstall};
+  if (!defined($postinstall)) {
+       my $postinstall = "/etc/post_install";
+  }
+  my $response_file = $frontier_config->{squidconf};
+  if (!defined($response_file)) {
+     my $response_file = "/data/squid/squidconf";
+  }
   my $username = $frontier_config->{username};
   my $group = $frontier_config->{group};
   my $cache_mem = $frontier_config->{cache_mem};
@@ -64,7 +74,7 @@ sub Configure($$@) {
         return 0;
   }
 
-  system("export SCFILE=".$response_file.";".$rpm_home."/etc/post_install");
+  system("export SCFILE=".$response_file.";".$rpmhome.$postinstall");
 
   return 1; # return code is not checked.
 }
