@@ -122,15 +122,6 @@ type ${project.artifactId}_component_xroot_access_rules = {
   'cert' : string = '*'
 } with component_dpmlfc_xroot_access_rules_valid(SELF);
 
-# xrootd file owner for newly created files
-type ${project.artifactId}_component_xroot_options = {
-        "principal" : string = 'root'
-        "voname"    : string
-        # Restrict fqan to one element as long as the dpmlfc parser is not
-        # able to handle multiple occurence of the same variable
-        "FQANs"      : string[] with length(fqan) <= 1
-};
-
 # xrootd has several specific options
 type ${project.artifactId}_component_xroot_options = {
         "ofsPlugin" : string = 'Ofs'
@@ -143,7 +134,6 @@ type ${project.artifactId}_component_xroot_options = {
         "tokenPrivateKey" ? string
         "tokenPublicKey" ? string
         "accessRules" ? ${project.artifactId}_component_xroot_access_rules[]
-        "fileOwner"   ? ${project.artifactId}_component_xroot_file_owner
 };
 
 type ${project.artifactId}_component_db_conn_options = {

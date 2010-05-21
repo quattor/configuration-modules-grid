@@ -335,14 +335,7 @@ my %config_rules = (
         "lfc" => \%lfc_config_rules,
         "lfc-dli" => \%lfcdli_config_rules,
        );
-
-# DPM/xroot configuration file.       
-my %dpm_xrootd_config_rules = (
-        "dpm.principal" => "dpmXrootdPrincipal:GLOBAL;$line_format_param",
-        "dpm.voname" => "dpmXrootdVO:GLOBAL;$line_format_param",
-        "dpm.fqan" => "dpmXrootdFQANs:GLOBAL;$line_format_param",
-       );
-
+       
 
 # Define services using each role/configuration file (if any), with each service
 # separated by a comma. Services will be restarted once even if they have
@@ -1123,7 +1116,7 @@ sub checkSecurity () {
              group => $daemon_group,
              mode => 0400
             );
-    unless (defined($changes) && ($changes >=0) ) {
+    unless (defined($changes)) {
       $self->error("error creating $hostkey copy for $product");
     }
     my $daemon_hostcert .= $daemon_security_dir."/".lc($product)."cert.pem";
@@ -1133,7 +1126,7 @@ sub checkSecurity () {
              group => $daemon_group,
              mode => 0644
             );
-    unless (defined($changes) && ($changes >=0) ) {
+    unless (defined($changes)) {
       $self->error("error creating $hostcert copy for $product");
     }
   }
@@ -2389,7 +2382,7 @@ sub addInRulesMatchesList () {
     return 1;
   }
 
-  $self->debug(2,"$function_name: adding line $line_num (line fmt=$line_fmt) to rule $rule_id list");
+  $self->debug(1,"$function_name: adding line $line_num (line fmt=$line_fmt) to rule $rule_id list");
   my $list = $self->getRuleMatches($rule_id);
   my %line;
   $line{LINENUM} = $line_num;
@@ -2561,23 +2554,23 @@ sub buildConfigContents () {
           $config_value = $value_tmp;
         }
       } else {
-        if ( $attribute eq "host" ) {
-          $config_value .= $self->getHostsList($role)." ";
-        } elsif ( $attribute ) {
-          # Use first host with  this role
-          my $role_hosts = $self->getHostsList($role);
-          if ( $role_hosts ) {
-            my @role_hosts = split /\s+/, $role_hosts;
-            my $server_config = $self->getHostConfig($role,$role_hosts[0]);
-            if ( exists(${$server_config}{$attribute}) ) {
-              $config_value .= ${$server_config}{$attribute}->getValue()." ";
-            } else {
-              $self->debug(1,"$function_name: attribute $attribute not found for component ".uc($role));
-            }
-                } else {
-              $self->error("No host with role ".uc($role)." found");
-          }
-        }
+  if ( $attribute eq "host" ) {
+    $config_value .= $self->getHostsList($role)." ";
+  } elsif ( $attribute ) {
+    # Use first host with  this role
+    my $role_hosts = $self->getHostsList($role);
+    if ( $role_hosts ) {
+      my @role_hosts = split /\s+/, $role_hosts;
+      my $server_config = $self->getHostConfig($role,$role_hosts[0]);
+      if ( exists(${$server_config}{$attribute}) ) {
+        $config_value .= ${$server_config}{$attribute}->getValue()." ";
+      } else {
+        $self->debug(1,"$function_name: attribute $attribute not found for component ".uc($role));
+      }
+          } else {
+        $self->error("No host with role ".uc($role)." found");
+    }
+  }
       }
     }
 
@@ -2587,26 +2580,26 @@ sub buildConfigContents () {
     if ( $attribute ) {
       my $entry_num = 0;
       if ( $self->getRulesMatchesLineNum($rule_id,$entry_num) ) {
-        while ( my $line = $self->getRulesMatchesLineNum($rule_id,$entry_num) ) {
-          my $file_line = $line + $file_line_offset;
-          my $line_fmt = $self->getRulesMatchesLineFmt($rule_id,$entry_num);
-          $config_value = $self->formatHostsList($config_value,$line_fmt) if $attribute eq "host";
-          if ( $config_value ) {
-            $newcontents[$line] = $self->formatConfigLine($keyword,$config_value,$line_fmt);
-            $self->debug(2,"$function_name: template line $file_line replaced");
-          }
-          $entry_num++;
-        }
+  while ( my $line = $self->getRulesMatchesLineNum($rule_id,$entry_num) ) {
+    my $file_line = $line + $file_line_offset;
+    my $line_fmt = $self->getRulesMatchesLineFmt($rule_id,$entry_num);
+    $config_value = $self->formatHostsList($config_value,$line_fmt) if $attribute eq "host";
+    if ( $config_value ) {
+      $newcontents[$line] = $self->formatConfigLine($keyword,$config_value,$line_fmt);
+      $self->debug(1,"$function_name: template line $file_line replaced");
+    }
+    $entry_num++;
+  }
       } else {
-        $config_value = $self->formatHostsList($config_value,$line_fmt) if $attribute eq "host";
-        if ( $config_value ) {
-          push @newcontents, $self->formatConfigLine($keyword,$config_value,$line_fmt);
-          $self->debug(2,"$function_name: configuration line added");
-        }
+  $config_value = $self->formatHostsList($config_value,$line_fmt) if $attribute eq "host";
+  if ( $config_value ) {
+    push @newcontents, $self->formatConfigLine($keyword,$config_value,$line_fmt);
+    $self->debug(1,"$function_name: configuration line added");
+  }
       }
     } else {
       push @newcontents, $self->formatConfigLine($keyword,"", $line_fmt);
-      $self->debug(2,"$function_name: configuration line added");
+      $self->debug(1,"$function_name: configuration line added");
     }
 
     $rule_id++;
@@ -2670,13 +2663,14 @@ sub updateConfigFile () {
                                 backup => $config_bck_ext,
                                 contents => $config_contents
                                );
+  unless (defined($changes)) {
+    $self->error("error creating ".uc($role)."configuration file ($config_files{$role}");
+    return;
+  }
 
   # Keep track of services that need to be restarted if changes have been made
   if ( $changes > 0 ) {
     $self->serviceRestartNeeded($role);
-  } elsif ( defined($changes) && ($changes == 0) ) {
-    $self->error("error creating/updating ".uc($role)."configuration file ($config_files{$role}");
-    return;    
   }
 
 }
@@ -2749,34 +2743,17 @@ sub xrootSpecificConfig () {
       $self->setGlobalOption("xrootConfig",basename($xrootd_config_file));
       $self->debug(1,"Global option 'xrootConfig' defined to ".$self->getGlobalOption("xrootConfig"));
     }
-    my $dpm_xrootd_file_ownership = $xroot_config->{fileOwner};
-    if ( $dpm_xrootd_file_ownership ) {
-      $self->setGlobalOption("dpmXrootdPrincipal",$dpm_xrootd_file_ownership->{principal});
-      $self->debug(1,"Global option 'dpmXrootdPrincipal' defined to ".$self->getGlobalOption("dpmXrootdPrincipal"));
-      $self->setGlobalOption("dpmXrootdVO",$dpm_xrootd_file_ownership->{voname});
-      $self->debug(1,"Global option 'dpmXrootdVO' defined to ".$self->getGlobalOption("dpmXrootdVO"));
-      if ( $dpm_xrootd_file_ownership->{FQANs} ) {
-        # Currently need to restrict to one value for FQANs
-        $self->setGlobalOption("dpmXrootdFQANs",$dpm_xrootd_file_ownership->{FQANs}[0]);
-        $self->debug(1,"Global option 'dpmXrootdFQANs' defined to ".$self->getGlobalOption("dpmXrootdFQANs"));        
-      }
-    }
     my $xrootd_config_template = $xrootd_config_file . '.templ';
     if ( -f $xrootd_config_template ) {
-      my $template_contents = file_contents($xrootd_config_template);
-      my $config_contents=$self->buildConfigContents($dpm_xrootd_config_rules, $template_contents);
-      $self->debug(3,"$function_name: $xroot_config_file configuration file new contents :\n$config_contents");
-      my $changes = LC::Check::file($xrootd_config_file,
-                                    backup => $config_bck_ext,
-                                    contents => $config_contents
-                                   );
-      if ( $changes > 0 ) {
-        $restart_services = 1;
-      } elsif ( defined($changes) && ($changes == 0) ) {
-        $self->debug(1,"$function_name: xrootd configuration file ($xrootd_config_file) is up-to-date");         
+      if ( !compare($xrootd_config_template,$xrootd_config_file) ) {
+        $self->debug(1,"$function_name: xrootd configuration file ($xrootd_config_file) is up-to-date");
       } else {
-        $self->warn("Error creating/updating xrootd configuration file ($xroot_config_file)");
-        return;    
+        $self->info("Updating xrootd configuration file ($xrootd_config_file) with template ($xrootd_config_template)");
+        if ( copy ($xrootd_config_template,$xrootd_config_file) ) {
+          $restart_services = 1;
+        } else {
+          $self->warn("Error creating xrootd configuration file ($xroot_config_file)");
+        }
       }
     } else {
       $self->debug(1,"$function_name: xrootd configuration file template ($xrootd_config_template) not found. Configuration file ($xrootd_config_file) must be created manually.");
