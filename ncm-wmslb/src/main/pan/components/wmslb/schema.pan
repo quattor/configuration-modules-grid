@@ -275,6 +275,7 @@ type ${project.artifactId}_component_service_wmproxy_loadmonitor_opts = {
   'ThresholdDiskUsage' ? long = 95
   'ThresholdFDNum'     ? long = 500
   'ThresholdMemUsage'  ? long = 95
+  'ThresholdFTPConn'   ? long = 30
 };
 
 type ${project.artifactId}_component_service_wmproxy_opts = {
