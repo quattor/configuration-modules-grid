@@ -251,16 +251,14 @@ sub Configure {
         }
         
       } else {
-        if ( !-f $script_config->{name} ) {
-          $self->info("Creating WM Load Monitor script ($script_config->{name}) from template ($script_config->{template})");
-          $changes = LC::Check::file($script_config->{name},
-                                     source   => $script_config->{template},
-                                     mode => 0755,
-                                    );
-          if ( $changes < 0 ) {
-            $self->error("Error creating WM Load Monitor script from template ($script_config->{name})");
-          }            
-        }          
+        $self->info("Checking WM Load Monitor script ($script_config->{name}, template=$script_config->{template})");
+        $changes = LC::Check::file($script_config->{name},
+                                   source   => $script_config->{template},
+                                   mode => 0755,
+                                  );
+        if ( $changes < 0 ) {
+          $self->error("Error updating WM Load Monitor script from template ($script_config->{name})");
+        }            
       }
       
       # Check if the WMProxy must be drained and do appropriate actions
