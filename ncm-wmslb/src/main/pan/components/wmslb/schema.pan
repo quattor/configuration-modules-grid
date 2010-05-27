@@ -269,16 +269,16 @@ type ${project.artifactId}_component_service_wmproxy_loadmonitor_script = {
 };
 
 type ${project.artifactId}_component_service_wmproxy_loadmonitor_opts = {
-  'ThresholdCPULoad1'  ? long = 10
-  'ThresholdCPULoad5'  ? long = 10
-  'ThresholdCPULoad15' ? long = 10
-  'ThresholdDiskUsage' ? long = 95
-  'ThresholdFDNum'     ? long = 500
-  'ThresholdFLNum'     ? long = 500
-  'ThresholdFTPConn'   ? long = 150
-  'ThresholdJDNum'     ? long = 500
-  'ThresholdMemUsage'  ? long = 95
-  'ThresholdSwapUsage'  ? long = 95
+  'ThresholdCPULoad1'  : long = 10
+  'ThresholdCPULoad5'  : long = 10
+  'ThresholdCPULoad15' : long = 10
+  'ThresholdDiskUsage' : long = 95
+  'ThresholdFDNum'     : long = 500
+  'ThresholdFLNum'     : long = 500
+  'ThresholdFTPConn'   : long = 150
+  'ThresholdJDNum'     : long = 500
+  'ThresholdMemUsage'  : long = 95
+  'ThresholdSwapUsage' : long = 95
 };
 
 type ${project.artifactId}_component_service_wmproxy_opts = {
