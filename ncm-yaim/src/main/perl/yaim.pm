@@ -22,7 +22,7 @@ $EC=LC::Exception::Context->new->will_store_all;
 
 
 use LC::File qw(file_contents);
-use LC::Process;
+use CAF::Process;
 
 use File::Basename;
 
@@ -30,26 +30,26 @@ use File::Basename;
 # run a given command and recover stdout and stderr.
 #
 sub run_command($) {
-    my ($self,@command)=@_;
+    my ($self,$cref)=@_;
+
+    # text representation of the command to execute
+    my $command = join " ", @{$cref};
 
     my $error=0;
-    my $command = join(" ",@command);
     if ($NoAction) {
         $self->info('(noaction mode) would run command: ' . $command);
         return 0;
     } else {
         $self->info('running command: ' . $command);
         my ($stdout,$stderr);
-        my $execute_status = LC::Process::execute(\@command,
-                                                  timeout => 90*60,
-                                                  stdout => \$stdout,
-                                                  stderr => \$stderr
-                                                 );
+
+        my $cmd = CAF::Process->new( $cref,
+                                    log => $self,
+                                    timeout => 90*60, 
+                                    stdout => \$stdout, 
+                                    stderr => \$stderr);
+        $cmd->execute();
         my $ret=$?;
-        unless (defined $execute_status) {
-            $self->error("could not execute '$command'");
-            return 1;
-        }
         if ($stdout) {
             $self->info("'$command' STDOUT output produced:");
             $self->report($stdout);
@@ -85,9 +85,14 @@ sub build_yaim_command {
     # setting LANG should result in the sorting order which yaim expects
     #
     # default language setting (work around for Savannah bug #27577)
+    #
+    # 2010-06-23 RonaldS: This is probably not used anymore because Yaim
+    #                     itself defines LANG=C. And with CAF::Process we 
+    #                     cannot change the environment anyway
+    #
     my $LANG="en_US.UTF-8";
     $ENV{"LANG"}= $LANG;
-    my $ENVSET = "export LANG=$LANG;";
+    my $ENVSET = "LANG=$LANG ";
 
     #
     # The YAIM command to execute
@@ -110,7 +115,9 @@ sub build_yaim_command {
         return undef;
     }
 
-    my $yaimcmd = $ENVSET . $yaim_script . " -c -s " . $cfgfilename;
+    # Different way of constructing the command to execute
+    # Needed for use with perl-LC >= 1.1.6
+    my @yaimcmd = ( $yaim_script , '-c', '-s', $cfgfilename );
 
     # Support for an ordered node list (Savannah bug #47269)
     my $count = 0;
@@ -122,7 +129,9 @@ sub build_yaim_command {
         foreach my $def_type ( @{$nodetypes} ) {
             if ( $req_type eq $def_type ) {
                 # requested node type is defined; add it to the yaim command 
-                $yaimcmd .= " -n \"$req_type\"";
+                # DO NOT USE \" \" around the node type when calling Yaim via CAF::Process
+                # or Yaim will fail
+                push @yaimcmd, '-n', "$req_type";
                 $found = 1;
                 last;
             }
@@ -134,9 +143,9 @@ sub build_yaim_command {
     # if no node types found, clear the command
     if ( $count == 0 ) {
         $self->warn("no known node types defined under nodetype, no configuration was applied");
-        $yaimcmd = undef;
+        @yaimcmd = undef;
     }
-    return $yaimcmd;
+    return \@yaimcmd;
 }
 
 
