@@ -83,6 +83,16 @@ sub createContents {
     if ($config->elementExists("$path/publishLimit")) {
 		$publishLimit = $config->getValue("$path/publishLimit");
     }
+
+    my $MaxInsertBatch;
+    if($config->elementExists("$path/MaxInsertBatch")) {
+        $MaxInsertBatch = $config->getValue("$path/MaxInsertBatch");
+    }
+    my $ConsumerTimeout;
+    if($config->elementExists("$path/ConsumerTimeout")) {
+        $ConsumerTimeout = $config->getValue("$path/ConsumerTimeout");
+    }
+
     my $dbURL = $config->getValue("$path/DBURL");
     my $dbUser = $config->getValue("$path/DBUsername");
     my $dbPass = $config->getValue("$path/DBPassword");
@@ -103,6 +113,8 @@ EOF
     if ( defined($publishLimit) ) {
         $contents .= "  <Limit>".$publishLimit."</Limit>\n";
     }
+    $contents .= "  <MaxInsertBatch>".$MaxInsertBatch."</MaxInsertBatch>\n" if ( defined($MaxInsertBatch) );
+    $contents .= "  <ConsumerTimeout>".$ConsumerTimeout."</ConsumerTimeout>\n" if ( defined($ConsumerTimeout) );
 
     # Check for the DBDeleteProcessor.
     $base = "$path/DBDeleteProcessor";

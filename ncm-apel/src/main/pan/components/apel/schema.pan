@@ -64,6 +64,13 @@ type structure_apel_file = {
 	'GKLogProcessor' ? structure_apel_gk_log_processor
 	'JoinProcessor' ? structure_apel_join_processor
 	'BlahdLogProcessor' ? structure_apel_blahd_log_processor
+	# do not enforce following options, they are not supported by previous versions
+	# BUT they are REQUIRED for newest versions, and will cause an unexplained apel crash
+	# if not present
+	'MaxInsertBatch' ? long
+		#default value: 2000
+	'ConsumerTimeout' ? long
+		#default value 1800000
 };
 
 
