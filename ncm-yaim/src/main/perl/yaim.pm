@@ -668,7 +668,7 @@ sub write_configuration {
                     my $retval = $self->run_command($cmd);
                     $result = -1 if ( $retval );
                 } else {
-                    $self->info("configure = false => Do not run : \"".$cmd."\".");
+                    $self->info("configure = false => Do not run : \"".join(" ",@{$cmd})."\".");
                 }
             }      
         } else {
