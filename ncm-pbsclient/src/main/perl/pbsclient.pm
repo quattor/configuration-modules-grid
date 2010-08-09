@@ -133,7 +133,7 @@ sub Configure {
   # users can define a list of properties they want to be included?
   # example elements are : "cpu count","model name","cpu MHz","cpu family","model","stepping"...
   if($config->elementExists("/software/components/pbsclient/cpuinfo")) {
-    $self->info("Additionnal CPUINFO elements exist, adding them as resources to mom config");
+    $self->info("Additional CPUINFO elements exist, adding them as resources to mom config");
     my @cpuinfoElements=@{$config->getElement("/software/components/pbsclient/cpuinfo")->getTree};
     my %tmphash=cpuinfo_hash();
     my %tmphash2;
