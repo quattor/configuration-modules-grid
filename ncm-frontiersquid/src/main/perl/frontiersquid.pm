@@ -44,15 +44,15 @@ sub Configure($$@) {
   # Pull out the other values
   my $rpmhome = $frontier_config->{rpmhome};
   if (!defined($rpmhome)) {
-     my $rpmhome = "/data/squid";
+     $rpmhome = "/data/squid";
   }
   my $postinstall = $frontier_config->{postinstall};
   if (!defined($postinstall)) {
-       my $postinstall = "/etc/post_install";
+       $postinstall = "/etc/post_install";
   }
   my $response_file = $frontier_config->{squidconf};
   if (!defined($response_file)) {
-     my $response_file = "/data/squid/squidconf";
+     $response_file = "/data/squid/squidconf";
   }
   my $username = $frontier_config->{username};
   my $group = $frontier_config->{group};
