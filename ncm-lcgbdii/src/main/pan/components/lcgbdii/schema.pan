@@ -40,7 +40,7 @@ type ${project.artifactId}_component = {
   'varDir'        : string = '/opt/bdii/var'
   'configFile'    : string = '/opt/bdii/bdii.conf'
   'logFile'       ? string
-  'logLevel'      : string = "ERROR" with match(SELF,'ERROR|WARNING|INFO|DEBUG')
+  'logLevel'      : string = "ERROR" with match(SELF,'^(ERROR|WARNING|INFO|DEBUG)$')
 
   'schemaFile'    : string = '/opt/bdii/etc/schemas'
   'schemas'       ? string[]
@@ -56,11 +56,11 @@ type ${project.artifactId}_component = {
   'readTimeout'   ? long(1..)
   'breatheTime'   : long(1..) = 60
   'archiveSize'   ? long
-  'autoUpdate'    : string = 'no' with match (SELF, 'yes|no')
-  'autoModify'    : string = 'no' with match (SELF, 'yes|no')
-  'isCache'       : string = 'no' with match (SELF, 'yes|no')
-  'modifyDN'      : string = 'no' with match (SELF, 'yes|no')
-  'fixGlue'       ? string with match (SELF, 'yes|no')
+  'autoUpdate'    : string = 'no' with match (SELF, '^(yes|no)$')
+  'autoModify'    : string = 'no' with match (SELF, '^(yes|no)$')
+  'isCache'       : string = 'no' with match (SELF, '^(yes|no)$')
+  'modifyDN'      : string = 'no' with match (SELF, '^(yes|no)$')
+  'fixGlue'       ? string        with match (SELF, '^(yes|no)$')
 
   'updateUrl'     ? type_absoluteURI
   'updateLdif'    ? type_absoluteURI
