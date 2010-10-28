@@ -30,7 +30,7 @@ type ${project.artifactId}_component_policies = {
 
 type ${project.artifactId}_component = {
 	include structure_component
-	'flavor' : string = 'edg' with match(SELF,'^edg|glite$')
+	'flavor' : string = 'edg' with match(SELF,'^(edg|glite)$')
 	'confFile' ? string = 'opt/edg/etc/edg-myproxy.conf'
   'trustedDNs' ? string[]
   'authorizedDNs' ? ${project.artifactId}_component_policies
