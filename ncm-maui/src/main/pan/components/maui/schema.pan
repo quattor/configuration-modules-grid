@@ -15,6 +15,6 @@ type ${project.artifactId}_component = {
         'contents' ? string
 };
 
-bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
+bind '/software/components/maui' = ${project.artifactId}_component;
 
 
