@@ -38,7 +38,7 @@ type ${project.artifactId}_component_type = {
     "wallTimeMultFactor" ? double
     "prologAlarmSec" ? long
     "configPath" ? string
-    "behaviour" ? string with match (self,'OpenPBS|Torque')
+    "behaviour" ? string with match (SELF,'OpenPBS|Torque')
     "nodeCheckScriptPath" ? string
     "nodeCheckIntervalSec" ? long
     "initScriptPath" ? string
@@ -53,4 +53,4 @@ type ${project.artifactId}_component_type = {
 };
 
 
-bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
+bind "/software/components/pbsclient" = ${project.artifactId}_component_type;
