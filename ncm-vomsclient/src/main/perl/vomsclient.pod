@@ -72,6 +72,9 @@ DN of VOMS server certificate
 
 DN of VOMS server certificate issuer.
 
+=head3 lscfile (optional)
+
+Use LSC format instead of certificate to configure vomsCertsDir
 
 =head1 EXAMPLE
 

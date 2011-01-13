@@ -21,6 +21,7 @@ type structure_vomsclient_voms_info = {
 
 type ${project.artifactId}_component = {
 	include structure_component
+	'lscfile' ? boolean
 	'vomsCertsDir' ? string
 	'vomsServersDir' ? string
 	'vos' ? structure_vomsclient_voms_info[]{}
