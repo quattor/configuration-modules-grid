@@ -13,6 +13,8 @@ use vars qw(@ISA $EC);
 @ISA = qw(NCM::Component);
 $EC=LC::Exception::Context->new->will_store_all;
 
+sub ReadCache($);
+
 ##########################################################################
 # Global variables
 ##########################################################################
@@ -27,10 +29,23 @@ sub Configure($$@) {
 
     my ($self, $config) = @_;
 
+    my $usecache = 0;
+    if ($config->elementExists("$basedir/usecache")){
+        $usecache = $config->getElement("$basedir/usecache");
+    }
+    if ($usecache){
+        $self->info("Using cached entries from " . $config->getValue($usersconf)." (if exists...)");
+    }
     #
     # users.conf
     #
     if ($config->elementExists($usersconf)){
+        my %user_cache = my %gid_cache = ();
+        if ($usecache){
+             my ($ref1,$ref2) = ReadCache($config->getValue($usersconf));
+             %user_cache = %$ref1 if $ref1;
+             %gid_cache  = %$ref2 if $ref2;
+        }
         my $vo = $config->getElement("${infobyvo}");
         my $result = "";
         while ($vo->hasNextElement()) {
@@ -47,12 +62,19 @@ sub Configure($$@) {
                      if ($config->elementExists("$path/flag")){
                          $flag = $config->getValue("$path/flag");
                      }
-                     my ($uid,$gid) = (getpwnam($name))[2,3]; 
+                     my $uid = my $gid = undef;
+                     if (exists $user_cache{$name}){
+                         ($uid,$gid) = @{$user_cache{$name}};
+                         delete $user_cache{$name}; # delete used entries, to obtain minor speedup...
+                     }else{
+                         ($uid,$gid) = (getpwnam($name))[2,3];
+                     }
                      if (not defined $uid or not defined $gid){
                          $self->warn("Cannot get uid/gid belonging to username \"$name\", skipping...");
                          next;
                      }
-                     my $gnam = getgrgid($gid);
+                     $gid_cache{$gid} ||= getgrgid($gid);
+                     my $gnam = $gid_cache{$gid};
                      if (not defined $gnam){
                          $self->warn("Cannot get group name belonging to group id \"$gid\", skipping...");
                          next;
@@ -123,6 +145,23 @@ sub Configure($$@) {
         $self->info("no location for groups.conf file defined, skipping...")
     }
     return;
+}
+
+sub ReadCache($){
+    my $cachefile = shift @_;
+    my %user_cache = my %gid_cache = ();
+    open(C,$cachefile) || return ();
+    while(<C>){
+        next if /^\s*#/; # skip comments
+        # 8957:aliceprd:1395,1395:z2,z2:alice:prd:
+        my ($uid,$username,$gid,$groupname) = split(":",$_);
+        $gid = (split(",",$gid))[0];
+        @{$user_cache{$username}} = ($uid,$gid);
+        $gid_cache{$gid} ||= (split(",",$groupname))[0];
+    }
+    close(C);
+
+    return \%user_cache,\%gid_cache;
 }
 
 1;      # Required for PERL modules
