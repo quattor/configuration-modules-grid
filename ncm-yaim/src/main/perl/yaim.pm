@@ -17,6 +17,8 @@ package NCM::Component::yaim;
 use strict;
 use NCM::Component;
 use vars qw(@ISA $EC);
+use CAF::Process;
+use LC::File qw(copy);
 @ISA = qw(NCM::Component);
 $EC=LC::Exception::Context->new->will_store_all;
 
@@ -232,7 +234,7 @@ sub write_cfg_file($$$) {
         # compare the contents with the old config file
         my $oldcfg=LC::File::file_contents($cfgfilename);
         if ($oldcfg ne $cfgfile) {
-            unless (LC::File::copy($cfgfilename,$cfgfilename.'.old')) {
+            unless (copy($cfgfilename,$cfgfilename.'.old')) {
                 $self->error("copying $cfgfilename to $cfgfilename.old:".
                              $EC->error->text);
                 return(-1);
@@ -565,14 +567,12 @@ sub create_user_groups_conf {
         $usersconf = $cfgtree->{'conf'}->{'USERS_CONF'};
     }
 
-    #
-    # Create a USERS_CONF file, if script exists:
-    #
-    system("[ -x /usr/libexec/create-YAIM-users_conf ] && /usr/libexec/create-YAIM-users_conf $usersconf");
-  
-    # Copy the default users.conf if no file exists
-    #
-    system("[ -e $usersconf ] || cp $yaimexampledir/users.conf $usersconf");
+    CAF::Process->new(["/usr/libexec/create-YAIM-users_conf", $usersconf],
+		      log => $self)->run()
+        if -x "/usr/libexec/create-YAIM-users_conf";
+
+    copy("$yaimexampledir/users.conf", $usersconf)
+	unless -e $usersconf;
 
     # Group.conf
     #
@@ -584,11 +584,14 @@ sub create_user_groups_conf {
     #
     # Create a GROUPS_CONF file, if script exists:
     #
-    system("[ -x /usr/libexec/create-YAIM-groups_conf ] && /usr/libexec/create-YAIM-groups_conf $groupsconf");
+    CAF::Process->new(["/usr/libexec/create-YAIM-groups_conf", $groupsconf],
+		      log => $self)->run()
+        if -x "/usr/libexec/create-YAIM-groups_conf";
 
     # Copy the default groups.conf file, if no file exists
     #
-    system("[ -e $groupsconf ] || cp $yaimexampledir/groups.conf $groupsconf");
+    copy("$yaimexampledir/groups.conf", "$groupsconf")
+	unless -e $groupsconf;
 }
 
 
