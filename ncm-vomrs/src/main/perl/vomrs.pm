@@ -31,43 +31,44 @@ use File::Basename;
 # run a given command and recover stdout and stderr.
 #
 sub run_command($) {
-  my ($self,$command)=@_;
+    my ($self,$cref)=@_;
 
-  my $error=0;
-  if ($NoAction) {
-    $self->info('(noaction mode) would run command: '.$command);
-    return 0;
-  } else {
-    $self->info('running command: '.$command);
-    my ($stdout,$stderr);
-    my $execute_status = LC::Process::execute([$command],
-                                              timeout => 90*60,
-                                              stdout => \$stdout,
-                                              stderr => \$stderr
-                                             );
-    my $ret=$?;
-    unless (defined $execute_status) {
-      $self->error("could not execute '$command'");
-      return 1;
-    }
+    # text representation of the command to execute
+    my $command = join " ", @{$cref};
 
-    if ($stdout) {
-      $self->info("'$command' STDOUT output produced:");
-      $self->report($stdout);
-    }
-    if ($stderr) {
-      $self->warn("'$command' STDERR output produced:");
-      $self->report($stderr);
-    }
-    if ($ret) {
-      $self->error("'$command' failed with non-zero exit status: $ret");
-      $error=1;
+    my $error=0;
+    if ($NoAction) {
+        $self->info('(noaction mode) would run command: ' . $command);
+        return 0;
     } else {
-      $self->info("'$command' run succesfully");
+        $self->info('running command: ' . $command);
+        my ($stdout,$stderr);
+
+        my $cmd = CAF::Process->new( $cref,
+                                    log => $self,
+                                    timeout => 90*60, 
+                                    stdout => \$stdout, 
+                                    stderr => \$stderr);
+        $cmd->execute();
+        my $ret=$?;
+        if ($stdout) {
+            $self->info("'$command' STDOUT output produced:");
+            $self->report($stdout);
+        }
+        if ($stderr) {
+            $self->warn("'$command' STDERR output produced:");
+            $self->report($stderr);
+        }
+        if ($ret) {
+            $self->error("'$command' failed with non-zero exit status: $ret");
+            $error=1;
+        } else {
+            $self->info("'$command' run succesfully");
+        }
+        return $error;
     }
-    return $error;
-  }
 }
+
 
 #
 # check if a configuration file already exists and if its contents have changed
@@ -233,11 +234,13 @@ sub Configure($$@) {
         $update ||= $res ;
 
         my $command =  $confscript." --autorun --skip-database -f ".$cfgfilename ;
+        $self->info("Command to run is $command") ;
         if ( $update ) {
            if ( $config->elementExists("$base/configure" ) && $config->getValue("$base/configure") eq 'true' ) {
-                $self->run_command($command) ;
-                $self->info("Copying vomrs_$vo.xml file to /etc/tomcat5/Catalina/localhost/.") ;
-                LC::File::copy($vomrshome.'/var/etc/vomrs_'.$vo.'/vomrs_'.$vo.'.xml','/etc/tomcat5/Catalina/localhost/vo#'.$vo.'.xml') ;
+                my @c = split('\s',$command);
+                $self->run_command(\@c) ;
+                #$self->info("Copying vomrs_$vo.xml file to /etc/tomcat5/Catalina/localhost/.") ;
+                #LC::File::copy($vomrshome.'/var/etc/vomrs_'.$vo.'/vomrs_'.$vo.'.xml','/etc/tomcat5/Catalina/localhost/vo#'.$vo.'.xml') ;
            }
            else {
                 $self->info("configure = false => Do not run \"$command\"") ;
