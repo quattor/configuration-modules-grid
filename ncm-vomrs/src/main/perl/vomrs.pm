@@ -26,6 +26,7 @@ use LC::File qw(file_contents copy);
 use LC::Process;
 
 use File::Basename;
+use CAF::Process;
 
 #
 # run a given command and recover stdout and stderr.
