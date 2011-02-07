@@ -124,6 +124,7 @@ type ${project.artifactId}_component_xroot_access_rules = {
 
 # xrootd has several specific options
 type ${project.artifactId}_component_xroot_options = {
+        "installDir" ? string
         "ofsPlugin" : string = 'Ofs'
         "cmsDaemon" : string = 'cmsd' with match(SELF,'cmsd|olbd')
         "configDir" : string = 'xrootd'

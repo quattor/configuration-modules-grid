@@ -263,7 +263,7 @@ my %xroot_config_rules = (
         "TTOKENAUTHZ_AUTHORIZATIONFILE" => "xrootAuthzConf:GLOBAL;$line_format_envvar",
         "XRDCONFIG" => "xrootConfig:GLOBAL;$line_format_envvar",
         "XRDOFS" => "xrootOfsPlugin:GLOBAL;$line_format_param",
-        "XRDLOCATION" => "installDir:GLOBAL;$line_format_param",
+        "XRDLOCATION" => "xrootInstallDir:GLOBAL;$line_format_param",
         "XRDLOGDIR" => "logfile:xroot;$line_format_param",
         "XRDPORT" => "port:xroot;$line_format_envvar",
         "XRDUSER" => "user:GLOBAL;$line_format_param",
@@ -2712,6 +2712,7 @@ sub xrootSpecificConfig () {
   }else {
     $self->info('xroot options not defined. Using defaults.')
   }
+  my $xroot_bin_dir = $dm_bin_dir;
   my $xroot_headnode = $self->hostHasRoles('dpns');
   my $xroot_diskserver = $self->hostHasRoles('gsiftp');
   my $xroot_token_auth = defined($xroot_config->{authzConf});
@@ -2725,6 +2726,11 @@ sub xrootSpecificConfig () {
   if ( $xroot_config->{MonALISAHost} ) {
     $self->setGlobalOption("xrootMonALISAHost",$xroot_config->{MonALISAHost});
     $self->debug(1,"Global option 'xrootMonALISAHost' defined to ".$self->getGlobalOption("xrootMonALISAHost"));
+  }
+  if ( $xroot_config->{installDir} ) {
+    $self->setGlobalOption("xrootInstallDir",$xroot_config->{installDir});
+    $self->debug(1,"Global option 'xrootInstallDir' defined to ".$self->getGlobalOption("xrootInstallDir"));
+    $xroot_bin_dir = $self->getGlobalOption("xrootInstallDir") . "/bin";
   }
       
   # Build xrootd configuration file (based on template provided in distribution, if it exists).
@@ -2859,8 +2865,8 @@ sub xrootSpecificConfig () {
   
   for my $prefix (@xroot_daemon_prefixes) {
     for my $daemon (keys(%xrootd_services)) {
-      my $link_name = $dm_bin_dir . '/' . $prefix . $daemon;
-      my $link_target = $dm_bin_dir . '/' . $daemon;
+      my $link_name = $xroot_bin_dir . '/' . $prefix . $daemon;
+      my $link_target = $xroot_bin_dir . '/' . $daemon;
       if ( !-x $link_target ) {
         $self->warn("$link_target missing or not executable. Check your DPM installation.");
       }
