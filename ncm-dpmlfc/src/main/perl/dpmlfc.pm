@@ -256,6 +256,7 @@ my %srmv22_config_rules = (
 
 my $xroot_config_file = "/etc/sysconfig/dpm-xrd";
 my %xroot_config_rules = (
+        "ALICEACCLOC" => "xrootTokenAuthLibDir:GLOBAL;$line_format_param",
         "DPM_HOST" => "host:dpm;$line_format_envvar",
         "DPNS_HOST" => "host:dpns;$line_format_envvar",
         "MANAGERHOST" => "host:dpm;$line_format_envvar",
@@ -2731,6 +2732,10 @@ sub xrootSpecificConfig () {
     $self->setGlobalOption("xrootInstallDir",$xroot_config->{installDir});
     $self->debug(1,"Global option 'xrootInstallDir' defined to ".$self->getGlobalOption("xrootInstallDir"));
     $xroot_bin_dir = $self->getGlobalOption("xrootInstallDir") . "/bin";
+  }
+  if ( $xroot_config->{tokenAuthLibDir} ) {
+    $self->setGlobalOption("xrootTokenAuthLibDir",$xroot_config->{tokenAuthLibDir});
+    $self->debug(1,"Global option 'xrootTokenAuthLibDir' defined to ".$self->getGlobalOption("xrootTokenAuthLibDir"));
   }
       
   # Build xrootd configuration file (based on template provided in distribution, if it exists).
