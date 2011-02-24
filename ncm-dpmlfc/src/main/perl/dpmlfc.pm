@@ -68,6 +68,10 @@ my $base = "/software/components/dpmlfc";
 my $dm_install_dir_default = "/opt/lcg";
 my $xroot_options_base = $base."/options/dpm/xroot";
 
+# Define some commands explicitly
+my $chkconfig = "/sbin/chkconfig";
+my $servicecmd = "/sbin/service";
+
 my $dpm_def_host;
 
 # Entry DEFAULT is tried first for any role. 
@@ -959,13 +963,14 @@ sub execCmd () {
   
   $self->debug(1,"$function_name: executing command '$cmd'");
 
-  my ($verb, @args) = split /\s+/, $cmd;
+  my @cmd_array = split /\s+/, $cmd;
+  my $verb = $cmd_array[0];
   if ( ! -x $verb ) {
     $self->error("Command $verb not found");
     return(2);
   }
   
-  my $errormsg = CAF::Process->new([$cmd],log=>$self)->output();
+  my $errormsg = CAF::Process->new(\@cmd_array,log=>$self)->output();
   my $status = $?;
 
   if ( $status ) {
@@ -1341,8 +1346,11 @@ sub mysqlExecCmd () {
 
   $self->debug(2,"$function_name: executing MySQL command '$command' on $db_admin_server (user:$db_admin_user, pwd:$db_admin_pwd)");
 
-  my $cmd = "mysql -h $db_admin_server -u '$db_admin_user' --password='$db_admin_pwd' $command";
-  my $errormsg = CAF::Process->new([$cmd],log=>$self)->output();
+  my @cmd_array = ("mysql", "-h", $db_admin_server,
+                            "-u", $db_admin_user,
+                            "--password=$db_admin_pwd",
+                            "--exec", $command);
+  my $errormsg = CAF::Process->new(\@cmd_array,log=>$self)->output();
   my $status = $?;
   if ( $? ) {
     $self->debug(2,"MySQL command error: $errormsg");
@@ -1375,12 +1383,12 @@ sub mysqlCheckAdminPwd() {
   # First check if administrator account is working without password (try to use mysql dabase)
   my $admin_pwd_saved = $db_admin_pwd;
   $self->setGlobalOption("dbadminpwd", "");
-  $status = $self->mysqlExecCmd("--exec 'use mysql'");
+  $status = $self->mysqlExecCmd("use mysql");
   $self->setGlobalOption("dbadminpwd", $admin_pwd_saved);
   
   if ( $status ) {  # administrator has a password set, try it
     # First check if administrator password is working (just trying to connect)
-    $status = $self->mysqlExecCmd("</dev/null");
+    $status = $self->mysqlExecCmd("source /dev/null");
   } else {
     $self->debug(1,"$function_name: MySQL administrator ($db_admin_server) password not set on $db_admin_server");
     $status = 1;  # Force initialization of password
@@ -1396,15 +1404,17 @@ sub mysqlCheckAdminPwd() {
 #   	  $self->setGlobalOption("dbadminpwd", "$db_admin_pwd_old");
 #    }
     
-    my $cmd = "mysqladmin -h $db_admin_server -u '$db_admin_user' password '$db_admin_pwd'";
-    my $errormsg = CAF::Process->new([$cmd],log=>$self)->output();
+    my @cmd_array = ("mysql", "-h", $db_admin_server,
+                              "-u", $db_admin_user,
+                              "--exec", "set password for '$db_admin_user'\@'$db_admin_server' = password('$db_admin_pwd')");
+    my $errormsg = CAF::Process->new(\@cmd_array,log=>$self)->output();
     $status = $?;
     if ( $status && ($db_admin_server ne "localhost") ) {
       $self->warn("Remote database server ($db_admin_server) : check access is allowed with full privileges from $db_admin_user on $this_host_full");
     }
 #	  $self->setGlobalOption("dbadminpwd", $admin_pwd_saved);
   } else {
-    $self->debug(1,"$function_name: MySQL administrator password succeeded");
+    $self->debug(1,"$function_name: MySQL administrator password check succeeded");
   }
 
   return $status;
@@ -1461,7 +1471,7 @@ sub mysqlAddUser() {
   my $status = 0;
   for my $host (@db_hosts) {
     $self->debug(1,"$function_name: Adding MySQL connection account for $product ($db_user on $host)");
-    $status = $self->mysqlExecCmd("--exec \"grant $db_rights on *.* to '$db_user'\@'$host' identified by '$db_pwd' with grant option\"");
+    $status = $self->mysqlExecCmd("grant $db_rights on *.* to '$db_user'\@'$host' identified by '$db_pwd' with grant option");
     if ( $status ) {
       # Error already signaled by caller
       $self->debug(1,"Failed to add MySQL connection for $db_user on $host");
@@ -1471,7 +1481,7 @@ sub mysqlAddUser() {
     # Backward compatibility for pre-4.1 clients, like perl-DBI-1.32
     if ( $short_pwd_hash ) {
       $self->debug(1,"$function_name: Defining password short hash for $db_user on $host)");
-      $status = $self->mysqlExecCmd("--exec \"set password for '$db_user'\@'$host' = OLD_PASSWORD('$db_pwd')\"");
+      $status = $self->mysqlExecCmd("set password for '$db_user'\@'$host' = OLD_PASSWORD('$db_pwd')");
       if ( $status ) {
         # Error already signaled by caller
         $self->debug(1,"Failed to define password short hash for $db_user on $host");
@@ -1510,7 +1520,7 @@ sub mysqlAddDb() {
   my $status = 1;  # Assume failure by default
 
   $self->debug(1,"$function_name: checking if database $database for $product already exists");
-  $status = $self->mysqlExecCmd("--exec \"use $database\"");
+  $status = $self->mysqlExecCmd("use $database");
 
 
   if ( $status ) {
@@ -1874,13 +1884,11 @@ sub enableService () {
     return 1;
   }
 
-  my @cmd = ["/sbin/chkconfig", $service];
-  CAF::Process->new(@cmd,log=>$self)->run();
+  CAF::Process->new([$chkconfig, $service],log=>$self)->run();
   if ( $? ) {
     # No need to do chkconfig --add first, done by default
     $self->info("Enabling service $service at startup");
-    my @cmd = ["/sbin/chkconfig", $service, "on"];
-    CAF::Process->new(@cmd,log=>$self)->run();
+    CAF::Process->new([$chkconfig, $service, "on"],log=>$self)->run();
     if ( $? ) {
       $self->error("Failed to enable service $service");
     }
@@ -1950,8 +1958,7 @@ sub restartServices () {
     $self->debug(1,"$function_name: list of services to restart : ".join(" ",keys(%{$list})));
     for my $service (keys %{$list}) {
       $self->info("Restarting service $service");
-      my @cmd = ["/sbin/service", $service, "stop"];
-      CAF::Process->new(@cmd,log=>$self)->run();
+      CAF::Process->new([$servicecmd, $service, "stop"],log=>$self)->run();
       if ( $? ) {
         # Service can be stopped, don't consider failure to stop as an error
         $self->warn("\tFailed to stop $service");
@@ -1959,8 +1966,7 @@ sub restartServices () {
       sleep 5;    # Give time to the daemon to shut down
       my $attempt = 10;
       my $status;
-      @cmd = ["/sbin/service", $service, "start"];
-      my $command = CAF::Process->new(@cmd,log=>$self);
+      my $command = CAF::Process->new([$servicecmd, $service, "start"],log=>$self);
       $command->run();
       $status = $?;
       while ( $attempt && $status ) {
