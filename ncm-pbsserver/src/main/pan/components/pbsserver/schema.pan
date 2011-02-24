@@ -91,6 +91,7 @@ type pbs_queue_attlist = {
     'enabled'                ? boolean
     'started'                ? boolean
     'keep_completed'         ? long(0..)
+    'route_destinations'	 ? string
 };
 
 type pbs_queue = {
