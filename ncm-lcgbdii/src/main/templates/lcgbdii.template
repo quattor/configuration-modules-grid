@@ -26,6 +26,7 @@ BDII_MODIFY_DN=<%modifyDN%>
 BDII_IS_CACHE=<%isCache%>
 BDII_UPDATE_URL=<%updateUrl%>
 BDII_UPDATE_LDIF=<%updateLdif%>
+BDII_RAM_DISK=<%RAMDisk%>
 FIX_GLUE=<%fixGlue%>
 SLAPD=<%slapd%>
 SLAPD_CONF=<%slapdConf%>

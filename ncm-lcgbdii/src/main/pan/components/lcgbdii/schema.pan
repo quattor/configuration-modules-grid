@@ -60,6 +60,7 @@ type ${project.artifactId}_component = {
   'autoModify'    : string = 'no' with match (SELF, '^(yes|no)$')
   'isCache'       : string = 'no' with match (SELF, '^(yes|no)$')
   'modifyDN'      : string = 'no' with match (SELF, '^(yes|no)$')
+  'RAMDisk'       ? string        with match (SELF, '^(yes|no)$')
   'fixGlue'       ? string        with match (SELF, '^(yes|no)$')
 
   'updateUrl'     ? type_absoluteURI
