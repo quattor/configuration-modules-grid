@@ -27,6 +27,7 @@ BDII_IS_CACHE=<%isCache%>
 BDII_UPDATE_URL=<%updateUrl%>
 BDII_UPDATE_LDIF=<%updateLdif%>
 BDII_RAM_DISK=<%RAMDisk%>
+BDII_DELETE_DELAY=<%deleteDelay|0%>
 FIX_GLUE=<%fixGlue%>
 SLAPD=<%slapd%>
 SLAPD_CONF=<%slapdConf%>

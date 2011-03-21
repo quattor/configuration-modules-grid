@@ -61,6 +61,7 @@ type ${project.artifactId}_component = {
   'isCache'       : string = 'no' with match (SELF, '^(yes|no)$')
   'modifyDN'      : string = 'no' with match (SELF, '^(yes|no)$')
   'RAMDisk'       ? string        with match (SELF, '^(yes|no)$')
+  'deleteDelay'   ? long
   'fixGlue'       ? string        with match (SELF, '^(yes|no)$')
 
   'updateUrl'     ? type_absoluteURI
