@@ -245,6 +245,7 @@ type structure_yaim_vo_services = {
     "VOMS_ADMIN_DB_USER"                ? string
     "VOMS_CORE_TIMEOUT"                 ? string
     "VOMS_ADMIN_MAIL"                   ? string
+    "VOMS_ADMIN_WEB_REGISTRATION_DISABLE" ? string
     "VOMS_DB_USER_PASSWORD"             ? string
     "groupsroles"                       ? string
 };
