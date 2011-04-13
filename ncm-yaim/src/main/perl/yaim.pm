@@ -459,8 +459,8 @@ sub get_vo_config {
         # If we've been given an ordered list of VOs, use it instead of the
         # one we've just created
         if ( exists $cfgtree->{VOs} ) {
-            my @ordered_vos = $cfgtree->{VOs}->getList();
-            $vo_cfg .= 'VOS="'.join (' ',map($_->getValue(),@ordered_vos)) ."\"\n";
+            my @ordered_vos = @{$cfgtree->{VOs}};
+            $vo_cfg .= 'VOS="'.join (' ',map($cfgtree->{vo}->{$_}->{name},@ordered_vos)) ."\"\n";
         } else {
             $vo_cfg .= 'VOS="'.join (' ',@vos) ."\"\n";
         }
