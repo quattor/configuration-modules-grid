@@ -130,6 +130,7 @@ type ${project.artifactId}_component = {
     'server'       ? pbs_server
     'queue'        ? pbs_queuelist
     'node'         ? pbs_nodelist
+    'ignoretorquecfg'    ? boolean = false
 };
 
 bind '/software/components/pbsserver' = ${project.artifactId}_component;

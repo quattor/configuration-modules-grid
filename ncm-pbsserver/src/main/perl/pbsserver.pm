@@ -103,9 +103,15 @@ sub Configure($$@) {
     # Ensure that any existing filter is removed.  Since the
     # submitfilter is the only parameter in torque.cfg, this file
     # can be removed as well.
+    ## this is far from true. if something else manages torque.cfg, set ignoretorquecfg to true
     } else {
       $self->info("Removing submission filter...");
-      unlink "$pbsroot/torque.cfg" if (-e "$pbsroot/torque.cfg");
+      my $removetorquecfg = 1;
+      if (exists($pbsserver_config->{ignoretorquecfg}) && $pbsserver_config->{ignoretorquecfg}) {
+        $removetorquecfg = 0;
+        $self->info("Ignoring torque.cfg file."); 
+      };
+      unlink "$pbsroot/torque.cfg" if (-e "$pbsroot/torque.cfg" && $removetorquecfg);
       unlink "$pbsroot/submit_filter" if (-e "$pbsroot/submit_filter");
     }
 
