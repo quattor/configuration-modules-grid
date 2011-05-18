@@ -45,8 +45,12 @@ type pbs_server_attlist = {
     'scheduler_iteration' ? long(1..)
     'scheduling'          ? boolean
     'server_name'         ? type_hostname
-    'submit_host'         ? string
+    'submit_hosts'         ? string
     'tcp_timeout'         ? long(1..) = 8
+    'disable_server_id_check' ? boolean
+    'resources_default.nodect' ? long(1..) 
+    'resources_default.nodes' ? long(1..)
+    'checkpoint_dir'    ? string
 };
 
 type pbs_server = {
@@ -69,6 +73,7 @@ type pbs_queue_attlist = {
     'resources_max.pvmem' ? string
     'resources_max.nice'     ? long(1..)
     'resources_max.walltime' ? string
+    'resources_default.walltime' ? string
     'resources_min.nice'     ? long(1..)
     'resources_min.mem' ? string
     'resources_min.vmem' ? string
@@ -76,7 +81,7 @@ type pbs_queue_attlist = {
     'resources_min.pvmem' ? string
     'resources_max.nodect'   ? long(1..)
     'resources_default.nodect'  ? long(1..)
-    'resources_default.nice' ? long(1..)
+    'resources_default.nice' ? long(0..)
     'resources_default.mem' ? string
     'resources_default.vmem' ? string
     'resources_default.pmem' ? string
@@ -92,6 +97,7 @@ type pbs_queue_attlist = {
     'started'                ? boolean
     'keep_completed'         ? long(0..)
     'route_destinations'	 ? string
+    'Priority'     ? long(0..)
 };
 
 type pbs_queue = {
