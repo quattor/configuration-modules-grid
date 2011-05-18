@@ -27,7 +27,7 @@ my ($pbsmomconf)="/var/spool/pbs/mom_priv/config";
 my ($pbsdir)="/var/spool/pbs";
 my ($pbsmomdir)="/var/spool/pbs/mom_priv";
 my ($pbsinitscript)="/etc/init.d/pbs";
-my ($masterlist, $restrictedlist, $logevent, $tmpdir, %resources);
+my ($masterlist, $aliaslist, $restrictedlist, $logevent, $tmpdir, %resources);
 my ($checkpoint_interval,$checkpoint_script,$restart_script,$checkpoint_run_exe,$remote_checkpoint_dirs,$max_conn_timeout_micro_sec);
 my ($resources, $cpuf, $wallf, $idealload, $maxload);
 my (%usecp, $prologalarm, $behaviour, $nodecheckscript);
@@ -102,6 +102,17 @@ sub Configure {
     $self->error("Empty master list");
     return;
   }
+
+  $aliaslist="";
+  $n=0;
+  while ($config->elementExists(
+            "/software/components/pbsclient/aliases/".$n)) {
+    ($aliaslist ne "") and $aliaslist.=" ";
+    $aliaslist .=
+      $config->getValue("/software/components/pbsclient/aliases/".$n);
+    $n++;
+  }
+
 
   # the restrictedlist will fill the $restricted directive
   $restrictedlist="";
@@ -271,6 +282,10 @@ sub Configure {
   # create the line(s) with the $clienthost directives from the master list
   foreach ( split(/\s+/,$masterlist) ) { 
     $contents.='$clienthost '.$_."\n";
+  }
+
+  foreach ( split(/\s+/,$aliaslist) ) { 
+    $contents.='$alias_server_name '.$_."\n";
   }
 
   $tmpdir and $contents .= '$tmpdir ' . $tmpdir . "\n";

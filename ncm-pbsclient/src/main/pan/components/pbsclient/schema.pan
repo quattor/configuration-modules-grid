@@ -27,6 +27,7 @@ type ${project.artifactId}_component_scripts_type = {
 type ${project.artifactId}_component_type = {
     include structure_component
     "masters"   : string[]
+    "aliases"   ? string[]
     "resources" ? string[]
     "tmpdir"	? string
     "restricted" ? string[]
