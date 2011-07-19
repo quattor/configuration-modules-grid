@@ -51,6 +51,19 @@ sub Configure($$@) {
 	my @seen = ();
         while ($vo->hasNextElement()) {
             my $voname = $vo->getNextElement()->getName();
+	    my @staticusers;
+	    if ($config->elementExists("${infobyvo}/$voname/staticusers")){
+		my $user_list = $config->getElement("${infobyvo}/$voname/staticusers");
+		while ($user_list->hasNextElement()) {
+		    my $index = $user_list->getNextElement()->getName();
+		    my $path = "${infobyvo}/$voname/staticusers/$index";
+		    my $name = my $flag = undef;
+		    if ($config->elementExists("$path/name")){
+			$name = $config->getValue("$path/name");
+			push @staticusers, $name;
+		    }
+		}
+	    }
             if ($config->elementExists("${infobyvo}/$voname/gridusers")){
 		my $user_list = $config->getElement("${infobyvo}/$voname/gridusers");
 		while ($user_list->hasNextElement()) {
@@ -86,7 +99,10 @@ sub Configure($$@) {
 			$self->warn("Cannot get group name belonging to group id \"$gid\", skipping...");
 			next;
 		    }
-		    if ($flag && ($gid =~ /^\d+$/)){
+		    if (0 < grep {$name eq $_} @staticusers){
+			$flag ||= "";
+			$result .= join(":",$uid,$name,$gid,$gnam,$voname,$flag) . ":\n";
+		    } elsif ($flag && ($gid =~ /^\d+$/)){
 			# special case: no secondary gid but flag defined so we reuse the primary
 			$result .= join(":",$uid,$name,"${gid},${gid}","${gnam},${gnam}",$voname,$flag) . ":\n";
 		    } else {

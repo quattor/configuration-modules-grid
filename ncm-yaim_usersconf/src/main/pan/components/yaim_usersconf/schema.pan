@@ -29,8 +29,9 @@ type structure_yaim_usersconf_gridgroups = {
 
 type structure_yaim_usersconf_vo = {
     "name"      : string
-    "gridusers"   ? structure_yaim_usersconf_gridusers[]
-    "gridgroups"  ? structure_yaim_usersconf_gridgroups[]
+    "staticusers"  ? structure_yaim_usersconf_gridusers[]
+    "gridusers"    ? structure_yaim_usersconf_gridusers[]
+    "gridgroups"   ? structure_yaim_usersconf_gridgroups[]
 
 };
 
@@ -39,6 +40,7 @@ type ${project.artifactId}_component = {
     "users_conf_file"  ? string # "location of users.conf file"
     "groups_conf_file" ? string # "location of groups.conf file"
     "vo"               ? structure_yaim_usersconf_vo{}
+    "usecache"         ? boolean
 
 };
 
