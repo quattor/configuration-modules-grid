@@ -799,6 +799,10 @@ sub Configure($$@) {
     $cfgfile .= &get_section_config($self, $cfgtree->{'SCAS'}, "SCAS server configuration",
                                     "", undef);
 
+    # ARGUS
+    $cfgfile .= &get_section_config($self, $cfgtree->{'ARGUS'}, "ARGUS server configuration",
+                                    "", undef);
+
     # GLEXEC
     $cfgfile .= &get_section_config($self, $cfgtree->{'GLEXEC'}, "GLEXEC_wn configuration",
                                     "", undef);

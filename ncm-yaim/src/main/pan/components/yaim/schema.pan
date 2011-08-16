@@ -167,6 +167,12 @@ type structure_yaim_conf = extensible {
 
     "WMS_EXPIRY_PERIOD"                 ? string
     "WMS_MATCH_RETRY_PERIOD"            ? string
+
+    "GLITE_LB_TYPE"                     ? string
+    "GLITE_LB_SUPER_USERS"              ? string
+    "GLITE_LB_RTM_ENABLED"              ? string
+    "GLITE_LB_RTM_DN"                   ? string
+    "GRIDFTP_CONNECTIONS_MAX"           ? long
 };
 
 type structure_yaim_close_se = {
@@ -242,11 +248,14 @@ type structure_yaim_vo_services = {
     "VOMS_DB_NAME"                      ? string
     "VOMS_PORT"                         ? string
     "VOMS_DB_USER"                      ? string
+    "VOMS_CORE_DB_USER"                 ? string
     "VOMS_ADMIN_DB_USER"                ? string
     "VOMS_CORE_TIMEOUT"                 ? string
     "VOMS_ADMIN_MAIL"                   ? string
     "VOMS_ADMIN_WEB_REGISTRATION_DISABLE" ? string
     "VOMS_DB_USER_PASSWORD"             ? string
+    "ORACLE_CONNECTION_STRING"          ? string
+    "VOMS_ADMIN_WEB_REGISTRATION_DISABLE" ? string
     "groupsroles"                       ? string
 };
 
@@ -301,6 +310,47 @@ type structure_yaim_vo = {
     "services"                          ? structure_yaim_vo_services
 };
 
+type structure_yaim_argus = {
+     "ARGUS_HOST"          : string
+     "PAP_ADMIN_DN"        : string
+     "CONFIG_PAP"          ? string
+     "CONFIG_PDP"          ? string
+     "CONFIG_PEP"          ? string
+     "PAP_HOME"            ? string
+     "PAP_ENTITY_ID"       ? string
+     "PAP_HOST"            ? string
+     "PAP_CONF_INI"        ? string
+     "PAP_AUTHZ_INI"       ? string
+     "PAP_ADMIN_PROPS"     ? string
+     "PAP_REPO_LOCATION"   ? string
+     "PAP_POLL_INTERVAL"   ? string
+     "PAP_ORDERING"        ? string
+     "PAP_CONSISTENCY_CHECK"   ? string
+     "PAP_CONSISTENCY_CHECK_REPAIR"   ? string
+     "PAP_PORT"            ? string
+     "PAP_SHUTDOWN_PORT"   ? string
+     "PAP_SHUTDOWN_COMMAND"? string
+     "PDP_HOME"            ? string
+     "PDP_CONF_INI"        ? string
+     "PDP_ENTITY_ID"       ? string
+     "PDP_HOST"            ? string
+     "PDP_PORT"            ? string
+     "PDP_ADMIN_PORT"      ? string
+     "PDP_ADMIN_PASSWORD"  ? string
+     "PDP_RETENTION_INTERVAL"   ? string
+     "PDP_PAP_ENDPOINTS"   ? string
+     "PEP_HOME"            ? string
+     "PEP_CONF_INI"        ? string
+     "PEP_ENTITY_ID"       ? string
+     "PEP_HOST"            ? string
+     "PEP_PORT"            ? string
+     "PEP_ADMIN_PORT"      ? string
+     "PEP_ADMIN_PASSWORD"  ? string
+     "PEP_MAX_CACHEDRESP"  ? string
+     "PEP_PDP_ENDPOINTS"   ? string
+     
+};
+
 type ${project.artifactId}_component = {
     include structure_component
     "configure"                         ? boolean # Should YAIM itself be run? (default no)
@@ -308,6 +358,7 @@ type ${project.artifactId}_component = {
     "conf"                              : structure_yaim_conf
     "nodetype"                          : string[]
     "CE"                                ? structure_yaim_ce
+    "ARGUS"                             ? structure_yaim_argus
     "FTA"                               ? string{}
     "FTS"                               ? structure_yaim_fts
     "FTM"                               ? string{}
