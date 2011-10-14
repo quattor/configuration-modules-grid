@@ -466,8 +466,8 @@ sub get_vo_config {
         }
         $vo_cfg .= $vo_cfg unless ( defined $href );
         $vo_cfg .= "\n#\n# LFC configuration\n#\n";
-        $vo_cfg .= 'LFC_CENTRAL="'.join(' ',@lfc_central)."\"\n";
-        $vo_cfg .= 'LFC_LOCAL="'.join(' ',@lfc_local)."\"\n";
+        $vo_cfg .= 'LFC_CENTRAL="'.join(' ',@lfc_central)."\"\n" if (@lfc_central) ;
+        $vo_cfg .= 'LFC_LOCAL="'.join(' ',@lfc_local)."\"\n" if (@lfc_local);
     } else {
         $self->warn("no VO information defined");
     }
