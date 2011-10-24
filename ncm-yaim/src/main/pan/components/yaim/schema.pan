@@ -257,6 +257,9 @@ type structure_yaim_vo_services = {
     "ORACLE_CONNECTION_STRING"          ? string
     "VOMS_ADMIN_WEB_REGISTRATION_DISABLE" ? string
     "groupsroles"                       ? string
+    "UNPRIVILEGED_MKGRIDMAP"            ? string
+    "MAP_WILDCARDS"                     ? string
+    "LFC"                               ? string
 };
 
 type structure_yaim_scas = {
@@ -355,6 +358,7 @@ type ${project.artifactId}_component = {
     include structure_component
     "configure"                         ? boolean # Should YAIM itself be run? (default no)
     "force"                             ? boolean = false   # force Yaim execution
+    "require_vos"                       ? boolean = true    # by default, assume VO defs are required
     "conf"                              : structure_yaim_conf
     "nodetype"                          : string[]
     "CE"                                ? structure_yaim_ce

@@ -397,7 +397,12 @@ sub get_vo_tree {
     elsif ( exists $cfgtree->{'system'} && exists $cfgtree->{'system'}->{'vo'} ) {
         return $cfgtree->{'system'}->{'vo'};
     }
-    $self->error("Failed to find a VO base");
+    if ( $cfgtree->{'require_vos'} ) {
+        $self->error("Failed to find a VO base");
+    }
+    else {
+        $self->verbose("No VO definition found");
+    }
     return undef;
 }
 
@@ -422,7 +427,7 @@ sub get_vo_config {
     my @lfc_local;
     my @lfc_central;
 
-    my $vo_cfg;
+    my $vo_cfg = "";
     $vo_cfg = "\n#\n# VO configuration\n#\n" if ( defined $href );
     
     my $votree = &get_vo_tree($self, $cfgtree);
@@ -468,8 +473,6 @@ sub get_vo_config {
         $vo_cfg .= "\n#\n# LFC configuration\n#\n";
         $vo_cfg .= 'LFC_CENTRAL="'.join(' ',@lfc_central)."\"\n" if (@lfc_central) ;
         $vo_cfg .= 'LFC_LOCAL="'.join(' ',@lfc_local)."\"\n" if (@lfc_local);
-    } else {
-        $self->warn("no VO information defined");
     }
     return $vo_cfg;
 }
@@ -562,7 +565,7 @@ sub create_user_groups_conf {
 
     # User.conf
     #
-    my $usersconf='$yaimhome/users.conf';
+    my $usersconf="$yaimhome/users.conf";
     if ( exists $cfgtree->{'conf'}->{'USERS_CONF'} ) {
         $usersconf = $cfgtree->{'conf'}->{'USERS_CONF'};
     }
@@ -576,7 +579,7 @@ sub create_user_groups_conf {
 
     # Group.conf
     #
-    my $groupsconf='$yaimhome/groups.conf';
+    my $groupsconf="$yaimhome/groups.conf";
     if ( exists $cfgtree->{'conf'}->{'GROUPS_CONF'} ) {
         $groupsconf = $cfgtree->{'conf'}->{'GROUPS_CONF'};
     }
