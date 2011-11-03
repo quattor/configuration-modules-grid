@@ -100,19 +100,22 @@ sub Configure($$@) {
     # a backup of the previous file if necessary. 
     # Already exists. Make backup and create new file. 
     $result = LC::Check::file($lcgbdii_config->{configFile},
-                                 backup => ".old",
-                                 contents => $contents,
-                                );
+        backup => ".old",
+        contents => $contents,
+        mode => 0600,
+        owner => (getpwnam($user))[2],
+        group => (getpwnam($user))[3],
+    );
     if ( $result > 0 ) {
         $self->log($lcgbdii_config->{configFile}." updated");
         $changes += $result;
+        # make sure backup is secure
+        LC::Check::mode(0600, $lcgbdii_config->{configFile} . ".old");
+        LC::Check::owner((getpwnam($user))[2], $lcgbdii_config->{configFile} . ".old");
+        LC::Check::group((getpwnam($user))[3], $lcgbdii_config->{configFile} . ".old");
     } elsif ( $result < 0 ) {
         $self->error("Failed to update ".$lcgbdii_config->{configFile})
     }
-
-    # Change the owner to the one running the daemon.
-    chmod 0600, $lcgbdii_config->{configFile};
-    chown((getpwnam($user))[2,3], glob($lcgbdii_config->{configFile}));
 
 
     ############################################
@@ -142,20 +145,22 @@ sub Configure($$@) {
     # Now just create the new configuration file.  Be careful to save
     # a backup of the previous file if necessary. 
     $result = LC::Check::file($fname,
-                                 backup => ".old",
-                                 contents => $contents,
-                                );
+        backup => ".old",
+        contents => $contents,
+        mode => 0600,
+        owner => (getpwnam($user))[2],
+        group => (getpwnam($user))[3],
+    );
     if ( $result > 0 ) {
         $self->log($fname." updated");
         $changes += $result;
+        # make sure backup is secure
+        LC::Check::mode(0600, $fname . ".old");
+        LC::Check::owner((getpwnam($user))[2], $fname . ".old");
+        LC::Check::group((getpwnam($user))[3], $fname . ".old");
     } elsif ( $result < 0 ) {
         $self->error("Failed to update ".$fname)
     }
-
-    # The file really only needs to be owned (and write-enabled) when
-    # the autoModify flag is set, but does no harm in other cases. 
-    chmod 0600, $fname;
-    chown((getpwnam($user))[2,3], glob($fname));
 
 
     ######################################

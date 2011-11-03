@@ -9,7 +9,7 @@
   <artifactId>lcgbdii</artifactId>
 
   <packaging>pom</packaging>
-  <version>2.6.4-SNAPSHOT</version>
+  <version>2.6.5-SNAPSHOT</version>
   <name>lcgbdii NCM component.</name>
 
   <repositories>
