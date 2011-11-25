@@ -29,8 +29,8 @@ type ${project.artifactId}_component_structure_initialisation = {
     ## initialisation values
     ## regular (see PBSINITIALISATIONVALUES)
     ## The expressions start with the variable t  (total  assigned  CPUs)  or  c  (existing CPUs), an operator (+ - / *), and followed by a float constant
-    "auto_ideal_load"           ? string with match (SELF,'^(t|c)(+-/*)\d+(\.\d+)?'
-    "auto_max_load"             ? string with match (SELF,'^(t|c)(+-/*)\d+(\.\d+)?'
+    "auto_ideal_load"           ? string with match (SELF,'^[tc][+-/*]\d+(\.\d+)?')
+    "auto_max_load"             ? string with match (SELF,'^[tc][+-/*]\d+(\.\d+)?')
 
     "check_poll_time"           ? long(0..)
 
@@ -40,7 +40,7 @@ type ${project.artifactId}_component_structure_initialisation = {
     
     "configversion"             ? string 
     
-    "cputmult" ?                ? double
+    "cputmult"                  ? double
     
     "down_on_error"             ? boolean 
     
@@ -49,7 +49,7 @@ type ${project.artifactId}_component_structure_initialisation = {
     "ideal_load"                ? double
     
     "igncput"                   ? boolean
-    "ignmem "                   ? boolean
+    "ignmem"                   ? boolean
     "ignvmem"                   ? boolean 
     "ignwalltime"               ? boolean
     
@@ -95,7 +95,7 @@ type ${project.artifactId}_component_structure_initialisation = {
 
     "status_update_time"        ? long
     
-    "tmpdir "                   ? string
+    "tmpdir"                   ? string
     
     "timeout"                   ? long
 
@@ -130,7 +130,7 @@ type ${project.artifactId}_component_type = {
     ## if behaviour = Torque, first entry of the masters is the $pbsmastername (which is old torque option?)
     ##                Torque3 uses $pbsserver instead of $clienthost
     ## default is ok
-    "behaviour" ? string with match (SELF,'OpenPBS|Torque|Torque3') = 'OpenPBS'
+    "behaviour" ? string = 'OpenPBS' with match (SELF,'OpenPBS|Torque|Torque3')
 
     "masters"       : string[]
     "pbsclient"     ? string[]
