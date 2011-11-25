@@ -23,424 +23,340 @@ use vars qw(@ISA $EC);
 @ISA = qw(NCM::Component);
 $EC=LC::Exception::Context->new->will_store_all;
 
-my ($pbsmomconf)="/var/spool/pbs/mom_priv/config";
-my ($pbsdir)="/var/spool/pbs";
-my ($pbsmomdir)="/var/spool/pbs/mom_priv";
-my ($pbsinitscript)="/etc/init.d/pbs";
-my ($masterlist, $aliaslist, $restrictedlist, $logevent, $tmpdir, %resources);
-my ($checkpoint_interval,$checkpoint_script,$restart_script,$checkpoint_run_exe,$remote_checkpoint_dirs,$max_conn_timeout_micro_sec);
-my ($resources, $cpuf, $wallf, $idealload, $maxload);
-my (%usecp, $prologalarm, $behaviour, $nodecheckscript);
-my ($nodecheckinterval);
+use constant COMPONENTPATH => "/software/components/pbsclient";
 
-sub initpaths {
-  my ($config) = (@_);
+use constant DEFAULTPBSMOMCONF => "/var/spool/pbs/mom_priv/config";
+use constant DEFAULTPBSINITSCRIPT => "/etc/init.d/pbs";
+use constant DEFAULTPBSDIR => "/var/spool/pbs";
+use constant DEFAULTPBSMOMDIR => "/var/spool/pbs/mom_priv";
 
-  # where should the config file be written? Will default
-  if ( $config->elementExists("/software/components/pbsclient/configPath")){
-    $pbsmomconf = 
-      $config->getValue("/software/components/pbsclient/configPath");
-  }
-  # name of the init script to restart pbs if config changed
-  if ( $config->elementExists("/software/components/pbsclient/initScriptPath")){
-    $pbsinitscript = 
-      $config->getValue("/software/components/pbsclient/initScriptPath");
-  }
- 
-  # make sure pbs mom directory exists and it properly writable
-  ($pbsmomdir=$pbsmomconf) =~ s/\/[^\/]+$//; # implements dirname()
-  ($pbsdir=$pbsmomdir) =~ s/\/[^\/]+$//; # implements dirname() again
+use constant SCRIPTPERMS => ("epilogue" => 0700,
+                             "epilogue.user" => 0755,
+                             "epilogue.parallel" => 0700,
+                             "prologue" => 0700,
+                             "prologue.user" => 0755,
+                             "prologue.parallel" => 0700
+                            );
 
-}
+use constant PBSCLIENTOPTIONS => qw(
+    mom_host
+    xauthpath
+);
 
-sub retrieve {
-  my ($self,$config,$path,$isreq,$scref,$default) = @_;
-  my ($tmpval);
+use constant PBSINITIALISATIONVALUES => qw(
+    auto_ideal_load
+    auto_max_load
+    cputmult
+    configversion
+    check_poll_time
+    checkpoint_interval
+    checkpoint_script
+    checkpoint_run_exe
+    down_on_error
+    enablemomrestart
+    ideal_load
+    igncput
+    ignmem
+    ignvmem
+    ignwalltime
+    job_output_file_mask
+    log_directory
+    logevent
+    log_file_suffix
+    log_keep_days
+    loglevel
+    log_file_max_size
+    log_file_roll_depth
+    max_conn_timeout_micro_sec
+    max_load
+    memory_pressure_threshold
+    memory_pressure_duration
+    node_check_script
+    node_check_interval
+    nodefile_suffix
+    nospool_dir_list
+    prologalarm
+    rcpcmd
+    remote_checkpoint_dirs
+    remote_reconfig
+    restart_script
+    source_login_batch
+    source_login_interactive
+    spool_as_final_name
+    status_update_time
+    tmpdir
+    timeout
+    use_smt
+    wallmult
+);
 
-  $self->debug(1,"Retrieving resource in $path");
+## Camelcase reflect older naming convention
+## map is: schemaname -> initialisationname
+## legacy issues: idealLoad, maxLoad, nodeCheckScriptPath, nodeCheckIntervalSec are probably wrong
+use constant PBSINITIALISATIONVALUESMAP => {
+    'logEvent' => 'logevent',
+    'cpuTimeMultFactor' => 'cputmult',
+    'wallTimeMultFactor' => 'wallmult',
+    'idealLoad' => 'idealload',
+    'maxLoad' => 'maxload',
+    'prologAlarmSec' => 'prologalarm',
+    'nodeCheckScriptPath' => 'nodecheckscript',
+    'nodeCheckIntervalSec' => 'nodecheckinterval'
+};
 
-  if ( $config->elementExists($path) ) {
-    $tmpval = $config->getValue($path);
-    $$scref=$tmpval;
-    $self->debug(1,"Set value of ref ".$scref." to $tmpval");
-  } else {
-    if ($isreq) {
-      $self->Error("Cannot obtain required value from $path");
-    } else {
-      $$scref=$default;
-
-      $default or $default="<undef>";
-      $self->debug(1,"Set value of ref ".$scref." to default $default");
-    }
-  }
-}
 
 ##########################################################################
 sub Configure {
 ##########################################################################
-  my ($self,$config)=@_;
-  my ($n) = 0;
-  my $changes = 0;
+    my ($self,$config)=@_;
+    my $changes = 0;
   
-  $self->info("Configuring PBS");
+    $self->info("Configuring PBS");
 
-  &initpaths($config);
+    #
+    # Create the Torque client config file from configuration
+    #
+    my $contents = "# File managed by Quattor component ncm-pbsclient. DO NOT EDIT.\n\n";
+    
+    our $cfgtree = $config->getElement(COMPONENTPATH)->getTree;
+    
+    ##
+    ## initPaths
+    ##
+    my $pbsmomconf = exists($cfgtree->{configPath}) ? $cfgtree->{configPath} : DEFAULTPBSMOMCONF;
+    my $pbsinitscript = exists($cfgtree->{initScriptPath}) ? $cfgtree->{initScriptPath} : DEFAULTPBSINITSCRIPT;
 
-  $self->debug(2,"PBSMOMDIR $pbsmomdir; PBSDIR $pbsdir");
-
-  # the masterlist will fill the $clienthost directive
-  $masterlist="";
-  $n=0;
-  while ($config->elementExists(
-            "/software/components/pbsclient/masters/".$n)) {
-    ($masterlist ne "") and $masterlist.=" ";
-    $masterlist .=
-      $config->getValue("/software/components/pbsclient/masters/".$n);
-    $n++;
-  }
-  if ($masterlist eq ""){
-    $self->error("Empty master list");
-    return;
-  }
-
-  $aliaslist="";
-  $n=0;
-  while ($config->elementExists(
-            "/software/components/pbsclient/aliases/".$n)) {
-    ($aliaslist ne "") and $aliaslist.=" ";
-    $aliaslist .=
-      $config->getValue("/software/components/pbsclient/aliases/".$n);
-    $n++;
-  }
+    my $pbsdir=DEFAULTPBSDIR;
+    my $pbsmomdir=DEFAULTPBSMOMDIR;
+    # make sure pbs mom directory exists and it properly writable
+    ($pbsmomdir=$pbsmomconf) =~ s/\/[^\/]+$//; # implements dirname()
+    ($pbsdir=$pbsmomdir) =~ s/\/[^\/]+$//; # implements dirname() again
+    $self->debug(2,"PBSMOMDIR $pbsmomdir; PBSDIR $pbsdir");
 
 
-  # the restrictedlist will fill the $restricted directive
-  $restrictedlist="";
-  $n=0;
-  while ($config->elementExists(
-            "/software/components/pbsclient/restricted/".$n)) {
-    ($restrictedlist ne "") and $restrictedlist.=" ";
-    $restrictedlist .=
-      $config->getValue("/software/components/pbsclient/restricted/".$n);
-    $n++;
-  }
-  if ($restrictedlist eq ""){
-    $self->info("No additional hosts added to the restricted list");
-  }
-
-  # additional resources (those without a $) that end up in the config
-
-  $n=0;
-  while (
-      $config->elementExists("/software/components/pbsclient/resources/$n") ) {
-    my $resource = 
-      $config->getValue("/software/components/pbsclient/resources/$n");
-    my ($a,$v)=split(/:/,$resource,2);
-    $resources{$a}=$v;
-    $n++;
-  } 
-
-  # add cpuinfo if defined by user :
-  # users can define a list of properties they want to be included?
-  # example elements are : "cpu count","model name","cpu MHz","cpu family","model","stepping"...
-  if($config->elementExists("/software/components/pbsclient/cpuinfo")) {
-    $self->info("Additional CPUINFO elements exist, adding them as resources to mom config");
-    my @cpuinfoElements=@{$config->getElement("/software/components/pbsclient/cpuinfo")->getTree};
-    my %tmphash=cpuinfo_hash();
-    my %tmphash2;
-    for my $elem (@cpuinfoElements) {
-      if(defined $tmphash{$elem}) {
-          my $prop = $elem;
-          #have things more readable
-          $prop =~ s/^(model |cpu |)//;
-          $prop =~ tr/ /_/;
-          #prefix a "cpu_" for all properties except ncpus and ncores
-          $prop="cpu_" . $prop unless( $prop =~ m/(^ncores)/) ;
-          #$tmphash2{$elem}=$tmphash{$elem}
-          $tmphash2{$prop}=$tmphash{$elem}
-        }
-    }      
-    # add cpuinfo to resources
-    %resources = (%resources, %tmphash2);
-  };
-
-
-
-  # can we add Torque-specific stuff (e.g. location of the server name)?
-  $self->retrieve($config,
-                  "/software/components/pbsclient/behaviour",0,
-                  \$behaviour,"OpenPBS");
-
-  # verbosity of the pbs mom
-  $self->retrieve($config,
-                  "/software/components/pbsclient/logEvent",0,
-                  \$logevent,undef);
-
-  # tmpdir (from the transient_tmpdir patch)
-  $self->retrieve($config,
-                  "/software/components/pbsclient/tmpdir",0,
-                  \$tmpdir,undef);
-  
-  # idealload
-  $self->retrieve($config,
-                  "/software/components/pbsclient/idealLoad",0,
-                  \$idealload,undef);
- 
-  # maxload
-  $self->retrieve($config,
-                  "/software/components/pbsclient/maxLoad",0,
-                  \$maxload,undef);
-
-  # cpuFactor
-  $self->retrieve($config,
-                  "/software/components/pbsclient/cpuTimeMultFactor",0,
-                  \$cpuf,undef);
-
-  # wallFactor
-  $self->retrieve($config,
-                  "/software/components/pbsclient/wallTimeMultFactor",0,
-                  \$wallf,undef);
-
-  # prologAlarmSec
-  $self->retrieve($config,
-                  "/software/components/pbsclient/prologAlarmSec",0,
-                  \$prologalarm,undef);
-
-  # nodeCheckScriptPath
-  $self->retrieve($config,
-                  "/software/components/pbsclient/nodeCheckScriptPath",0,
-                  \$nodecheckscript,undef);
-
-  # nodeCheckIntervalSec
-  $self->retrieve($config,
-                  "/software/components/pbsclient/nodeCheckIntervalSec",0,
-                  \$nodecheckinterval,undef);
-
-  # checkpoint_interval
-  $self->retrieve($config,
-                  "/software/components/pbsclient/checkpoint_interval",0,
-                  \$checkpoint_interval,undef);
-
-  # checkpoint_script
-  $self->retrieve($config,
-                  "/software/components/pbsclient/checkpoint_script",0,
-                  \$checkpoint_script,undef);
-
-  # restart_script
-  $self->retrieve($config,
-                  "/software/components/pbsclient/restart_script",0,
-                  \$restart_script,undef);
-
-  # checkpoint_run_exe
-  $self->retrieve($config,
-                  "/software/components/pbsclient/checkpoint_run_exe",0,
-                  \$checkpoint_run_exe,undef);
-
-  # remote_checkpoint_dirs
-  $self->retrieve($config,
-                  "/software/components/pbsclient/remote_checkpoint_dirs",0,
-                  \$remote_checkpoint_dirs,undef);
-
-  # max_conn_timeout_micro_sec
-  $self->retrieve($config,
-                  "/software/components/pbsclient/max_conn_timeout_micro_sec",0,
-                  \$max_conn_timeout_micro_sec,undef);
-
-
-  # additional usecp directives, list of lists(2)
-  $n=0;
-  while (
-      $config->elementExists("/software/components/pbsclient/directPaths/$n")){
-    # do both elements exist?
-    $self->Error("Cannot find mountloc for directPath $n") unless
-      $config->elementExists("/software/components/pbsclient/directPaths/$n/locations");
-    $self->Error("Cannot find location for directPath $n") unless
-      $config->elementExists("/software/components/pbsclient/directPaths/$n/path");
-
-    my $locations = 
-      $config->getValue("/software/components/pbsclient/directPaths/$n/locations");
-    my $path = 
-      $config->getValue("/software/components/pbsclient/directPaths/$n/path");
-
-    $usecp{$locations}=$path;
-    $self->debug(1,"Adding direct path $n: \$usecp $locations $path");
-    $n++;
-  } 
-
-
-
-  LC::Check::directory("$pbsmomdir");
-
-  -e "$pbsmomconf" or ( open PBSMOMCONF,">$pbsmomconf" and close PBSMOMCONF );
-  -f "$pbsmomconf" or $self->Error("$pbsmomconf exists but is not a file");
-
-  #
-  # Create the Torque client config file from configuration
-  #
-  my $contents = "# File managed by Quattor component ncm-pbsclient. DO NOT EDIT.\n\n";
-  
-  # create the line(s) with the $clienthost directives from the master list
-  foreach ( split(/\s+/,$masterlist) ) { 
-    $contents.='$clienthost '.$_."\n";
-  }
-
-  foreach ( split(/\s+/,$aliaslist) ) { 
-    $contents.='$alias_server_name '.$_."\n";
-  }
-
-  $tmpdir and $contents .= '$tmpdir ' . $tmpdir . "\n";
- 
-  $logevent and $contents .= '$logevent ' . $logevent . "\n";
-
-  $cpuf and $contents .= '$cputmult ' . $cpuf . "\n";
-
-  $wallf and $contents .= '$wallmult ' . $wallf . "\n";
-
-  $idealload and $contents .= '$idealload ' . $idealload . "\n";
-
-  $maxload and $contents .= '$maxload ' . $maxload . "\n";
-
-  $prologalarm and $contents .= '$prologalarm ' . $prologalarm . "\n";
-
-  $nodecheckscript and $contents .= '$nodecheckscript ' . $nodecheckscript . "\n";
-
-  $nodecheckinterval and $contents .= '$nodecheckinterval ' . $nodecheckinterval . "\n";
-
-  $checkpoint_interval and $contents .= '$checkpoint_interval ' . $checkpoint_interval . "\n";
-
-  $checkpoint_script and $contents .= '$checkpoint_script ' . $checkpoint_script . "\n";
-
-  $restart_script and $contents .= '$restart_script ' . $restart_script . "\n";
-
-  $checkpoint_run_exe and $contents .= '$checkpoint_run_exe ' . $checkpoint_run_exe . "\n";
-
-  $remote_checkpoint_dirs and $contents .= '$remote_checkpoint_dirs ' . $remote_checkpoint_dirs . "\n";
-
-  $max_conn_timeout_micro_sec and $contents .= '$max_conn_timeout_micro_sec ' . $max_conn_timeout_micro_sec . "\n";
-
-  if ( $behaviour eq "Torque" ) { # add a $pbsservername line
-    # assume first master is the real one
-    my $pbsmastername=(split(/\s+/,$masterlist))[0];
-    $pbsmastername and $contents .= '$pbsmastername ' . $pbsmastername . "\n";
-  }
-
-  # create the line(s) with the $restricted directives from the master list
-  foreach ( split(/\s+/,$restrictedlist) ) { 
-    $contents .= '$restricted ' . $_ . "\n";
-  }
-
-  # create the line(s) with the $usecp direcxties from path hash
-  foreach ( keys %usecp ) { 
-    $contents .= '$usecp ' . $_ . " " . $usecp{$_} . "\n";
-  }
-
-  # Define other resources
-  foreach ( keys %resources ) { 
-    $self->info("Additional resource '" . $_ . "' defined");
-    my $resource_string = $_;
-    if ( defined($resources{$_}) && length($resources{$_}) ) {
-      $resource_string .= " " . $resources{$_};
+    # the masterlist will fill the $clienthost directive
+    # create the line(s) with the $clienthost directives from the master list
+    my $pbsclienthostname='clienthost';
+    if ( $cfgtree->{behaviour} eq "Torque3" ) {
+         $pbsclienthostname='pbsserver';
     }
-    $contents .= $resource_string . "\n";
-  }
-
-
-  #
-  # Update Torque client configuration file if needed
-  #
+    if ($cfgtree->{masters} && @{$cfgtree->{masters}}[0]){
+        foreach ( @{$cfgtree->{masters}} ) {
+            $contents.='$' . $pbsclienthostname . ' '.$_."\n";
+        };
+    } else {
+        $self->error("Empty master list");
+        return;
+    }
   
-  my $result = LC::Check::file( $pbsmomconf,
-                                backup => ".old",
-                                contents => $contents,
-                                owner => "root",
-                                group => "root",
-                                mode  => 0640,
-                              );
-  if ( $result ) {
-    $self->log("$pbsmomconf updated");
-    $changes += $result;
-  }
+
+    foreach ( @{$cfgtree->{aliases}} ) { 
+        $contents.='$alias_server_name '.$_."\n";
+    }
+
+    foreach ( @{$cfgtree->{pbsclient}} ) { 
+        $contents.='$pbsclient '.$_."\n";
+    }
+
+    foreach ( @{$cfgtree->{varattr}} ) { 
+        $contents.='$varattr '.$_."\n";
+    }
+
+    # create the line(s) with the $restricted directives from the master list
+    foreach ( @{$cfgtree->{restricted}} ) { 
+        $contents .= '$restricted ' . $_ . "\n";
+    }
+
+    # additional resources (those without a $) that end up in the config
+    my %resources;
+    foreach my $resource (@{$cfgtree->{resources}}) {
+        my ($a,$v)=split(/:/,$resource,2);
+        $resources{$a}=$v;
+    }
+
+    # add cpuinfo if defined by user :
+    # users can define a list of properties they want to be included?
+    # example elements are : "cpu count","model name","cpu MHz","cpu family","model","stepping"...
+    if(exists($cfgtree->{cpuinfo})) {
+        $self->info("Additional CPUINFO elements exist, adding them as resources to mom config");
+        
+        my %tmphash=cpuinfo_hash();
+        my %tmphash2;
+        for my $elem (@{$cfgtree->{cpuinfo}}) {
+            if(defined $tmphash{$elem}) {
+                my $prop = $elem;
+                #have things more readable
+                $prop =~ s/^(model |cpu |)//;
+                $prop =~ tr/ /_/;
+                #prefix a "cpu_" for all properties except ncpus and ncores
+                $prop="cpu_" . $prop unless( $prop =~ m/(^ncores)/) ;
+                #$tmphash2{$elem}=$tmphash{$elem}
+                $tmphash2{$prop}=$tmphash{$elem};
+            }
+        }      
+        # add cpuinfo to resources
+        %resources = (%resources, %tmphash2);
+    };
+
+    # Define other resources
+    foreach ( keys %resources ) { 
+        $self->info("Additional resource '" . $_ . "' defined");
+        my $resource_string = $_;
+        if ( defined($resources{$_}) && length($resources{$_}) ) {
+            $resource_string .= " " . $resources{$_};
+        }
+        $contents .= $resource_string . "\n";
+    }
 
 
-  #
-  # Update server_name file
-  #
-  
-  my $srvfile="$pbsdir/server_name";
-  -e "$srvfile" or ( open SNM,">$srvfile" and close SNM );
-  -f "$srvfile" or $self->Error("$srvfile exists but is not a file");
 
-  my $master=(split(/\s+/,$masterlist))[0];
-  if ( $master ) { 
-    my $result = LC::Check::file( $srvfile,
+    # additional usecp directives
+    foreach my $dp ( @{$cfgtree->{directPaths}} ) {
+        my $locations = $dp->{locations};
+        my $path = $dp->{path};
+        $self->debug(1,"Adding direct path \$usecp $locations $path");
+        $contents .= '$usecp ' . $locations . " " . $path . "\n";
+    }
+    
+    ## bulk of all options
+    ## regular style
+    sub makestring {
+        my $arg=shift;
+        my $tmp = $cfgtree->{$arg};
+        my $res;
+        if ( ref($tmp) eq "ARRAY" ) {
+            $res=join(',',@{$tmp});
+        } else {
+            $res=$tmp;
+        }
+        return $res;
+    }
+    foreach ( PBSINITIALISATIONVALUES ) {
+        $contents .= '$'.$_ . ' ' . makestring($_) . "\n" if ($cfgtree->{$_});
+    }
+    ## camelcase with mapping
+    while ( my ($schemaname, $cfgentry) = each %{&PBSINITIALISATIONVALUESMAP} ) {
+        ## regular style is preferred in case of mixing (but silently)
+        $contents .= '$'.$cfgentry . ' ' . makestring($schemaname) . "\n" if ($cfgtree->{$schemaname} && (! $cfgtree->{$cfgentry}));
+    }
+    
+    ## options don't start with $
+    foreach ( PBSCLIENTOPTIONS ) {
+        $contents .= $_ . ' ' . makestring($_) . "\n" if ($cfgtree->{$_});
+    }
+
+
+    ## behaviour OpenPBS default pushed to schema
+    ## This Torque behaviour is from very early Torque version. OpenPBS is best left as default.
+    if ( $cfgtree->{behaviour} eq "Torque" ) { 
+        # add a $pbsservername line
+        # assume first master is the real one
+        $contents .= '$pbsmastername ' . @{$cfgtree->{masters}}[0] . "\n";
+    }
+
+    #
+    # Update Torque client configuration file if needed
+    #
+    LC::Check::directory("$pbsmomdir");
+    
+    ## Is this still needed? LC::Check::file probably already does this?
+    -e "$pbsmomconf" or ( open PBSMOMCONFFH,">$pbsmomconf" and close PBSMOMCONFFH );
+    -f "$pbsmomconf" or $self->Error("$pbsmomconf exists but is not a file");
+
+    my $result = LC::Check::file( $pbsmomconf,
                                   backup => ".old",
-                                  contents => $master,
+                                  contents => $contents,
                                   owner => "root",
                                   group => "root",
-                                  mode  => 0644,
+                                  mode  => 0640,
                                 );
     if ( $result ) {
-      $self->log("$srvfile updated");
-      $changes += $result;
+        $self->log("$pbsmomconf updated");
+        $changes += $result;
     }
-  }
 
 
-  # Ensure that the tmpdir exists if it is specified.
-  # For torque 2+, this directory must have group write privilege.
-  #
-  # Bug 28585: 
-  # Do NOT set the absolute permissions because that may affect other permissions
-  # Just ensure that the group can write to $tmpdir
-  if ( defined($tmpdir) ) {
-    # Bug 37119: The group writable bit is suppressed by the default umask
-    #            So always check that the group writable bit is set and
-    #            toggle it if that is not the case
-    if ( ! -e $tmpdir ) {
-      mkpath("$tmpdir",0,01775);
+    #
+    # Update server_name file
+    #
+  
+    my $srvfile="$pbsdir/server_name";
+
+    ## Is this still needed? LC::Check::file probably already does this?
+    -e "$srvfile" or ( open SNM,">$srvfile" and close SNM );
+    -f "$srvfile" or $self->Error("$srvfile exists but is not a file");
+
+    ## @{$cfgtree->{masters}}[0] checked above
+    $result = LC::Check::file( $srvfile,
+                               backup => ".old",
+                               contents => @{$cfgtree->{masters}}[0],
+                               owner => "root",
+                               group => "root",
+                               mode  => 0644,
+                             );
+    if ( $result ) {
+        $self->log("$srvfile updated");
+        $changes += $result;
     }
-    my $mode = (stat $tmpdir)[2];
-    if ( ! ($mode & S_IWGRP) ) {
-        $mode |= S_IWGRP;
-        $self->info("Setting permissions on TMPDIR $tmpdir to " .
+
+
+    # Ensure that the tmpdir exists if it is specified.
+    # For torque 2+, this directory must have group write privilege.
+    #
+    # Bug 28585: 
+    # Do NOT set the absolute permissions because that may affect other permissions
+    # Just ensure that the group can write to $tmpdir
+    if ( $cfgtree->{tmpdir} ) {
+        my $tmpdir=$cfgtree->{tmpdir};
+        # Bug 37119: The group writable bit is suppressed by the default umask
+        #            So always check that the group writable bit is set and
+        #            toggle it if that is not the case
+        if ( ! -e $tmpdir ) {
+            mkpath("$tmpdir",0,01775);
+        }
+        my $mode = (stat $tmpdir)[2];
+        if ( ! ($mode & S_IWGRP) ) {
+            $mode |= S_IWGRP;
+            $self->info("Setting permissions on TMPDIR $tmpdir to " .
                      sprintf("%04o", $mode & 07777));
-        chmod ($mode, $tmpdir);
+            chmod ($mode, $tmpdir);
+        }
     }
-  }
 
-  # Install (or remove) the various epilogue and prologue scripts.
-  # No need to mark changes because pbs picks up the scripts
-  # dynamically.
-  my %scriptperms = ("prologue" => 0700,
-             "epilogue" => 0700,
-             "prologue.user" => 0755,
-             "epilogue.user" => 0755,
-             "prologue.parallel" => 0700);
-
-  foreach my $script (keys %scriptperms) {
-    my $panpath = '/software/components/pbsclient/scripts/'.$script;
-    my $fullpath = "$pbsmomdir/$script";
-    if ($config->elementExists($panpath)) {
-      my $contents = $config->getValue($panpath);
-      my $result = LC::Check::file( $fullpath,
-                                    backup => ".old",
-                                    contents => $contents,
-                                    owner => "root",
-                                    group => "root",
-                                    mode  => $scriptperms{$script},
-                                  );
-      if ( $result ) {
-        $self->log("$fullpath updated");
-      }
+    # Install (or remove) the various epilogue and prologue scripts.
+    # No need to mark changes because pbs picks up the scripts
+    # dynamically.
+    while ( my ($script, $scriptcontents) = each %{$cfgtree->{scripts}} ) {
+        my $fullpath = "$pbsmomdir/$script";
+        my $result = LC::Check::file($fullpath,
+                                     backup => ".old",
+                                     contents => $scriptcontents,
+                                     owner => "root",
+                                     group => "root",
+                                     mode  => SCRIPTPERMS->{$script},
+                                    );
+        if ( $result ) {
+            $self->log("$fullpath updated");
+        }
     }
-  }
 
-  # restart PBS if it is already running AND the config changed
-  if ($changes) {
-    system("$pbsinitscript status > /dev/null && $pbsinitscript restart")
-  };
+    # restart PBS if it is already running AND the config changed
+    if ($changes) {
+        my $output = CAF::Process->new([$pbsinitscript, "status"], log => $self)->output();
+        if ($?) {
+            $self->info("Not running (from $pbsinitscript status)");
+        } else {
+            $self->info("Running, will attempt restart (from $pbsinitscript status)");
+            $output = CAF::Process->new([$pbsinitscript, "restart"], log => $self)->output();
+            if ($?) {
+                $self->info("Restart failed (output from $pbsinitscript restart: $output)");
+            } else {
+                $self->info("Restarted (from $pbsinitscript restart)");
+            }            
+        }
+    };
 
-  return;
+    return;
 }
 
 
@@ -449,10 +365,8 @@ sub Unconfigure {
 ##########################################################################
   my ($self,$config)=@_;
 
-  $self->info("Unconfiguring PBS");
+  $self->info("Unconfiguring PBS. Nothing implemented.");
   
-  &initpaths($config);
-
   return;
 }
 
@@ -460,61 +374,64 @@ sub Unconfigure {
 # returns a hash with cpuinfo
 sub cpuinfo_hash {
 ##########################################################################
-  my %localres;
-  my %cpuinfo;
-  #
-  #assume processor number is the first information in cpuinfo
-  #if a newline is found, increase the processor number
-  #(processors are separated with newlines)
+    my %localres;
+    my %cpuinfo;
+    #
+    #assume processor number is the first information in cpuinfo
+    #if a newline is found, increase the processor number
+    #(processors are separated with newlines)
   
-  # Opening the file /proc/cpuinfo for input...
-  my $processor=0;
-  open (CPUINFO, "</proc/cpuinfo") || die "Can't open file \/proc\/cpuinfo!! : $!\n";
-  while (<CPUINFO>) {
-      chomp;                  #removing newline
-      my $linetest =$_;          #checking if the line contains a :
-      if ($linetest=~ m/^$/) {
-          $processor+=1;
-      }
-      if ($linetest=~ m/:/) {
-          my ($key, $value) = split /\s*:\s*/; #if so, split the line in 2
-          $cpuinfo{$processor}{$key} = $value;        #and put the keys & and values in a hash
-      }
-  }
+    # Opening the file /proc/cpuinfo for input...
+    my $processor=0;
+    open (CPUINFO, "</proc/cpuinfo") || die "Can't open file \/proc\/cpuinfo!! : $!\n";
+    while (<CPUINFO>) {
+        chomp;                  #removing newline
+        my $linetest =$_;          #checking if the line contains a :
+        if ($linetest=~ m/^$/) {
+            $processor+=1;
+        }
+        if ($linetest=~ m/:/) {
+            my ($key, $value) = split /\s*:\s*/; #if so, split the line in 2
+            $cpuinfo{$processor}{$key} = $value;        #and put the keys & and values in a hash
+        }
+    }
 
-  # close the filehandle since it is no longer needed.
-  close (CPUINFO);
+    # close the filehandle since it is no longer needed.
+    close (CPUINFO);
 
-  my %cpus=(0,"");
-  for (keys %cpuinfo) {
-      #print "$_\n";
-      my $processor = 0;
-      $processor = $cpuinfo{$_}{"processor"} if exists $cpuinfo{$_}{"processor"};
-      if(exists($cpuinfo{$_}{"physical id"})) { $cpus{$cpuinfo{$_}{"physical id"}}=$processor ; }
-      else  {$cpus{$processor}=$processor ; }
-  }
-  my @cpulist=sort keys %cpus;
+    my %cpus=(0,"");
+    for (keys %cpuinfo) {
+        #print "$_\n";
+        my $processor = 0;
+        $processor = $cpuinfo{$_}{"processor"} if exists $cpuinfo{$_}{"processor"};
+        if(exists($cpuinfo{$_}{"physical id"})) { 
+            $cpus{$cpuinfo{$_}{"physical id"}}=$processor ; 
+        } else  {
+            $cpus{$processor}=$processor ; 
+        }
+    }
+    my @cpulist=sort keys %cpus;
 
-  # define a resource for the number of CPUs
-  my $ncpus= $cpulist[$#cpulist] +1;
-  #print "ncpus $ncpus" ;
-  $localres{"cpu count"}=$ncpus;
+    # define a resource for the number of CPUs
+    my $ncpus= $cpulist[$#cpulist] +1;
+    #print "ncpus $ncpus" ;
+    $localres{"cpu count"}=$ncpus;
 
-  # define a resource for the number of CPU cores
-  my $ncores = scalar keys %cpuinfo;
-  #print "\nncores $ncores\n";
-  $localres{"ncores"}=$ncores;
+    # define a resource for the number of CPU cores
+    my $ncores = scalar keys %cpuinfo;
+    #print "\nncores $ncores\n";
+    $localres{"ncores"}=$ncores;
 
 
-  # define several localres related to the 1st CPU
-  # We're assuming all CPUs are the SAME (does anybody mix CPUs in a cluster node ?) !
-  # If the pbs client has different cpus, then... too bad.
-  # 
-  for my $property (keys %{$cpuinfo{0}}) {
-      $localres{$property}=$cpuinfo{0}{$property}
-  }
+    # define several localres related to the 1st CPU
+    # We're assuming all CPUs are the SAME (does anybody mix CPUs in a cluster node ?) !
+    # If the pbs client has different cpus, then... too bad.
+    # 
+    for my $property (keys %{$cpuinfo{0}}) {
+        $localres{$property}=$cpuinfo{0}{$property}
+    }
 
-  return %localres
-  }
+    return %localres
+}
 
 1; #required for Perl modules
