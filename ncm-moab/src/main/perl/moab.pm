@@ -57,6 +57,8 @@ use constant MAINOPTS => qw (
     jobprioaccrualpolicy
     resourcelimitpolicy
     preemptpolicy
+    maxjob
+    
 );
 
 use constant PRIORITYOPTS => qw (
@@ -133,7 +135,7 @@ sub Configure($$@) {
         $contents .= uc($opt)."\t".%$re->{$opt}."\n" if exists(%$re->{$opt});
     }
     foreach my $opt (keys(%$re)) {
-        $self->warning("Unknown opt $opt in MAIN") if (! (grep {$_ eq $opt} MAINOPTS));
+        $self->warn("Unknown opt $opt in MAIN") if (! (grep {$_ eq $opt} MAINOPTS));
     }
     $contents .= "\n";
     
@@ -144,7 +146,7 @@ sub Configure($$@) {
         $contents .= uc($opt)."\t".%$re->{$opt}."\n" if exists(%$re->{$opt});
     }
     foreach my $opt (keys(%$re)) {
-        $self->warning("Unknown opt $opt in PRIORITY") if (! (grep {$_ eq $opt} PRIORITYOPTS));
+        $self->warn("Unknown opt $opt in PRIORITY") if (! (grep {$_ eq $opt} PRIORITYOPTS));
     }
     $contents .= "\n";
         
