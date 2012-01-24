@@ -173,6 +173,10 @@ type structure_yaim_conf = extensible {
     "GLITE_LB_RTM_ENABLED"              ? string
     "GLITE_LB_RTM_DN"                   ? string
     "GRIDFTP_CONNECTIONS_MAX"           ? long
+
+    "USE_ARGUS"                         ? string
+    "ARGUS_PEPD_ENDPOINTS"              ? string
+    "CREAM_PEPC_RESOURCEID"             ? string                 
 };
 
 type structure_yaim_close_se = {
