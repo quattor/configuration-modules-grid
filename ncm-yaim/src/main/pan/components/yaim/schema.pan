@@ -219,6 +219,21 @@ type structure_yaim_fts = {
     "DB_SQLPLUS_CONNECTSTRING"          ? string
     "DB_USER"                           ? string
     "DB_PASSWORD"                       ? string
+    "MSG_ACTIVE"                        ? string
+    "MSG_BROKER"                        ? string
+    "MSG_COMPLETE"                      ? string
+    "MSG_START"                         ? string
+    "MSG_CRON"                          ? string
+    "MSG_ENABLELOG"                     ? string
+    "MSG_ENABLEMSGLOG"                  ? string
+    "MSG_PASSWORD"                      ? string
+    "MSG_TOPIC"                         ? string
+    "MSG_TTL"                           ? string
+    "MSG_USERNAME"                      ? string
+    "MSG_FQDN"                          ? string
+    "MSG_LOGFILEDIR"                    ? string
+    "MSG_LOGFILENAME"                   ? string
+    "MSG_USE_BROKER_CREDENTIALS"        ? string
 };
 
 type structure_yaim_vomsadmin = {
@@ -287,6 +302,7 @@ type structure_yaim_scas = {
 type structure_yaim_glexec = {
     "GLEXEC_WN_OPMODE"                  ? string
     "GLEXEC_WN_SCAS_ENABLED"            ? string
+    "GLEXEC_WN_ARGUS_ENABLED"           ? string
     "GLEXEC_WN_LCASLCMAPS_LOG"          ? string
     "GLEXEC_WN_LCAS_DEBUG_LEVEL"        ? long
     "GLEXEC_WN_LCAS_DIR"                ? string
