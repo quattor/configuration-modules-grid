@@ -58,8 +58,6 @@ use constant CLIENT_CONFIG_STR => qw(
     log4perl.appender.Screen.Threshold
     log4perl.logger.Message
     log4perl.appender.Log
-    log4perl.appender.Log
-    log4perl.appender.Log.filename
     log4perl.appender.Log.filename
     log4perl.appender.Log.mode
     log4perl.appender.Log.layout
@@ -68,6 +66,37 @@ use constant CLIENT_CONFIG_STR => qw(
     log4perl.appender.Screen.layout
     log4perl.appender.Screen.layout.ConversionPattern
 );
+
+
+use constant CGICLIENT_CONFIG_INT => qw(
+    server.port
+    response.chunksize
+    currency.precision
+    log4perl.appender.Log.size
+    log4perl.appender.Log.max
+);
+
+use constant CGICLIENT_CONFIG_STR => qw(
+    server.host
+    server.backup
+    security.authentication
+    security.encryption
+    security.token.type
+    response.chunking
+    log4perl.logger
+    log4perl.appender.Log.Threshold
+    log4perl.appender.Screen.Threshold
+    log4perl.logger.Message
+    log4perl.appender.Log
+    log4perl.appender.Log.filename
+    log4perl.appender.Log.mode
+    log4perl.appender.Log.layout
+    log4perl.appender.Log.layout.ConversionPattern
+    log4perl.appender.Screen
+    log4perl.appender.Screen.layout
+    log4perl.appender.Screen.layout.ConversionPattern
+);
+
 
 use constant SERVER_CONFIG_INT => qw(
     server.port
@@ -98,7 +127,6 @@ use constant SERVER_CONFIG_STR => qw(
     log4perl.appender.Screen.Threshold
     log4perl.logger.Message
     log4perl.appender.Log
-    log4perl.appender.Log
     log4perl.appender.Log.filename
     log4perl.appender.Log.mode
     log4perl.appender.Log.layout
@@ -120,7 +148,7 @@ sub Configure($$@) {
     my $base = "/software/components/gold";
 
     our $tree;
-    my $contents;
+    my ($contents,$result,$fname);
     my @alloptions;
 
     ## default config path
@@ -129,20 +157,24 @@ sub Configure($$@) {
         $cpath = $config->getValue("$base/configPath");
     }
 
-    mkpath($cpath, 0, 0755) unless (-e $mpath);
+    mkpath($cpath, 0, 0755) unless (-e $cpath);
     if (! -d $cpath) {
-        $self->Fail("Can't create directory: $mpath");
+        $self->Fail("Can't create directory: $cpath");
         return 1;
     }
 
     ##
     ## start with auth_key file
     ## -r--r-----. 1 root apache   xxx auth_key
-    my $fname = "$cpath/auth_key";
+    $fname = "$cpath/auth_key";
+    if ($config->elementExists("$base/auth_key")) {
+	$contents = $config->getElement($base."/auth_key")->getValue();
+    } else {
+        $self->Fail("mandatory auth_key missing");
+        return 1;
+    }
 
-    $contents = $config->getElement($base."/auth_key");
-
-    my $result = LC::Check::file( $fname,
+    $result = LC::Check::file( $fname,
                                   contents => encode_utf8($contents),
                                   owner       => 'root',
                                   group       => 'apache',
@@ -176,20 +208,57 @@ sub Configure($$@) {
     $contents.=get_cfg("string",CLIENT_CONFIG_INT);    
     $contents.=get_cfg("string",CLIENT_CONFIG_STR);    
 
-    my $result = LC::Check::file( $fname,
+    $result = LC::Check::file( $fname,
                                   contents => encode_utf8($contents),
                                   owner       => 'root',
                                   group       => 'root',
                                   mode        => 0644,
                                 );
     if ($result) {
-        $self->log("$fname updated");
+        $self->info("$fname updated");
     } else {
         if (!defined($result)) {
             $self->error("$fname update failed");
             return 1;
         }
     }
+
+
+    ## 
+    ## cgiclient config
+    ## -rw-r--r--. 1 root root xxx goldg.conf
+    ##    
+    if ($config->elementExists("$base/cgiclient")) {
+	$fname = "$cpath/goldg.conf";
+
+	$tree = $config->getElement($base."/cgiclient")->getTree();
+	$contents = '';
+
+	@alloptions=();
+	push(@alloptions,CGICLIENT_CONFIG_INT,CGICLIENT_CONFIG_STR);
+	foreach my $opt (keys(%$tree)) {
+	    $self->warn("Unknown cgiclient opt $opt in tree") if (! (grep {$_ eq $opt} @alloptions ));
+	}
+
+	$contents.=get_cfg("string",CGICLIENT_CONFIG_INT);    
+	$contents.=get_cfg("string",CGICLIENT_CONFIG_STR);    
+
+	$result = LC::Check::file( $fname,
+                                  contents => encode_utf8($contents),
+                                  owner       => 'root',
+                                  group       => 'root',
+                                  mode        => 0644,
+                                );
+	if ($result) {
+	    $self->info("$fname updated");
+	} else {
+	    if (!defined($result)) {
+		$self->error("$fname update failed");
+		return 1;
+	    }
+	}
+    }
+    
 
 
     ## 
@@ -212,14 +281,15 @@ sub Configure($$@) {
         $contents.=get_cfg("string",SERVER_CONFIG_STR);    
 
     
-        my $result = LC::Check::file( $fname,
+        $result = LC::Check::file( $fname,
                                       contents => encode_utf8($contents),
                                       owner       => 'root',
                                       group       => 'root',
                                       mode        => 0600,
                                     );
+	
         if ($result) {
-            $self->log("$fname updated. restarting service");
+            $self->info("$fname updated. restarting service");
             restartgold();
         } else {
             if (!defined($result)) {
@@ -274,10 +344,10 @@ sub get_cfg {
         } elsif ($mod eq "quoted") {
             $ans = "'$val'";
         } else {
-            $self->error("create_postgresql_mainconfig get_cfg: Unknown mode $mod");
+            $self->error("get_cfg: Unknown mode $mod");
         }; 
 
-        $c .= "$opt=".$ans."\n";
+        $c .= "$opt = ".$ans."\n";
     }
     $c .= "\n";
     
