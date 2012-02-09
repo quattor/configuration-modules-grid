@@ -28,6 +28,9 @@ use CAF::Process;
 
 use File::Basename;
 
+
+my $force_uppercase_variable_names;
+
 #
 # run a given command and recover stdout and stderr.
 #
@@ -273,6 +276,20 @@ sub vo_for_env($) {
 }
 
 
+#
+# Convert the text to a variable name; that is either force uppercase, or leave as is
+# 
+# This is yet another ugly hack that is needed since 
+# someone introduced mixed case Yaim variables in glite-CLUSTER
+#
+#
+sub make_variable($) {
+    if ( $force_uppercase_variable_names ) {
+        return( uc( $_[0] ) );
+    }
+    return $_[0];
+}
+
 
 #
 # getQueueConfig:   Configure the Yaim variables that are related to queues,
@@ -349,7 +366,7 @@ sub getQueueConfig {
     if ( scalar %queues ) {
         $cfg .="QUEUES=\"".join(' ', keys %queues)."\"\n";
         foreach my $qvar ( sort keys %queues ) {
-            my $varname = uc($qvar)."_GROUP_ENABLE";
+            my $varname = &make_variable($qvar)."_GROUP_ENABLE";
             $cfg .= "${varname}=\"".$queues{$qvar}."\"\n";
         }
     }
@@ -375,7 +392,7 @@ sub get_section_config {
         foreach my $key (sort keys %{$section_tree}) {
             my $value = $section_tree->{$key};
             next if ( ref $value eq "HASH" || ref $value eq "ARRAY" );
-            $cfg .= uc($prefix.$key) . "=\"$value\"\n";
+            $cfg .= &make_variable($prefix.$key) . "=\"$value\"\n";
         }
     }
 
@@ -504,7 +521,7 @@ sub get_bdii_regions_config {
             if ($region =~ /-/){
                 $self->error("Character \"-\" not allowed in the region tag \"$region\". Yaim will break");
             }
-            my $region_tag = "BDII_". uc($region)."_URL";
+            my $region_tag = "BDII_". &make_variable($region)."_URL";
             $self->verbose("Region tag \"$region_tag\"\n");
 
             if ( exists $cfgtree->{'conf'}->{$region_tag} ) {
@@ -541,7 +558,7 @@ sub get_close_se_config {
                                              '', "CE_CLOSE_${se}_", undef);
             push (@se_hosts, $cfgtree->{'CE'}->{'closeSE'}->{$se}->{'HOST'});
         }
-        $cfgstr .= 'CE_CLOSE_SE="'.uc(join (' ',@ses)) ."\"\n";
+        $cfgstr .= 'CE_CLOSE_SE="'.&make_variable(join (' ',@ses)) ."\"\n";
         $cfgstr .= 'SE_LIST="'.join (' ',@se_hosts) ."\"\n";
         $cfgstr .= $se_cfg;
     }
@@ -724,6 +741,9 @@ sub Configure($$@) {
 
     # yaim directory
     my $yaimhome = $cfgtree->{'conf'}->{'YAIM_HOME'} || '/opt/glite/yaim';
+
+    # force uppercase variables or not?
+    $force_uppercase_variable_names = $cfgtree->{'force_uppercase_variables'} || 0;
 
     #
     # determine the available node types based on the information under node-info.d

@@ -394,6 +394,8 @@ type ${project.artifactId}_component = {
     "SITE_INFO_DEF_FILE"                ? string
     "USE_VO_D"                          ? boolean # store VO config in file per VO under vo.d (default no)
     "VOs"                               ? string[]
+
+    "force_uppercase_variables"         : boolean = true    # for backward compatibility
 };
 
 bind "/software/components/yaim" = ${project.artifactId}_component;
