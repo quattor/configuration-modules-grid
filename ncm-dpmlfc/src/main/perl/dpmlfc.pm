@@ -382,6 +382,7 @@ my %nameserver_role = (
 # Define roles needing access to database
 my %db_roles = (
     "DPM" => "dpm,dpns",
+    "LFC" => "lfc",
          );
 
 # Gives Db name associate with one role and script to use to create 
@@ -1589,21 +1590,6 @@ sub initDb () {
   $self->setGlobalOption("dbserver",$db_server);
 
 
-  my $db_admin_pwd = $self->getDbOption("adminpwd");
-  my $db_admin_user;
-  if ( $db_admin_pwd ) {
-    $self->setGlobalOption("dbadminpwd",$db_admin_pwd);
-    $db_admin_user = $self->getDbOption("adminuser");
-    unless ( $db_admin_user ) {
-      $db_admin_user = "root";
-      $self->debug(1,"$function_name: DB admin user set to default ($db_admin_user)");
-    }
-    $self->setGlobalOption("dbadminuser",$db_admin_user);
-  } else {
-    $do_db_config = 0;
-    $self->warn("DB admin password not defined. Skipping database configuration for $product");
-  }
-
   # info_user is the MySQL user used by GIP to collect DPM statistics.
   # Configure only if GIP is configured on the machine.
   my $gip_user;
@@ -1633,57 +1619,76 @@ sub initDb () {
   } else {
     $self->debug(1,"GIP no configured on this node. Skipping $product DB configuration for GIP.");
   }
-  
-  my $db_config_done = 1;    # Assume failure
-  my $db_init_script;
-  if ( $db_type eq "mysql" ) {
-      $db_init_script = $mysql_init_scripts{$product};
-    MYSQL : {
-      if ( $do_db_config ) {
-  if ( $self->mysqlCheckAdminPwd() ) {
-    $self->error("Unable to use database administrator ($db_admin_user) password. Database configuration skipped");
-    $db_config_done = 0;
-    last MYSQL;
-  }
-  if ( $self->mysqlAddUser() ) {
-    $self->error("Failure to add database user $db_user for $product. Database configuration skipped");
-    $db_config_done = 0;
-    last MYSQL;
-  }
 
-  if ( $db_info_user ) {
-    if ( $self->mysqlAddUser($db_info_user,$db_info_pwd,'select',1) ) {
-      $self->error("Failure to add database user $db_info_user for $product. Database configuration skipped");
-      $db_config_done = 0;
-      last MYSQL;
-    }
-  }
-  
-  my $product_db_roles = $db_roles{$product};
-  my @product_db_roles = split /\s*,\s*/, $product_db_roles;
-  for my $role (@product_db_roles) {
-    my $database = $db_roles_dbs{$role};
-    next unless $database;
-    my $db_creation_script = $mysql_db_scripts{$role};
-    unless ( $database ) {
-      $self->debug(1,"$function_name: No script to create database $database for $product. Database configuration skipped");
-      $db_config_done = 0;
-      last MYSQL;
-    }
-    $self->mysqlAddDb($database,$db_creation_script);
-  }
-      } else {
-  $db_config_done = 0;
+  # Enable MySQL configuration only for the DPM product
+  if ( $product eq "DPM" ) {  
+    my $db_admin_pwd = $self->getDbOption("adminpwd");
+    my $db_admin_user;
+    if ( $db_admin_pwd ) {
+      $self->setGlobalOption("dbadminpwd",$db_admin_pwd);
+      $db_admin_user = $self->getDbOption("adminuser");
+      unless ( $db_admin_user ) {
+        $db_admin_user = "root";
+        $self->debug(1,"$function_name: DB admin user set to default ($db_admin_user)");
       }
+      $self->setGlobalOption("dbadminuser",$db_admin_user);
+    } else {
+      $do_db_config = 0;
+      $self->warn("DB admin password not defined. Skipping database configuration for $product");
     }
-  } elsif ( $db_type eq "oracle" ) {
-      $db_config_done = 0;
-      $db_init_script = $oracle_init_scripts{$product};
-  } else {
-    $self->error("DB type '$db_type' not supported. Configure manually");
-  }
-  unless ( $db_config_done ) {
+    my $db_config_done = 1;    # Assume failure
+    my $db_init_script;
+    if ( $db_type eq "mysql" ) {
+      $db_init_script = $mysql_init_scripts{$product};
+      MYSQL : {
+        if ( $do_db_config ) {
+          if ( $self->mysqlCheckAdminPwd() ) {
+            $self->error("Unable to use database administrator ($db_admin_user) password. Database configuration skipped");
+            $db_config_done = 0;
+            last MYSQL;
+          }
+          if ( $self->mysqlAddUser() ) {
+            $self->error("Failure to add database user $db_user for $product. Database configuration skipped");
+            $db_config_done = 0;
+            last MYSQL;
+          }
+
+          if ( $db_info_user ) {
+            if ( $self->mysqlAddUser($db_info_user,$db_info_pwd,'select',1) ) {
+              $self->error("Failure to add database user $db_info_user for $product. Database configuration skipped");
+              $db_config_done = 0;
+              last MYSQL;
+            }
+          }
+  
+          my $product_db_roles = $db_roles{$product};
+          my @product_db_roles = split /\s*,\s*/, $product_db_roles;
+          for my $role (@product_db_roles) {
+            my $database = $db_roles_dbs{$role};
+            next unless $database;
+            my $db_creation_script = $mysql_db_scripts{$role};
+            unless ( $database ) {
+              $self->debug(1,"$function_name: No script to create database $database for $product. Database configuration skipped");
+              $db_config_done = 0;
+              last MYSQL;
+            }
+            $self->mysqlAddDb($database,$db_creation_script);
+          }
+        } else {
+          $db_config_done = 0;
+        }
+      }
+    } elsif ( $db_type eq "oracle" ) {
+        $db_config_done = 0;
+        $db_init_script = $oracle_init_scripts{$product};
+    } else {
+      $self->error("DB type '$db_type' not supported. Configure manually");
+    }
+    unless ( $db_config_done ) {
     $self->info("$db_type DB configuration must be done manually for $product use ($db_init_script)");
+    }
+  } else {
+    $self->info("MySQL configuration for $product is performed by the ncm-mysql component");
   }
 
   # Update DB connection configuration file for main user if content has changed
