@@ -368,11 +368,9 @@ my %services = (
 # Define DB initialization script for each product (DPM / LFC)
 my %mysql_init_scripts = (
            "DPM" => "/opt/lcg/yaim/functions/config_DPM_mysql",
-           "LFC" => "/opt/lcg/yaim/functions/config_lfc_mysql_server",
           );
 my %oracle_init_scripts = (
            "DPM" => "/opt/lcg/yaim/functions/config_DPM_oracle",
-           "LFC" => "/opt/lcg/yaim/functions/config_lfc_oracle_server",
           );
 
 # Define nameserver role in each product
@@ -384,7 +382,6 @@ my %nameserver_role = (
 # Define roles needing access to database
 my %db_roles = (
     "DPM" => "dpm,dpns",
-    "LFC" => "lfc",
          );
 
 # Gives Db name associate with one role and script to use to create 
@@ -393,13 +390,11 @@ my %db_roles = (
 my %db_roles_dbs = (
       "dpm" => "dpm_db",
       "dpns" => "cns_db",
-      "lfc" => "cns_db",
        );
 
 my %mysql_db_scripts = (
       "dpm" => "/opt/lcg/share/DPM/create_dpm_tables_mysql.sql",
       "dpns" => "/opt/lcg/share/DPM/create_dpns_tables_mysql.sql",
-      "lfc" => "/opt/lcg/share/LFC/create_lfc_tables_mysql.sql",
            );
 
 # Define file where is stored DB connection information
