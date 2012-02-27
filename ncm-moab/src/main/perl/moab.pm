@@ -58,7 +58,10 @@ use constant MAINOPTS => qw (
     resourcelimitpolicy
     preemptpolicy
     maxjob
-    
+    nodeavailabilitypolicy
+    resweight
+    rescap
+    procweight
 );
 
 use constant PRIORITYOPTS => qw (
