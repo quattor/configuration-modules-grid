@@ -121,6 +121,8 @@ type pbs_server_attlist = {
     'tcp_timeout'         ? long(1..) = 8
 
     'checkpoint_dir'    ? string
+
+    'moab_array_compatible' ? boolean
 };
 
 type pbs_server = {
