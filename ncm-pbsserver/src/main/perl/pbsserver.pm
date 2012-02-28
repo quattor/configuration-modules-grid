@@ -21,10 +21,15 @@ use File::Path;
 local(*DTA);
 
 
-##########################################################################
-sub Configure($$@) {
-##########################################################################
-    
+use constant FILTERED_KEYS => {
+			       status => 1,
+			       jobs => 1,
+			       mom_manager_port => 1,
+			       mom_service_port => 1,
+};
+
+sub Configure
+{
     my ($self, $config) = @_;
 
     # Define paths for convenience and retrieve configuration 
@@ -285,12 +290,11 @@ sub Configure($$@) {
           # Start of a section with node name.
           $lastnode = $1;
           $existingnodes{$lastnode} = {};
-    
         } elsif (m/^\s*(\w+)\s*=\s*(.*)/) {  
           # This is an attribute.  Attach it to last node.
           my $name = $1;
           my $value = $2;
-          if ($lastnode and not (($name eq "status") ||($name eq "jobs"))) {
+          if ($lastnode && !exists(FILTERED_KEYS->{$name})) {
             my $href = $existingnodes{$lastnode};
             $href->{$name} = $value;
           }
