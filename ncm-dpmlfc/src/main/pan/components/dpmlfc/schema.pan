@@ -139,16 +139,11 @@ type ${project.artifactId}_component_xroot_options = {
 };
 
 type ${project.artifactId}_component_db_conn_options = {
-        "type"          ? string
         "configfile"    ? string
         "configmode"    ? string = '600'
         "server"        ? string
         "user"          : string = "dpmmgr"
         "password"      : string
-#        "oldpassword"   ? string  # to be used when changing password
-        "adminuser"     : string
-        "adminpwd"      : string
-#        "oldadminpwd"   ? string  # to be used when changing password
         "infoFile"      ? string
         "infoUser"      ? string
         "infoPwd"       ? string

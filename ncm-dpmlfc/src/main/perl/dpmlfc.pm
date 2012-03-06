@@ -365,14 +365,6 @@ my %services = (
          );
 
 
-# Define DB initialization script for each product (DPM / LFC)
-my %mysql_init_scripts = (
-           "DPM" => "/opt/lcg/yaim/functions/config_DPM_mysql",
-          );
-my %oracle_init_scripts = (
-           "DPM" => "/opt/lcg/yaim/functions/config_DPM_oracle",
-          );
-
 # Define nameserver role in each product
 my %nameserver_role = (
                        "DPM", "dpns",
@@ -385,18 +377,6 @@ my %db_roles = (
     "LFC" => "lfc",
          );
 
-# Gives Db name associate with one role and script to use to create 
-# the database associated with a role, if needed.
-# DPNS and LFC use the same database but not the same script name to create it
-my %db_roles_dbs = (
-      "dpm" => "dpm_db",
-      "dpns" => "cns_db",
-       );
-
-my %mysql_db_scripts = (
-      "dpm" => "/opt/lcg/share/DPM/create_dpm_tables_mysql.sql",
-      "dpns" => "/opt/lcg/share/DPM/create_dpns_tables_mysql.sql",
-           );
 
 # Define file where is stored DB connection information
 my %db_conn_config = (
@@ -409,9 +389,6 @@ my %db_conn_config_mode = (
          );
 
 my %db_servers;
-
-# Define default values for some global options
-my $db_type_def = "mysql";
 
 my %users_def = (
         "DPM" => "dpmmgr",
@@ -598,7 +575,7 @@ sub Configure($$@) {
     # DB access
     if ( $self->hostHasRoles($db_roles{$product}) ) {
       $self->info("Checking ".$self->getCurrentProduct()." database configuration...");
-      my $status = $self->initDb();
+      my $status = $self->createDbConfigFile();
       # Negative status means success with changes requiring services restart
       if ( $status < 0 ) {
         for my $role_to_restart ($db_roles{$product}) {
@@ -1320,225 +1297,16 @@ sub getDbAdminServer () {
 }
 
 
-# Function to execute silently a mysql command. Host, user and password are retrived
-# from context global variables. stdout and stderr are redirected to /dev/null
-# Returns status code from the command (0 if success)
-#
-# Arguments :
-#  command : mysql command to execute (anything without connexion information)
-sub mysqlExecCmd () {
-  my $function_name = "mysqlExecCmd";
-  my $self = shift;
-
-  my $command = shift;
-  unless ( $command ) {
-    $self->error("$function_name: 'command' argument missing");
-    return 0;
-  }
-
-  my $db_admin_user = $self->getGlobalOption("dbadminuser");
-  my $db_admin_pwd = $self->getGlobalOption("dbadminpwd");
-  my $db_admin_server = $self->getDbAdminServer();
-
-  $self->debug(2,"$function_name: executing MySQL command '$command' on $db_admin_server (user:$db_admin_user, pwd:$db_admin_pwd)");
-
-  my @cmd_array = ("mysql", "-h", $db_admin_server,
-                            "-u", $db_admin_user,
-                            "--password=$db_admin_pwd",
-                            "--exec", $command);
-  my $errormsg = CAF::Process->new(\@cmd_array,log=>$self)->output();
-  my $status = $?;
-  if ( $? ) {
-    $self->debug(2,"MySQL command error: $errormsg");
-  }
-
-  return $status
-}
-
-
-# Function to check and if necessary/possible change MySQL administrator password
-# Returns 0 in case of success.
-#
-# User is added for localhost and server indicated in options.
-#
-# Arguments :
-#  none
-sub mysqlCheckAdminPwd() {
-  my $function_name = "mysqlCheckAdminPwd";
-  my $self = shift;
-
-  my $product = $self->getCurrentProduct();
-  my $db_admin_user = $self->getGlobalOption("dbadminuser");
-  my $db_admin_pwd = $self->getGlobalOption("dbadminpwd");
-  my $db_admin_pwd_old = $self->getGlobalOption("dboldadminpwd");
-  my $db_admin_server = $self->getDbAdminServer();
-  my $status = 1;  # Assume failure by default
-
-  $self->debug(1,"$function_name: Checking MySQL administrator on $db_admin_server (user=$db_admin_user, pwd=$db_admin_pwd)");
-
-  # First check if administrator account is working without password (try to use mysql dabase)
-  my $admin_pwd_saved = $db_admin_pwd;
-  $self->setGlobalOption("dbadminpwd", "");
-  $status = $self->mysqlExecCmd("use mysql");
-  $self->setGlobalOption("dbadminpwd", $admin_pwd_saved);
-  
-  if ( $status ) {  # administrator has a password set, try it
-    # First check if administrator password is working (just trying to connect)
-    $status = $self->mysqlExecCmd("source /dev/null");
-  } else {
-    $self->debug(1,"$function_name: MySQL administrator ($db_admin_server) password not set on $db_admin_server");
-    $status = 1;  # Force initialization of password
-  }
-
-  # If it fails, try to change it assuming a password has not yet been set
-  if ( $status ) {
-    $self->debug(1,"$function_name: trying to set administrator password on $db_admin_server");
-    
-#    # if oldpassword is set then try and use it
-#    if ($db_admin_pwd_old) {
-#      $admin_pwd_saved = $db_admin_pwd;
-#   	  $self->setGlobalOption("dbadminpwd", "$db_admin_pwd_old");
-#    }
-    
-    my @cmd_array = ("mysql", "-h", $db_admin_server,
-                              "-u", $db_admin_user,
-                              "--exec", "set password for '$db_admin_user'\@'$db_admin_server' = password('$db_admin_pwd')");
-    my $errormsg = CAF::Process->new(\@cmd_array,log=>$self)->output();
-    $status = $?;
-    if ( $status && ($db_admin_server ne "localhost") ) {
-      $self->warn("Remote database server ($db_admin_server) : check access is allowed with full privileges from $db_admin_user on $this_host_full");
-    }
-#	  $self->setGlobalOption("dbadminpwd", $admin_pwd_saved);
-  } else {
-    $self->debug(1,"$function_name: MySQL administrator password check succeeded");
-  }
-
-  return $status;
-}
-
-
-# Function to add a database user for the product. Usercan be retrieved from options
-# or passed as arguments
-# Returns 0 in case of success (user already exists with the right password
-# or successful creation)
-#
-# Arguments (optional) :
-#     User : DB user to create. Defaults to 'dbuser' global option.
-#     Password : password for the user. Defaults to 'dbpwd' global option.
-#     DB rights : rights to give to the user. Defaults to 'ALL'
-#     Short password hash : true/false. Default : false.
-sub mysqlAddUser() {
-  my $function_name = "mysqlAddUser";
-  my $self = shift;
-
-  my $product = $self->getCurrentProduct();
-  my $db_server = $self->getGlobalOption("dbserver");
-
-  my $db_user;
-  if ( @_ > 0 ) {
-    $db_user = shift;
-  } else {
-    $db_user = $self->getGlobalOption("dbuser");
-  }
-
-  my $db_pwd;
-  if ( @_ > 0 ) {
-    $db_pwd = shift;
-  } else {
-    $db_pwd = $self->getGlobalOption("dbpwd");
-  }
-
-  my $db_rights;
-  if ( @_ > 0 ) {
-    $db_rights = shift;
-  } else {
-    $db_rights = 'ALL';
-  }
-
-  my $short_pwd_hash;
-  if ( @_ > 0 ) {
-    $short_pwd_hash = shift;
-  } else {
-    $short_pwd_hash = 0;
-  }
-
-  my @db_hosts = ($db_server, 'localhost');
-  
-  my $status = 0;
-  for my $host (@db_hosts) {
-    $self->debug(1,"$function_name: Adding MySQL connection account for $product ($db_user on $host)");
-    $status = $self->mysqlExecCmd("grant $db_rights on *.* to '$db_user'\@'$host' identified by '$db_pwd' with grant option");
-    if ( $status ) {
-      # Error already signaled by caller
-      $self->debug(1,"Failed to add MySQL connection for $db_user on $host");
-      return $status;
-    }
-    
-    # Backward compatibility for pre-4.1 clients, like perl-DBI-1.32
-    if ( $short_pwd_hash ) {
-      $self->debug(1,"$function_name: Defining password short hash for $db_user on $host)");
-      $status = $self->mysqlExecCmd("set password for '$db_user'\@'$host' = OLD_PASSWORD('$db_pwd')");
-      if ( $status ) {
-        # Error already signaled by caller
-        $self->debug(1,"Failed to define password short hash for $db_user on $host");
-        return $status;
-      }      
-    }
-  }
-  
-  return $status;
-}
-
-
-# Function to add a database
-# Returns 0 in case of success (database already exists with the right password
-# or successful creation)
-#
-# Arguments :
-#  database : database to create
-#  script : script to create the database and tables if it doesn't exist
-sub mysqlAddDb() {
-  my $function_name = "mysqlAddDb";
-  my $self = shift;
-
-  my $database = shift;
-  unless ( $database ) {
-    $self->error("$function_name: 'database' argument missing");
-    return 0;
-  }
-  my $script = shift;
-  unless ( $script ) {
-    $self->error("$function_name: 'script' argument missing");
-    return 0;
-  }
-
-  my $product = $self->getCurrentProduct();
-  my $status = 1;  # Assume failure by default
-
-  $self->debug(1,"$function_name: checking if database $database for $product already exists");
-  $status = $self->mysqlExecCmd("use $database");
-
-
-  if ( $status ) {
-    $self->debug(1,"$function_name: creating database $database for $product");
-    $status = $self->mysqlExecCmd("< $script");
-  } else {
-    $self->debug(1,"$function_name: database $database found");
-  }
-
-  return $status;
-}
-
-# Function to initialize DB tables and create the DB connection information
+# Function to create the DB configuration file
 #
 # Arguments : 
 #  none
-sub initDb () {
-  my $function_name = "initDb";
+sub createDbConfigFile () {
+  my $function_name = "createDbConfigFile";
   my $self = shift;
 
   my $product = $self->getCurrentProduct();
-  $self->debug(1,"$function_name: Checking database configuration for $product");
+  $self->debug(1,"$function_name: Creating database configuration file for $product");
 
   my $db_config_base = $base."/options/".lc($product)."/db";
   unless ( $config->elementExists("$db_config_base") ) {
@@ -1549,27 +1317,21 @@ sub initDb () {
 
   my $do_db_config = 1;
 
-
-  my $db_type = $self->getDbOption("type");
-  unless ( $db_type ) {
-    $self->info("DB type not configured : assuming $db_type_def");
-    $db_type = $db_type_def;
-  }
-
+  # Owner of the DB configuration file
   my $daemon_user = $self->getDaemonUser();
   my $daemon_group = $self->getDaemonGroup();
 
   my $db_user = $self->getDbOption("user");
   unless ( $db_user ) {
-    $db_user = $daemon_user;
-    $self->debug(1,"$function_name: DB user default used ($db_user)");
+    $self->warn("Cannot configure DB connection : DB username missing");
+    return 1; 
   }
   $self->setGlobalOption("dbuser",$db_user);
 
   my $db_pwd = $self->getDbOption("password");
   unless ( $db_pwd ) {
-    $db_pwd = $self->generatePassword();
-    $self->info("DB password not configured : generating a new one.");
+    $self->warn("Cannot configure DB connection : DB password missing");
+    return 1;
   }
   $self->setGlobalOption("dbpwd",$db_pwd);
 
@@ -1605,8 +1367,8 @@ sub initDb () {
       if ( $db_info_pwd ) {
         $self->setGlobalOption("dbinfopwd",$db_info_pwd);
       } else {
-        $db_info_pwd = $self->generatePassword();
-        $self->info("DB info user's password not configured : generating a new one.");
+        $self->warn("Cannot configure DB for info user : DB password missing.");
+        return 1;
       }
       $db_info_file= $self->getDbOption("infoFile");
       unless ( $db_info_file ) {
@@ -1618,77 +1380,6 @@ sub initDb () {
     }
   } else {
     $self->debug(1,"GIP no configured on this node. Skipping $product DB configuration for GIP.");
-  }
-
-  # Enable MySQL configuration only for the DPM product
-  if ( $product eq "DPM" ) {  
-    my $db_admin_pwd = $self->getDbOption("adminpwd");
-    my $db_admin_user;
-    if ( $db_admin_pwd ) {
-      $self->setGlobalOption("dbadminpwd",$db_admin_pwd);
-      $db_admin_user = $self->getDbOption("adminuser");
-      unless ( $db_admin_user ) {
-        $db_admin_user = "root";
-        $self->debug(1,"$function_name: DB admin user set to default ($db_admin_user)");
-      }
-      $self->setGlobalOption("dbadminuser",$db_admin_user);
-    } else {
-      $do_db_config = 0;
-      $self->warn("DB admin password not defined. Skipping database configuration for $product");
-    }
-    my $db_config_done = 1;    # Assume failure
-    my $db_init_script;
-    if ( $db_type eq "mysql" ) {
-      $db_init_script = $mysql_init_scripts{$product};
-      MYSQL : {
-        if ( $do_db_config ) {
-          if ( $self->mysqlCheckAdminPwd() ) {
-            $self->error("Unable to use database administrator ($db_admin_user) password. Database configuration skipped");
-            $db_config_done = 0;
-            last MYSQL;
-          }
-          if ( $self->mysqlAddUser() ) {
-            $self->error("Failure to add database user $db_user for $product. Database configuration skipped");
-            $db_config_done = 0;
-            last MYSQL;
-          }
-
-          if ( $db_info_user ) {
-            if ( $self->mysqlAddUser($db_info_user,$db_info_pwd,'select',1) ) {
-              $self->error("Failure to add database user $db_info_user for $product. Database configuration skipped");
-              $db_config_done = 0;
-              last MYSQL;
-            }
-          }
-  
-          my $product_db_roles = $db_roles{$product};
-          my @product_db_roles = split /\s*,\s*/, $product_db_roles;
-          for my $role (@product_db_roles) {
-            my $database = $db_roles_dbs{$role};
-            next unless $database;
-            my $db_creation_script = $mysql_db_scripts{$role};
-            unless ( $database ) {
-              $self->debug(1,"$function_name: No script to create database $database for $product. Database configuration skipped");
-              $db_config_done = 0;
-              last MYSQL;
-            }
-            $self->mysqlAddDb($database,$db_creation_script);
-          }
-        } else {
-          $db_config_done = 0;
-        }
-      }
-    } elsif ( $db_type eq "oracle" ) {
-        $db_config_done = 0;
-        $db_init_script = $oracle_init_scripts{$product};
-    } else {
-      $self->error("DB type '$db_type' not supported. Configure manually");
-    }
-    unless ( $db_config_done ) {
-    $self->info("$db_type DB configuration must be done manually for $product use ($db_init_script)");
-    }
-  } else {
-    $self->info("MySQL configuration for $product is performed by the ncm-mysql component");
   }
 
   # Update DB connection configuration file for main user if content has changed
@@ -2680,24 +2371,6 @@ sub updateConfigFile () {
     $self->serviceRestartNeeded($role);
   }
 
-}
-
-# Function to generate a random password of a given length. Default length is 16.
-sub generatePassword {
-  my $self = shift;
-  
-  my $length = 16;
-  if ( @_ > 0 ) {
-    $length = shift;
-  }
-
-  my $password = '';
-  my $possible = 'abcdefghijkmnpqrstuvwxyz23456789_-!,;:.ABCDEFGHJKLMNPQRSTUVWXYZ';
-  while (length($password) < $length) {
-    $password .= substr($possible, (int(rand(length($possible)))), 1);
-  }
-
-  return $password;
 }
 
 
