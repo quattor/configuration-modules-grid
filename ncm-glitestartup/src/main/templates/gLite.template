@@ -29,6 +29,10 @@
 . <restartEnv/<$script>>;
 <ENDFOR>
 
+if [ "x$GLITE_LOCATION" = "x/usr" ]
+then
+ GLITE_LOCATION="/"
+fi
  
 GLITE_STARTUP_SCRIPT_DIR=${GLITE_LOCATION}/etc/init.d/
 
