@@ -48,7 +48,7 @@ sub Configure($$@) {
       }
     }
   } else {
-    @vo_list = keys(%{$vos_config});
+    @vo_list = sort(keys(%{$vos_config})); # if you need a different order, specify voList
   }
     
   # Save the date.
@@ -83,7 +83,7 @@ EOF
 
       # Loop over all of the defined VOs to fill out this section. Looking at
       # the values: /system/vo/*/voms/*/(fqan|user|group). 
-      for my $name (sort(@vo_list)) {
+      for my $name (@vo_list) {
         my $voentry = $vos_config->{$name};
         
         if ( $voentry->{voms} ) {
@@ -171,7 +171,7 @@ EOF
 
     # Loop over all of the defined VOs to fill out this section. Looking at
     # the values: /system/vo/*/auth/*/(uri|user). 
-    for my $name (sort(@vo_list)) {
+    for my $name (@vo_list) {
       my $voentry = $vos_config->{$name};
       
       if ( $voentry->{auth} ) {
