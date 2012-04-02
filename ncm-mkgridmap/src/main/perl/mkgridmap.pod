@@ -37,7 +37,7 @@ below.
 
 =head2 voList : list (optional)
 
-This list specifies the VO to process. If not present or undefined, defaults to all VOs defined in the configuration (/system/vo).
+This list specifies the VO to process, and the order in which they will appear. If not present or undefined, defaults to all VOs defined in the configuration (/system/vo), sorted by name.
 
 
 =head1 LCMAPS RESOURCES
@@ -104,8 +104,10 @@ this.
 
 =head2 gmflocal
 
-A local grid-mapfile to be imported in the generated grid-mapfile. By default 
-this is <edgcfg.location>/etc/grid-mapfile-local
+One or more local grid-mapfile(s) to be imported in the generated grid-mapfile, where they will override
+other entries. By default <edgcfg.location>/etc/grid-mapfile-local. The entry
+can be either a string (default), or a list of strings (in which case the existing entry will have to
+be null-ified beforehand).
 
 =head2 overwrite
 
@@ -115,7 +117,7 @@ overwritten if it already exists.
 =head2 locals
 
 A list for which each element has the values of cert_<local> and 
-user_<local>. This will add mappings to the grid-mapfile-local defined
+user_<local>. This will add mappings to the (first) grid-mapfile-local defined
 above.
 
 =cut

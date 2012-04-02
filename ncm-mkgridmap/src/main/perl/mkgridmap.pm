@@ -262,8 +262,15 @@ EOF
 
     # Local gridmap file. Looking at the value:
     # /software/components/mkgridmap/gmflocal.
+    # this could be either a string or list of strings
     if ( $entry->{gmflocal} ) {
-      $contents .= "gmf_local " . $entry->{gmflocal} . "\n";
+      if (ref($entry->{gmflocal}) eq "ARRAY") {
+         for my $gmf (@{$entry->{gmflocal}}) {
+            $contents .= "gmf_local " . $gmf . "\n";
+         }
+      } else {
+         $contents .= "gmf_local " . $entry->{gmflocal} . "\n";
+      }
     }
       
     # The mapping for VOMS attributes managed by LCMAPS.
@@ -325,6 +332,10 @@ EOF
 sub write_conf_file ($$$) {
   my ($self, $fname, $contents) = @_;
 
+  # might get an array ref instead of filename - use first entry
+  if(ref($fname) eq 'ARRAY') {
+     $fname = $$fname[0];
+  }
   # Now just create the new configuration file.  Be careful to save
   # a backup of the previous file if necessary. 
   my $result = LC::Check::file($fname,

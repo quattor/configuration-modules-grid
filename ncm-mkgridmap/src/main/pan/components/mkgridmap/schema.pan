@@ -19,11 +19,12 @@ type structure_mkgridmap_lcmaps = {
 	'groupmapfile' : string = '/opt/edg/etc/lcmaps/groupmapfile'
 };
 
-type ${project.artifactId}_component_entry = {
+type ${project.artifactId}_component_entry = extensible {
         'mkgridmapconf' : string
         'format'        : string with (match(SELF, 'edg|lcgdm'))
         'command'       ? string
-        'gmflocal'      ? string
+     #  'gmflocal'      ? string    # can have either string or list (hence "extensible")
+     #  'gmflocal'      ? string[]  # if you need a list, explicitly set to "null" before to remove default
         'lcuser'        ? string
         'allow'         ? string
         'deny'          ? string
