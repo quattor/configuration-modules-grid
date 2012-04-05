@@ -138,21 +138,18 @@ sub Configure
       return 1;
     }
 
-    # Command to retrieve the server state from torque.
-    my $qmgr_state = "$qmgr -c \"print server\"";
-
     # Wait a bit for the server to become active in case it has been restarted.
     # Check every 30s after the first try until it comes up; try for up to
     # 5 minutes.
     $self->info("Retrieving current configuration...");
     my $remaining = 10;
     sleep 5;
-    my @current_config = qx/$qmgr_state/;
+    my @current_config = $self->runCommand($qmgr, "print server");
     while ( $? && ($remaining > 0) ) {
       $self->log("waiting 30s for qmgr to respond; $remaining tries remaining");
       $remaining--;
       sleep 30;
-      @current_config = qx/$qmgr_state/;
+      @current_config = $self->runCommand($qmgr, "print server");
     }
     if ( $? ) {
       $self->error("qmgr is not responding; aborting configuration");
@@ -404,6 +401,7 @@ sub runCommand {
     } else {
 	$self->debug(2, "OK: $cmd");
     }
+    return $out;
 }
 
 1;      # Required for PERL modules
