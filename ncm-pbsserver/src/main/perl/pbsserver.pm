@@ -5,7 +5,7 @@
 #
 
 package NCM::Component::pbsserver;
-  
+
 use strict;
 use NCM::Component;
 use vars qw(@ISA $EC);
@@ -14,6 +14,7 @@ $EC=LC::Exception::Context->new->will_store_all;
 use NCM::Check;
 
 use EDG::WP4::CCM::Element;
+use CAF::Process;
 
 use File::Copy;
 use File::Path;
@@ -32,7 +33,7 @@ sub Configure
 {
     my ($self, $config) = @_;
 
-    # Define paths for convenience and retrieve configuration 
+    # Define paths for convenience and retrieve configuration
     my $base = "/software/components/pbsserver";
     my $pbsserver_config = $config->getElement($base)->getTree();
 
@@ -50,7 +51,7 @@ sub Configure
       return 1;
     }
 
-    # Retrieve the contents of the envrionment file and update if necessary/ 
+    # Retrieve the contents of the envrionment file and update if necessary/
     if ( $pbsserver_config->{env} ) {
       my $fname = "$pbsroot/pbs_environment";
       $self->info("Checking environment file ($fname)...");
@@ -64,12 +65,12 @@ sub Configure
                                     );
       if ( $result < 0 ) {
         $self->error("Error updating $fname");
-      } elsif ( $result > 0 ) { 
+      } elsif ( $result > 0 ) {
         $self->log("$fname updated. Restarting pbs_server...");
         if (system('/sbin/service pbs_server restart')) {
           $self->error('pbs_server init.d restart failed: '. $?);
         }
-      }      
+      }
     }
 
 
@@ -87,7 +88,7 @@ sub Configure
                                   );
       if ( $result < 0 ) {
         $self->error("Error updating $fname");
-      } elsif ( $result > 0 ) { 
+      } elsif ( $result > 0 ) {
         $self->log("$fname updated");
       }
 
@@ -99,7 +100,7 @@ sub Configure
                                );
       if ( $result < 0 ) {
         $self->error("Error updating $fname");
-      } elsif ( $result > 0 ) { 
+      } elsif ( $result > 0 ) {
         $self->log("$fname updated");
       }
       chmod 0755, "$fname";
@@ -114,14 +115,14 @@ sub Configure
       my $removetorquecfg = 1;
       if (exists($pbsserver_config->{ignoretorquecfg}) && $pbsserver_config->{ignoretorquecfg}) {
         $removetorquecfg = 0;
-        $self->info("Ignoring torque.cfg file."); 
+        $self->info("Ignoring torque.cfg file.");
       };
       unlink "$pbsroot/torque.cfg" if (-e "$pbsroot/torque.cfg" && $removetorquecfg);
       unlink "$pbsroot/submit_filter" if (-e "$pbsroot/submit_filter");
     }
 
 
-    # Determine the location of the pbs commands. 
+    # Determine the location of the pbs commands.
     my $binpath = "/usr/bin";
     if ( $pbsserver_config->{binpath} ) {
       $binpath = $pbsserver_config->{binpath};
@@ -141,7 +142,7 @@ sub Configure
     my $qmgr_state = "$qmgr -c \"print server\"";
 
     # Wait a bit for the server to become active in case it has been restarted.
-    # Check every 30s after the first try until it comes up; try for up to  
+    # Check every 30s after the first try until it comes up; try for up to
     # 5 minutes.
     $self->info("Retrieving current configuration...");
     my $remaining = 10;
@@ -158,7 +159,7 @@ sub Configure
       return 1;
     }
 
-    # Slurp the existing server and queue information into a set of hashes. 
+    # Slurp the existing server and queue information into a set of hashes.
     my %existingsatt;
     my %existingqueues;
     for (@current_config) {
@@ -172,7 +173,7 @@ sub Configure
         $existingqueues{$1} = {};
 
       } elsif (m/set queue ([\w\.\-]+)\s+([\w\.]+)/) {
-        # Mark the attribute as set for the given queue. 
+        # Mark the attribute as set for the given queue.
         my $queue = $1;
         my $name = $2;
         my $href = $existingqueues{$queue};
@@ -181,7 +182,7 @@ sub Configure
     }
 
     ## server configuration
-    ## $serverbase --+ 
+    ## $serverbase --+
     ##               +--manualconfig : boolean
     ##               +--attlist ? nlist
     ## If manualconfig is false, remove any existing config parameter not part of the configuration.
@@ -192,14 +193,14 @@ sub Configure
         my $server_attlist = $pbsserver_config->{server}->{attlist};
         for my $serveratt (keys(%{$server_attlist})) {
           $definedsatt{$serveratt} = 1;
-          $self->runCommand($qmgr, "set server $serveratt = ".$server_attlist->{$serveratt});          
+          $self->runCommand($qmgr, "set server $serveratt = ".$server_attlist->{$serveratt});
         }
       }
 
       # Removing server attributes not defined in configuration if manualconfig is set to false.
       # Take care of not removing a few attributes generated/maintained by the server.
       # 'acl_hosts' is defined to the server host name at startup if not explicitly defined.
-      if ( defined($pbsserver_config->{server}->{manualconfig}) && 
+      if ( defined($pbsserver_config->{server}->{manualconfig}) &&
            !$pbsserver_config->{server}->{manualconfig} ) {
         $self->debug(1,"Removing server attributes not part of the configuration (manualconfig=false)");
         foreach (keys %existingsatt) {
@@ -210,12 +211,12 @@ sub Configure
             $self->runCommand($qmgr, "unset server $_");
           }
         }
-      }      
+      }
     }
-    
+
 
     ## queue configuration
-    ## $queuebase --+ 
+    ## $queuebase --+
     ##              +--manualconfig : boolean
     ##              +--queuelist--+ ? nlist
     ##                            +--manualconfig : boolean
@@ -246,28 +247,28 @@ sub Configure
             for my $queueatt ('enabled', 'started') {
               if ( $definedqatt{$queueatt} ) {
                 $self->runCommand($qmgr, "set queue $queue $queueatt = ".$queue_attlist->{$queueatt});
-              }              
+              }
             }
           }
 
           # Removing non-defined queue attributes if manualconfig is set to false
-          if ( defined($queuelist->{$queue}->{manualconfig}) && 
+          if ( defined($queuelist->{$queue}->{manualconfig}) &&
                !$queuelist->{$queue}->{manualconfig} ) {
             $self->debug(1,"Removing queue $queue attributes not part of the configuration (manualconfig=false)");
             foreach (keys %{$existingqueues{$queue}}) {
               $self->runCommand($qmgr, "unset queue $queue $_") unless (defined($definedqatt{$_}));
             }
           }
-        }      
+        }
       }
 
-      # Delete existing queues not part of the configuration if manualconfig is set to 
-      if ( defined($pbsserver_config->{queue}->{manualconfig}) && 
+      # Delete existing queues not part of the configuration if manualconfig is set to
+      if ( defined($pbsserver_config->{queue}->{manualconfig}) &&
            !$pbsserver_config->{queue}->{manualconfig}  ) {
         foreach (keys %existingqueues) {
           unless (defined($definedqueues{$_})) {
             $self->info("Removing queue $_...");
-            $self->runCommand($qmgr, "delete queue $_");            
+            $self->runCommand($qmgr, "delete queue $_");
           }
         }
       }
@@ -275,7 +276,7 @@ sub Configure
 
 
     # This slurps the pbsnodes output into a hash of hashes.  This
-    # avoids having to rerun the command. 
+    # avoids having to rerun the command.
     my %existingnodes;
     my $lastnode = '';
     if (-e "$pbsroot/server_priv/nodes" && -s "$pbsroot/server_priv/nodes") {
@@ -286,11 +287,11 @@ sub Configure
       }
       for (@node_list) {
         chomp;
-        if (m/(^[\w\d\.-]+)\s*$/) {    
+        if (m/(^[\w\d\.-]+)\s*$/) {
           # Start of a section with node name.
           $lastnode = $1;
           $existingnodes{$lastnode} = {};
-        } elsif (m/^\s*(\w+)\s*=\s*(.*)/) {  
+        } elsif (m/^\s*(\w+)\s*=\s*(.*)/) {
           # This is an attribute.  Attach it to last node.
           my $name = $1;
           my $value = $2;
@@ -302,8 +303,8 @@ sub Configure
       }
     }
 
-    ## node configuration 
-    ## $nodebase--+ 
+    ## node configuration
+    ## $nodebase--+
     ##            +--manualconfig : boolean
     ##            +--nodelist--+ ? nlist
     ##                         +--manualconfig : boolean
@@ -331,9 +332,9 @@ sub Configure
             my @props = split /,/, $existingnatt{properties};
             foreach my $p (@props) {
               $defprops{$p} = 1;
-            } 
+            }
           }
-    
+
           if ( $nodelist->{$node}->{attlist} ) {
             my $node_attlist = $nodelist->{$node}->{attlist};
             for my $nodeatt (keys(%{$node_attlist})) {
@@ -354,7 +355,7 @@ sub Configure
           }
 
           # Removing non-defined node attributes if manualconfig is set to false
-          if ( defined($nodelist->{$node}->{manualconfig}) && 
+          if ( defined($nodelist->{$node}->{manualconfig}) &&
                !$nodelist->{$node}->{manualconfig} ) {
             $self->debug(1,"Removing node $node attributes not part of the configuration (manualconfig=false)");
             # First delete properties not part of the configuration
@@ -364,8 +365,8 @@ sub Configure
             # Delete attributes not part of the configuration, preserving special attributes
             # like state, status or ntype.
             foreach (keys %existingnatt) {
-              if (!defined($definednatt{$_}) && 
-                  ($_ ne "ntype") && 
+              if (!defined($definednatt{$_}) &&
+                  ($_ ne "ntype") &&
                   ($_ ne "state") &&
                   ($_ ne "properties") &&
                   ($_ ne "status")) {
@@ -373,22 +374,22 @@ sub Configure
               }
             }
           }
-        }      
+        }
       }
 
       # Delete existing nodes not part of the configuration if manualconfig is set to false
-      if ( defined($pbsserver_config->{node}->{manualconfig}) && 
+      if ( defined($pbsserver_config->{node}->{manualconfig}) &&
            !$pbsserver_config->{node}->{manualconfig} ) {
         foreach (keys %existingnodes) {
           unless (defined($definednodes{$_})) {
             $self->info("Removing node $_...");
-            $self->runCommand($qmgr, "delete node $_");            
+            $self->runCommand($qmgr, "delete node $_");
           }
         }
       }
     }
 
-    
+
     return 1;
 }
 
@@ -396,11 +397,12 @@ sub Configure
 # Convenience routine to run a command and print out the result.
 sub runCommand {
     my ($self, $qmgr, $cmd) = @_;
-    my $s = `$qmgr -c \"$cmd\"`;
+
+    my $out = CAF::Process->new([$qmgr, "-c", $cmd], log => $self)->output();
     if ($?) {
-      $self->error("ERROR (" . ($? >> 8)  . "): $cmd");
+	$self->error("Failed to run qmgr $cmd: $out (", $? >> 8, ")");
     } else {
-      $self->log("OK: $cmd");
+	$self->debug(2, "OK: $cmd");
     }
 }
 
