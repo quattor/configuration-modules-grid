@@ -36,6 +36,8 @@ use constant MOABCFG => qw(
     qos
     class
     id
+    node
+    account
 );
 
 use constant MAINOPTS => qw (
@@ -62,6 +64,7 @@ use constant MAINOPTS => qw (
     resweight
     rescap
     procweight
+    usedatabase
 );
 
 use constant PRIORITYOPTS => qw (

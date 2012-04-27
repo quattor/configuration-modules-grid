@@ -33,6 +33,12 @@ type ${project.artifactId}_component = {
     
     'user' ? ${project.artifactId}_component_cfg{}
     'group' ? ${project.artifactId}_component_cfg{}
+
+    'node'  ? ${project.artifactId}_component_cfg{}
+
+    'account'  ? ${project.artifactId}_component_cfg{}
+    'class'  ? ${project.artifactId}_component_cfg{}
+    'qos'  ? ${project.artifactId}_component_cfg{}
     
     'include' ? ${project.artifactId}_component_include{}
     
