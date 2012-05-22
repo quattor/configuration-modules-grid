@@ -12,7 +12,7 @@ use vars qw(@ISA $EC);
 @ISA = qw(NCM::Component);
 $EC=LC::Exception::Context->new->will_store_all;
 use NCM::Check;
-
+use CAF::Process;
 use LC::Check;
 
 use Encode qw(encode_utf8);
@@ -79,11 +79,15 @@ sub Configure($$@) {
     } else {
         $workDirs = ["$baseDir/tmp"] unless $workDirs;
     }
+    $etcDir = $gip_config->{etcDir} if ( exists($gip_config->{etcDir}) );
+    $ldifDir = $gip_config->{ldifDir} if ( exists($gip_config->{ldifDir}) );
+    $pluginDir = $gip_config->{pluginDir} if ( exists($gip_config->{pluginDir}) );
+    $providerDir = $gip_config->{providerDir} if ( exists($gip_config->{providerDir}) );
 
     # Build a list of all files managed by this component that will be
     # used to determine if a file must be removed from GIP directories.
     my %managedFiles;
-    for my $fileType ('ldif', 'plugin', 'provider', 'scripts', 'stubs') {
+    for my $fileType ('ldif', 'plugin', 'provider', 'scripts', 'stubs', 'external') {
         $self->debug(1, "Adding $fileType files to list of managed files");
         my $filePath;
         my @fileList;
@@ -104,6 +108,12 @@ sub Configure($$@) {
             $filePath = $ldifDir;
             for my $entry (keys(%{$gip_config->{$fileType}})) {
                 push @fileList, $gip_config->{$fileType}->{$entry}->{ldifFile};
+            }
+
+        # External files, the path is the escaped string
+        } elsif ( $fileType eq 'external' ) {
+            for my $efile (@{$gip_config->{$fileType}}) {
+                push @fileList, unescape($efile);
             }
 
         # Other file types: the key is the file name relative to the file type directory.
@@ -240,10 +250,12 @@ sub Configure($$@) {
             # Run the command to generate the LDIF file.
             # A temporary LDIF file is produced and then the LDIF file is updated
             # with the temporary file if the content was changed.
-            my $cmd = "$staticInfoCmd -c $etcDir/$file -t $template > $ldifTmp";
-            `$cmd`;
+            my $staticInfoArgs = "-c $etcDir/$file -t $template";
+            $staticInfoArgs = $entry->{staticInfoArgs} if ( exists($entry->{staticInfoArgs}) );
+            my $cmd = "$staticInfoCmd $staticInfoArgs > $ldifTmp";
+            CAF::Process->new([qw($cmd)], log => $self)->run();
             if ($?) {
-                $self->error("Error generating LDIF file (commad=$cmd)");
+                $self->error("Error generating LDIF file (command=$cmd)");
             } else {
                 $changes = LC::Check::file(
                     $ldifFile,
@@ -398,7 +410,7 @@ sub Configure($$@) {
         my $bdii_startup = '/etc/init.d/bdii';
         if ( -x $bdii_startup && !system("$bdii_startup status >/dev/null") ) {
             $self->info("Restarting BDII...");
-            system("$bdii_startup condrestart");
+            CAF::Process->new([qw($bdii_startup condrestart)], log => $self)->run();
         }
     }
 

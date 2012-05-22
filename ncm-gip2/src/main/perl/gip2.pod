@@ -51,11 +51,17 @@ Default : none.
 Name of the LDIF file to produce. It can be either a name or an absolute path. When using a name without a path,
 the file will be created in the LDIF directory (basedir/ldif).
 
-Default : none
+Default : none.
 
 =head3 LDIF entries : list (required)
 
 List of LDIF entries to put in the resulting file.
+
+Default : none.
+
+=head3 LDIF staticInfoArgs : string (optional)
+
+Arguments used to process the LDIF template.
 
 Default : none.
 
@@ -94,6 +100,12 @@ If stubs are defined, BDII will be restarted if running on the current node.
 
 Default : none.
 
+=head2 /software/components/gip2/external : list of strings (optional)
+
+List of files/scripts that will be trusted as if managed by the component.
+
+Default : none.
+
 =head2 /software/components/gip2/user : string (required)
 
 Account GIP runs under. Used to define user ownership of GIP directories and files.
@@ -105,6 +117,30 @@ Default : none.
 List of working directories used by GIP that must be configured to be owned and writable by GIP user.
 
 Default : none.
+
+=head2 /software/components/gip2/etcDir : string (optional)
+
+Location of the "etc" directory.
+
+Default : basedir/etc (LCG) or basedir/etc/gip (gLite)
+
+=head2 /software/components/gip2/ldifDir : string (optional)
+
+Location of the "ldif" directory.
+
+Default : basedir/ldif (LCG) or basedir/etc/ldif (gLite)
+
+=head2 /software/components/gip2/pluginDir : string (optional)
+
+Location of the "plugin" directory.
+
+Default : basedir/plugin (LCG) or basedir/etc/plugin (gLite)
+
+=head2 /software/components/gip2/providerDir : string (optional)
+
+Location of the "provider" directory.
+
+Default : basedir/provider (LCG) or basedir/etc/provider (gLite)
 
 
 =head1 DEPENDENCIES
