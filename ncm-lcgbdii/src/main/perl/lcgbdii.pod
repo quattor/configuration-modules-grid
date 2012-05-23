@@ -131,7 +131,7 @@ Name of file listing the schemas used by BDII.  This is required for LCG 2.5.0 o
 
 Default: /opt/bdii/etc/schemas
 
-=head2 schemas : list of strings (required)
+=head2 schemas : list of strings (optional)
 
 List of file names for the schema files used. 
 
