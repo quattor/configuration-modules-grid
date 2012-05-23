@@ -182,26 +182,25 @@ sub Configure($$@) {
         return 1 if ($rc);
     }
 
-    # Retrieve the command to use for generating the static
-    # LDIF information.
-    my $staticInfoCmd = $gip_config->{staticInfoCmd};
-
-    # Ensure that the command exists and is executable.
-    if (! -f $staticInfoCmd) {
-        $self->error("$staticInfoCmd does not exist");
-        return 1;
-    }
-    if (! -x $staticInfoCmd) {
-        $self->error("$staticInfoCmd is not executable");
-        return 1;
-    }
-
-
     # Process all of the defined LDIF files.
 
     if ( $gip_config->{ldif} ) {
-        my $files = $gip_config->{ldif};
 
+        # Retrieve the command to use for generating the static
+        # LDIF information.
+        my $staticInfoCmd = $gip_config->{staticInfoCmd};
+
+        # Ensure that the command exists and is executable.
+        if (! -f $staticInfoCmd) {
+            $self->error("$staticInfoCmd does not exist");
+            return 1;
+        }
+        if (! -x $staticInfoCmd) {
+            $self->error("$staticInfoCmd is not executable");
+            return 1;
+        }
+
+        my $files = $gip_config->{ldif};
         foreach my $file (sort keys %$files) {
             my $entry = $files->{$file};
 
