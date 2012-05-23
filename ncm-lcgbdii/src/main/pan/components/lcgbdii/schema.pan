@@ -17,11 +17,11 @@ function lcgbdii_check_params = {
         error('lcgbdii_check_params must receive exactly one argument of type component_lcgbdii');
     };
   
-    if ( (SELF['autoUpdate'] == 'yes') && !exists(SELF['updateUrl']) ) {
+    if ( is_defined(SELF['autoUpdate']) && (SELF['autoUpdate'] == 'yes') && !exists(SELF['updateUrl']) ) {
         error('Property updateUrl required when autoUpdate=yes');
     };
 
-    if ( (SELF['autoModify'] == 'yes') && !exists(SELF['updateLdif']) ) {
+    if ( is_defined(SELF['autoModify']) && (SELF['autoModify'] == 'yes') && !exists(SELF['updateLdif']) ) {
         error('Property updateLdif required when autoModify=yes');
     };
 
@@ -29,7 +29,7 @@ function lcgbdii_check_params = {
         error('Either port or portRead/portsWrite must be specified');
     };
   
-   true;
+    true;
 };
 
 
