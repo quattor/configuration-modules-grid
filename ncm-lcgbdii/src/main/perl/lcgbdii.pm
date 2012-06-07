@@ -11,6 +11,7 @@ use NCM::Component;
 use vars qw(@ISA $EC);
 @ISA = qw(NCM::Component);
 $EC=LC::Exception::Context->new->will_store_all;
+use CAF::Process;
 use NCM::Check;
 use File::Copy;
 
@@ -200,15 +201,15 @@ sub Configure($$@) {
     ################################    
 
     if ( $changes ) {
-        if (system("/sbin/service bdii stop")) {
-            $self->warn("init.d lcg-bdii stop failed: " . $?);
+        CAF::Process->new(["/sbin/service bdii stop"], log => $self)->run();
+        if ($?) {
+            $self->warn("service bdii stop failed: " . $?);
         }
-        if (system("/sbin/service bdii start")) {
-            $self->error("init.d lcg-bdii start failed: " . $?);
+        CAF::Process->new(["/sbin/service bdii start"], log => $self)->run();
+        if ($?) {
+            $self->warn("service bdii start failed: " . $?);
         }
     }
-    
-
     return 1;
 }
 
