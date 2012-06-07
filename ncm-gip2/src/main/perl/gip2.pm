@@ -211,7 +211,6 @@ sub Configure($$@) {
                 $ldifFile = $ldifDir . '/' . $ldifFile;
             }
             $self->debug(1, 'Processing entry for LDIF file ' . $ldifFile);
-            my $ldifTmp = '/tmp/' . fileparse($ldifFile);
 
             # Ensure that the template file exists.
             my $template = $entry->{template};
@@ -237,11 +236,7 @@ sub Configure($$@) {
             }
 
             # Write out the configuration file.
-            my $changes = LC::Check::file(
-                "$etcDir/$file",
-                contents => encode_utf8($contents),
-                mode => 0644,
-            );
+            my $changes = LC::Check::file("$etcDir/$file", contents => encode_utf8($contents), mode => 0644);
             if ( $changes < 0 ) {
                 $self->error("Error updadating LDIF configuration file $etcDir/$file");
             }
@@ -251,16 +246,12 @@ sub Configure($$@) {
             # with the temporary file if the content was changed.
             my $staticInfoArgs = "-c $etcDir/$file -t $template";
             $staticInfoArgs = $entry->{staticInfoArgs} if ( exists($entry->{staticInfoArgs}) );
-            my $cmd = "$staticInfoCmd $staticInfoArgs > $ldifTmp";
-            CAF::Process->new([qw($cmd)], log => $self)->run();
+            my $cmd = "$staticInfoCmd $staticInfoArgs";
+            CAF::Process->new([$cmd], log => $self, stdout => \$contents)->execute();
             if ($?) {
                 $self->error("Error generating LDIF file (command=$cmd)");
             } else {
-                $changes = LC::Check::file(
-                    $ldifFile,
-                    source => $ldifTmp,
-                    mode => 0644,
-                );
+                $changes = LC::Check::file($ldifFile, contents => encode_utf8($contents), mode => 0644);
                 if ( $changes < 0 ) {
                     $self->error("Error updadating $ldifFile");
                 }
@@ -280,11 +271,7 @@ sub Configure($$@) {
             my $contents = $files->{$file};
 
             # Write out the file.
-            my $changes = LC::Check::file(
-                $pluginFile,
-                contents => encode_utf8($contents),
-                mode => 0755,
-            );
+            my $changes = LC::Check::file($pluginFile, contents => encode_utf8($contents), mode => 0755);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $pluginFile");
             }
@@ -303,11 +290,7 @@ sub Configure($$@) {
             my $contents = $files->{$file};
 
             # Write out the file.
-            my $changes = LC::Check::file(
-                $providerFile,
-                contents => encode_utf8($contents),
-                mode => 0755,
-            );
+            my $changes = LC::Check::file($providerFile, contents => encode_utf8($contents), mode => 0755);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $providerFile");
             }
@@ -328,11 +311,7 @@ sub Configure($$@) {
             my $contents = $files->{$efile};
 
             # Write out the file.
-            my $changes = LC::Check::file(
-                "$file",
-                contents => encode_utf8($contents),
-                mode => 0755,
-            );
+            my $changes = LC::Check::file("$file", contents => encode_utf8($contents), mode => 0755);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             }
@@ -352,11 +331,7 @@ sub Configure($$@) {
             my $contents = $files->{$efile};
 
             # Write out the file.
-            my $changes = LC::Check::file(
-                "$file",
-                contents => encode_utf8($contents),
-                mode => 0644,
-            );
+            my $changes = LC::Check::file("$file", contents => encode_utf8($contents), mode => 0644);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             }
@@ -391,11 +366,7 @@ sub Configure($$@) {
             }
 
             # Write out the file.
-            my $changes = LC::Check::file(
-                "$file",
-                contents => encode_utf8($contents),
-                mode => 0644,
-            );
+            my $changes = LC::Check::file("$file", contents => encode_utf8($contents), mode => 0644);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             } elsif ( $changes > 0 ) {
@@ -407,9 +378,12 @@ sub Configure($$@) {
     # Restart BDII if already running
     if ( $restartBDII && $bdiiRestartAllowed ) {
         my $bdii_startup = '/etc/init.d/bdii';
-        if ( -x $bdii_startup && !system("$bdii_startup status >/dev/null") ) {
-            $self->info("Restarting BDII...");
-            CAF::Process->new([qw($bdii_startup condrestart)], log => $self)->run();
+        if ( -x $bdii_startup) {
+            CAF::Process->new(["$bdii_startup status >/dev/null"], log => $self)->run();
+            if (! $?) {
+                $self->info("Restarting BDII...");
+                CAF::Process->new(["$bdii_startup condrestart"], log => $self)->run();
+            }
         }
     }
 
