@@ -279,6 +279,7 @@ type structure_yaim_vo_services = {
     "UNPRIVILEGED_MKGRIDMAP"            ? string
     "MAP_WILDCARDS"                     ? string
     "LFC"                               ? string
+    "WMS_HOSTS"                         ? string
 };
 
 type structure_yaim_scas = {
