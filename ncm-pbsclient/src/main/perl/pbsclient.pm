@@ -30,13 +30,13 @@ use constant DEFAULTPBSINITSCRIPT => "/etc/init.d/pbs";
 use constant DEFAULTPBSDIR => "/var/spool/pbs";
 use constant DEFAULTPBSMOMDIR => "/var/spool/pbs/mom_priv";
 
-use constant SCRIPTPERMS => ("epilogue" => 0700,
+use constant SCRIPTPERMS => {"epilogue" => 0700,
                              "epilogue.user" => 0755,
                              "epilogue.parallel" => 0700,
                              "prologue" => 0700,
                              "prologue.user" => 0755,
                              "prologue.parallel" => 0700
-                            );
+                            };
 
 use constant PBSCLIENTOPTIONS => qw(
     mom_host
