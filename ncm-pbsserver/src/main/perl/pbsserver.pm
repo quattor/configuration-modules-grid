@@ -41,7 +41,7 @@ sub Configure
     my $date = localtime();
 
     # Retrieve location for pbs working directory and ensure it exists.
-    my $pbsroot = "/var/spool/pbs";
+    my $pbsroot = "/var/torque";
     if ( $pbsserver_config->{pbsroot} ) {
       $pbsroot = $pbsserver_config->{pbsroot};
     }
