@@ -25,10 +25,10 @@ $EC=LC::Exception::Context->new->will_store_all;
 
 use constant COMPONENTPATH => "/software/components/pbsclient";
 
-use constant DEFAULTPBSMOMCONF => "/var/spool/pbs/mom_priv/config";
+use constant DEFAULTPBSMOMCONF => "mom_priv/config";
 use constant DEFAULTPBSINITSCRIPT => "/etc/init.d/pbs";
-use constant DEFAULTPBSDIR => "/var/spool/pbs";
-use constant DEFAULTPBSMOMDIR => "/var/spool/pbs/mom_priv";
+use constant DEFAULTPBSDIR => "/var/torque";
+use constant DEFAULTPBSMOMDIR => "mom_priv";
 
 use constant SCRIPTPERMS => {"epilogue" => 0700,
                              "epilogue.user" => 0755,
@@ -123,11 +123,12 @@ sub Configure {
     ##
     ## initPaths
     ##
-    my $pbsmomconf = exists($cfgtree->{configPath}) ? $cfgtree->{configPath} : DEFAULTPBSMOMCONF;
-    my $pbsinitscript = exists($cfgtree->{initScriptPath}) ? $cfgtree->{initScriptPath} : DEFAULTPBSINITSCRIPT;
+    my $pbsroot    = exists($cfgtree->{pbsroot}) ? $cfgtree->{pbsroot} : DEFAULTPBSDIR
+    my $pbsmomconf = exists($cfgtree->{configPath}) ? $pbsroot . '/' . $cfgtree->{configPath} : $pbsroot . '/' . DEFAULTPBSMOMCONF;
+    my $pbsinitscript = exists($cfgtree->{initScriptPath}) ? $pbsroot . '/' . $cfgtree->{initScriptPath} : DEFAULTPBSINITSCRIPT;
 
-    my $pbsdir=DEFAULTPBSDIR;
-    my $pbsmomdir=DEFAULTPBSMOMDIR;
+    my $pbsdir=$pbsroot;
+    my $pbsmomdir=$pbsroot. '/' . DEFAULTPBSMOMDIR;
     # make sure pbs mom directory exists and it properly writable
     ($pbsmomdir=$pbsmomconf) =~ s/\/[^\/]+$//; # implements dirname()
     ($pbsdir=$pbsmomdir) =~ s/\/[^\/]+$//; # implements dirname() again

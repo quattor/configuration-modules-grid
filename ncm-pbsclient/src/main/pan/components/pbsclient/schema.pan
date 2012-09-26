@@ -124,6 +124,7 @@ type ${project.artifactId}_component_structure_options = {
 type ${project.artifactId}_component_type = {
     include structure_component
 
+    "pbsroot"    ? string
     "configPath" ? string
     "initScriptPath" ? string
 
