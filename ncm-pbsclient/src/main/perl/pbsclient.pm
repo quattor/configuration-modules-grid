@@ -123,15 +123,15 @@ sub Configure {
     ##
     ## initPaths
     ##
-    my $pbsroot    = exists($cfgtree->{pbsroot}) ? $cfgtree->{pbsroot} : DEFAULTPBSDIR
+    my $pbsroot    = exists($cfgtree->{pbsroot}) ? $cfgtree->{pbsroot} : DEFAULTPBSDIR;
     my $pbsmomconf = exists($cfgtree->{configPath}) ? $pbsroot . '/' . $cfgtree->{configPath} : $pbsroot . '/' . DEFAULTPBSMOMCONF;
     my $pbsinitscript = exists($cfgtree->{initScriptPath}) ? $pbsroot . '/' . $cfgtree->{initScriptPath} : DEFAULTPBSINITSCRIPT;
 
     my $pbsdir=$pbsroot;
     my $pbsmomdir=$pbsroot. '/' . DEFAULTPBSMOMDIR;
     # make sure pbs mom directory exists and it properly writable
-    ($pbsmomdir=$pbsmomconf) =~ s/\/[^\/]+$//; # implements dirname()
-    ($pbsdir=$pbsmomdir) =~ s/\/[^\/]+$//; # implements dirname() again
+    #($pbsmomdir=$pbsmomconf) =~ s/\/[^\/]+$//; # implements dirname()
+    #($pbsdir=$pbsmomdir) =~ s/\/[^\/]+$//; # implements dirname() again
     $self->debug(2,"PBSMOMDIR $pbsmomdir; PBSDIR $pbsdir");
 
 
