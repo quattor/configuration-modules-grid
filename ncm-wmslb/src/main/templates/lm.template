@@ -1,17 +1,14 @@
-JobsPerCondorLog = <%JobsPerCondorLog|1000%>;
-
-LockFile = "<%LockFile|${GLITE_WMS_LOCATION_VAR}/logmonitor/lock%>";
-LogFile = "<%LogFile|${GLITE_WMS_LOCATION_VAR}/log/logmonitor_events.log%>";
-LogLevel = <%LogLevel|5%>;
-ExternalLogFile = "<%ExternalLogFile|${GLITE_WMS_LOCATION_VAR}/log/logmonitor_external.log%>";
-
-MainLoopDuration = <%MainLoopDuration|5%>;
-
-CondorLogDir = "<%CondorLogDir|${GLITE_WMS_LOCATION_VAR}/logmonitor/CondorG.log%>";
-CondorLogRecycleDir = "<%CondorLogRecycleDir|${GLITE_WMS_LOCATION_VAR}/logmonitor/CondorG.log/recycle%>";
-MonitorInternalDir = "<%MonitorInternalDir|${GLITE_WMS_LOCATION_VAR}/logmonitor/internal%>";
-IdRepositoryName = "<%IdRepositoryName|irepository.dat%>";
-
+CondorLogRecycleDir = "<%CondorLogRecycleDir|${WMS_LOCATION_VAR}/logmonitor/CondorG.log/recycle%>";
+LockFile = "<%LockFile|${WMS_LOCATION_VAR}/logmonitor/lock%>";
 AbortedJobsTimeout = <%AbortedJobsTimeout|600%>;
+CondorLogDir = "<%CondorLogDir|${WMS_LOCATION_VAR}/logmonitor/CondorG.log%>";
+MonitorInternalDir = "<%MonitorInternalDir|${WMS_LOCATION_VAR}/logmonitor/internal%>";
+MainLoopDuration = <%MainLoopDuration|5%>;
 GlobusDownTimeout = <%GlobusDownTimeout|7200%>;
+LogLevel = <%LogLevel|5%>;
+JobsPerCondorLog = <%JobsPerCondorLog|1000%>;
+LogFile = "<%LogFile|${WMS_LOCATION_VAR}/log/logmonitor_events.log%>";
+ExternalLogFile = "<%ExternalLogFile|${WMS_LOCATION_VAR}/log/logmonitor_external.log%>";
 RemoveJobFiles = <%RemoveJobFiles|true%>;
+IdRepositoryName = "<%IdRepositoryName|irepository.dat%>";
+ForceCancellationRetries = <%ForceCancellationRetries|2%>;

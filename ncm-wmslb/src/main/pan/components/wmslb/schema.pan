@@ -15,35 +15,38 @@ type ${project.artifactId}_component_env = {
   'GLITE_LOCATION_LOG' ? string
   'GLITE_LOCATION_TMP' ? string
   'GLITE_LOCATION_VAR' ? string
-  'GLITE_WMS_LOCATION' : string = '/opt/glite'
   'GLITE_WMS_LOCATION_VAR' ? string
   'GLITE_WMS_TMP' ? string
-  'GLITE_WMS_LOG_DESTINATION' ? string
   'GLITE_WMS_USER' ? string
   'GLITE_WMS_GROUP' ? string
   'GLITE_HOST_CERT' ? string
   'GLITE_HOST_KEY' ? string
   'GLITE_WMS_QUERY_TIMEOUT' : long = 300
-  'GLITE_WMS_WMPROXY_WEIGHTS_UPPER_LIMIT' : long = 10
   'GLITE_WMS_WMPROXY_MAX_SERVED_REQUESTS' : long = 50
   'GLITE_PR_TIMEOUT' : long = 300
-  'GLITE_SD_VO' : string = ''
   'GLITE_SD_PLUGIN' : string = 'bdii,rgma'
   'GLITE_HOST_KEY' ? string
   'GLITE_HOST_CERT' ? string
   'GLOBUS_LOCATION' ? string
-  'GT_PROXY_MODE' ? string = 'old'
   'CONDORG_INSTALL_PATH' ? string
   'CONDOR_CONFIG' ? string
   'GLITE_USER' ? string = 'glite'
   'X509_CERT_DIR' ? string = '/opt/grid-security/certificates'
   'X509_VOMS_DIR' ? string = '/opt/grid-security/vomses'
   'MYPROXY_TCP_PORT_RANGE' ? string
-  'JAVA_HOME' ? string
-  'CONDOR_IDS' ? string
-  'LCMAPS_DB_FILE' ? string
-  'RGMA_HOME' ? string
   'HOSTNAME' ? string
+  'WMS_JOBWRAPPER_TEMPLATE' ? string
+  'WMS_LOCATION_USR' ? string
+  'WMS_LOCATION_BIN' ? string
+  'WMS_LOCATION_ETC' ? string
+  'WMS_LOCATION_LIBEXEC' ? string
+  'WMS_LOCATION_LOG' ? string
+  'WMS_LOCATION_SBIN' ? string
+  'WMS_LOCATION_TMP' ? string
+  'WMS_LOCATION_VAR' ? string
+  'GLITE_WMS_CONFIG_DIR' ? string
+  'LCG_GFAL_INFOSYS' ? string
+  'LD_LIBRARY_PATH' ? string
 };
 
 type ${project.artifactId}_component_service_special_dirs = {
@@ -104,10 +107,8 @@ type ${project.artifactId}_component_service_ice_opts = {
   'proxy_renewal_frequency'            ? long
   'bulk_query_size'                    ? long
   'lease_update_frequency'             ? long
-  'InputType'                          ? string
   'max_ice_mem'                        ? long
   'ice_empty_threshold'                ? long
-
 };
 
 type ${project.artifactId}_component_service_ice = {
@@ -128,6 +129,8 @@ type ${project.artifactId}_component_service_jc_opts = {
   'Input'          ? string
   'InputType'      ? string
 
+  'MaximumTimeAllowedForCondorMatch' ? long
+  'DagmanMaxPre'   ? long
   'LockFile'       ? string
   'LogFile'        ? string
   'LogLevel'       ? long(1..6)
@@ -163,9 +166,10 @@ type ${project.artifactId}_component_service_lm_opts = {
   'CondorLogDir'        ? string
   'CondorLogRecycleDir' ? string
   'MonitorInternalDir'  ? string
-  'IdRepositoryNamer'   ? string
+  'IdRepositoryName'   ? string
 
-  'AbortedJobsTimeoutr' ? long
+  'AbortedJobsTimeout' ? long
+  'RemoveJobFiles' ? boolean
 };
 
 type ${project.artifactId}_component_service_lm = {
@@ -215,38 +219,34 @@ type ${project.artifactId}_component_service_ns = {
 };
 
 type ${project.artifactId}_component_service_wm_opts = {
-  'CeMonitorAsyncPort' ? long
-  #'CeMonitorServices" ? string{}
-  'DisablePurchasingFromGris' ? boolean
-  'DispatcherType'     ? string
-  'DliServiceName'     ? string
-  'EnableBulkMM'       ? boolean
-  'EnableIsmDump'      ? boolean
-  'EnableRecovery'     ? boolean
-  'ExpiryPeriod'       ? long
-  'Input'              ? string
-  'IsmDump'            ? string
-  'IsmUpdateRate'      ? string
-  'IsmIiPurchasingRate' ? long
-  'IsmIiLDAPCEFilterExt' ? string
-  'IsmIiLDAPSearchAsync' ? boolean
-  'IsmThreads'         ? boolean
-  'JobWrapperTemplateDir' ? string
-  'LogLevel'           ? long(1..6)
-  'LogFile'            ? string
-  'MatchRetryPeriod'   ? long
-  'MaxOutputSandboxSize' ? long
-  'MaxRetryCount'      ? long
-  'MaxShallowRetryCount'      ? long
-  'PipeDepth'          ? long
-  'SiServiceName'      ? string
-  'WorkerThreads'      ? long
-  'IsmDumpRate'         ? long
-  'IsmIiPurchasingRate' ? long 
-  'IsmUpdateRate'       ? long 
-  'MinPerusalTimeInterval' ? long
-  'QueueSize'          ? long
-  'RuntimeMalloc'      ? string
+  'CeForwardParameters'       ? string
+  'CeMonitorAsyncPort'        ? long
+  'CeMonitorServices'         ? string{}
+  'DispatcherType'            ? string
+  'EnableBulkMM'              ? boolean
+  'EnableRecovery'            ? boolean
+  'ExpiryPeriod'              ? long
+  'Input'                     ? string
+  'IsmBlackList'              ? string
+  'IsmDump'                   ? string
+  'IsmIiLDAPCEFilterExt'      ? string
+  'IsmIiPurchasingRate'       ? long
+  'IsmThreads'                ? boolean
+  'IsmUpdateRate'             ? long 
+  'JobWrapperTemplateDir'     ? string
+  'LogFile'                   ? string
+  'LogLevel'                  ? long(1..6)
+  'MaxReplansCount'           ? long
+  'MatchRetryPeriod'          ? long
+  'MaxOutputSandboxSize'      ? long
+  'MaxRetryCount'             ? long
+  'PropagateToLRMS'           ? string
+  'QueueSize'                 ? long
+  'ReplanGracePeriod'         ? long
+  'RuntimeMalloc'             ? string
+  'SbRetryDifferentProtocols' ? boolean
+  'WmsRequirements'           ? string
+  'WorkerThreads'             ? long
 };
 
 type ${project.artifactId}_component_service_wm_jw = {
@@ -262,48 +262,57 @@ type ${project.artifactId}_component_service_wm = {
 };
 
 type ${project.artifactId}_component_service_wmproxy_loadmonitor_script = {
-  'contents'    ? string
-  'name'        : string = '/opt/glite/sbin/glite_wms_wmproxy_load_monitor'
-  # template is ignored if contents is specified
-  'template'    : string = '/opt/glite/sbin/glite_wms_wmproxy_load_monitor.template'
+  'name'        : string = '/usr/sbin/glite_wms_wmproxy_load_monitor'
 };
 
 type ${project.artifactId}_component_service_wmproxy_loadmonitor_opts = {
-  'ThresholdCPULoad1'  : long = 10
-  'ThresholdCPULoad5'  : long = 10
-  'ThresholdCPULoad15' : long = 10
-  'ThresholdDiskUsage' : long = 95
-  'ThresholdFDNum'     : long = 500
-  'ThresholdFLNum'     : long = 500
-  'ThresholdFTPConn'   : long = 150
-  'ThresholdJDNum'     : long = 500
-  'ThresholdMemUsage'  : long = 95
-  'ThresholdSwapUsage' : long = 95
+  'ThresholdCPULoad1'  : long
+  'ThresholdCPULoad5'  : long
+  'ThresholdCPULoad15' : long
+  'ThresholdMemUsage'  : long
+  'ThresholdSwapUsage' : long
+  'ThresholdFDNum'     : long
+  'ThresholdDiskUsage' : long
+  'ThresholdFLSize' : long
+  'ThresholdFLNum' : long
+  'ThresholdJDSize' : long
+  'ThresholdJDNum'     : long
+  'ThresholdFTPConn'   : long
 };
 
+#type component_wmslb_service_wmproxy_operationsloadscripts_opts = {
+#  'load1'     ? long
+#  'load5'     ? long
+#  'load15'    ? long
+#  'memusage'  ? long
+#  'diskusage' ? long
+#  'fdnum'     ? long
+#};
+
 type ${project.artifactId}_component_service_wmproxy_opts = {
-  'SandboxStagingPath'           ? string
-  'LogFile'                      ? string
-  'ApacheLogLevel'               ? string with match(SELF,'emerg|alert|crit|error|warn|notice|info|debug')
-  'LogLevel'                     ? long(1..6)
-  'MaxInputSandboxSize'          ? long
-  'ListMatchRootPath'            ? string
-  'ListMatchTimeout'             ? long
-  'LBProxy'                      ? boolean
-  'HTTPSPort'                    ? long
-  'GridFTPPort'                  ? long
-  'DefaultProtocol'              ? string
-  'LBServer'                     ? string
-  'LBLocalLogger'                ? string
-  'LoadMonitor'                  : ${project.artifactId}_component_service_wmproxy_loadmonitor_opts
-  'MinPerusalTimeInterval'       ? long
-  'MaxServedRequests'            ? long
+#  'ApacheLogLevel'               ? string with match(SELF,'emerg|alert|crit|error|warn|notice|info|debug')
   'AsyncJobStart'                ? boolean
-  'SDJRequirements'              ? string
+#  'DefaultProtocol'              ? string
   'EnableServiceDiscovery'       ? boolean
+  'GridFTPPort'                  ? long
+#  'HTTPSPort'                    ? long
+  'LBLocalLogger'                ? string
+  'LBServer'                     ? string
   'LBServiceDiscoveryType'       ? string
+  'ListMatchRootPath'            ? string
+#  'ListMatchTimeout'             ? long
+  'LoadMonitor'                  : ${project.artifactId}_component_service_wmproxy_loadmonitor_opts
+  'LogFile'                      ? string
+  'LogLevel'                     ? long(1..6)
+#  'LBProxy'                      ? boolean
+#  'MaxInputSandboxSize'          ? long
+  'MaxServedRequests'            ? long
+  'MinPerusalTimeInterval'       ? long
+#  'OperationLoadScripts'        ? ${project.artifactId}_component_service_wmproxy_operationsloadscripts_opts
+  'SandboxStagingPath'           ? string
+#  'SDJRequirements'              ? string
   'ServiceDiscoveryInfoValidity' ? long
-  #'OperationLoadScripts'        ? string{}
+  'WeightsCacheValidity'         ? long
 };
 
 type ${project.artifactId}_component_service_wmproxy = {
@@ -311,7 +320,6 @@ type ${project.artifactId}_component_service_wmproxy = {
 
   'LoadMonitorScript' : ${project.artifactId}_component_service_wmproxy_loadmonitor_script
   'options'     : ${project.artifactId}_component_service_wmproxy_opts
-  'drained'     : boolean = false
 };
 
 type ${project.artifactId}_component_service_wmsclient_opts = {
