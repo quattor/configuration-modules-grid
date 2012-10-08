@@ -15,6 +15,7 @@ type ${project.artifactId}_component_env = {
   'GLITE_LOCATION_LOG' ? string
   'GLITE_LOCATION_TMP' ? string
   'GLITE_LOCATION_VAR' ? string
+  'GLITE_LB_TYPE' ? string
   'GLITE_WMS_LOCATION_VAR' ? string
   'GLITE_WMS_TMP' ? string
   'GLITE_WMS_USER' ? string
