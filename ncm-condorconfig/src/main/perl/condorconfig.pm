@@ -42,7 +42,7 @@ sub Configure($$@) {
     }
 
     # The LOCAL_DIR value.
-    my $local_dir = "/opt/condor/var/condor";
+    my $local_dir = "/var/local/condor";
     if ($config->elementExists("$base/LOCAL_DIR")) {
         $local_dir = $config->getValue("$base/LOCAL_DIR");
     }
@@ -80,6 +80,19 @@ sub Configure($$@) {
 	return 1;
     }
 
+    # The EXECUTE value.
+    my $execute_dir = "$local_dir/execute";
+    if ($config->elementExists("$base/EXECUTE")) {
+        $execute_dir = $config->getValue("$base/EXECUTE");
+    }
+
+    # Make the execute_dir and change ownership.
+    createAndChownDir($user,$execute_dir);
+    unless (-d $execute_dir) {
+	$self->error("cannot create $execute_dir");
+	return 1;
+    }
+
     # The GRIDLOG value.
     my $gridlog_dir = "$local_dir/GridLogs";
     if ($config->elementExists("$base/GRIDMANAGER_LOG")) {
@@ -107,11 +120,29 @@ sub Configure($$@) {
 
     # Use the default name if one has not been given.  Make it an 
     # absolute path if necessary.
-    my $fname;
+    my $configFile;
     if ($config->elementExists("$base/configFile")) {
-        $fname = $config->getValue("$base/configFile");
+        $configFile = $config->getValue("$base/configFile");
     } else {
-	$self->error("configuration file name not specified");
+	$self->error("Configuration file name not specified");
+	return 1;
+    }
+
+    # Use the default name if one has not been given.  Make it an 
+    # absolute path if necessary.
+    my $fname;
+    if ($config->elementExists("$base/localConfigFile")) {
+        $fname = $config->getValue("$base/localConfigFile");
+    } else {
+	$self->error("local configuration file name not specified");
+	return 1;
+    }
+
+    # The LOCALCONF value.
+    my $localconf_dir = dirname($fname);
+    createAndChownDir($user,$localconf_dir);
+    unless (-d $localconf_dir) {
+	$self->error("cannot create $localconf_dir");
 	return 1;
     }
 
