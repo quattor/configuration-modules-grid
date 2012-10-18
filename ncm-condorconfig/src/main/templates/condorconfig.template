@@ -138,11 +138,7 @@ SCHEDD_INTERVAL = <%SCHEDD_INTERVAL|10%>
 SHADOW_SIZE_ESTIMATE = <%SHADOW_SIZE_ESTIMATE|1800%>
 SHADOW_RENICE_INCREMENT = <%SHADOW_RENICE_INCREMENT|0%>
 QUEUE_SUPER_USERS = <%QUEUE_SUPER_USERS|root, condor%>
-VALID_SPOOL_FILES = <%VALID_SPOOL_FILES|job_queue.log, job_queue.log.tmp, history, \
-                    Accountant.log, Accountantnew.log, \
-                    local_univ_execute, .quillwritepassword, \
-                    .pgpass, \
-                    .schedd_address, .schedd_classad%>
+VALID_SPOOL_FILES = <%VALID_SPOOL_FILES|job_queue.log, job_queue.log.tmp, history, Accountant.log, Accountantnew.log, local_univ_execute, .quillwritepassword, .pgpass, .schedd_address, .schedd_classad%>
 INVALID_LOG_FILES = <%INVALID_LOG_FILES|core%>
 JAVA_MAXHEAP_ARGUMENT = <%JAVA_MAX_HEAP_ARGUMENT|-Xmx1024m%>
 GRIDMANAGER = <%GRIDMANAGER|$(SBIN)/condor_gridmanager%>
