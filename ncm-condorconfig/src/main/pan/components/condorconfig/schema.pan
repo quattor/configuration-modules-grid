@@ -134,6 +134,7 @@ type ${project.artifactId}_component = {
         'GRID_MONITOR' ? string
         'GRIDMANAGER_DEBUG' ? string
         'GRIDMANAGER_LOG' ? string
+        'MAX_GRIDMANAGER_LOG' ? string
         'GRIDSHELL' ? string
         'GRIDMANAGER_MAX_JOBMANAGERS_PER_RESOURCE' ? string
         'GRIDMANAGER_CHECKPROXY_INTERVAL' ? string
