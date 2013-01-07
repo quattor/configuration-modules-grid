@@ -61,7 +61,7 @@ sub Configure($$@) {
 
   my $contents  = "export FRONTIER_USER=".$username."\n";
   $contents  .= "export FRONTIER_GROUP=".$group . "\n";
-  $contents  .= "export FRONTIER_NET_LOCAL='".$networks."'\n"; 
+  #$contents  .= "export FRONTIER_NET_LOCAL='".$networks."'\n"; 
   $contents  .= "export FRONTIER_CACHE_MEM=".$cache_mem . "\n";
   $contents  .= "export FRONTIER_CACHE_DIR_SIZE=".$cache_dir . "\n"; 
 
