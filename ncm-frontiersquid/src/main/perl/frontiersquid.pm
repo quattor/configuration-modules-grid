@@ -74,7 +74,7 @@ sub Configure($$@) {
         return 0;
   }
 
-  system("export SCFILE=".$response_file.";".$rpmhome.$postinstall");
+  system("export SCFILE=".$response_file.";".$rpmhome.$postinstall);
 
   return 1; # return code is not checked.
 }
