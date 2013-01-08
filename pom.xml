@@ -48,6 +48,7 @@
     <module>ncm-globuscfg</module>
     <module>ncm-gold</module>
     <module>ncm-gridmapdir</module>
+    <module>ncm-gsissh</module>
   </modules>
 
 </project>
