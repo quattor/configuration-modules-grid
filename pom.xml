@@ -57,6 +57,7 @@
     <module>ncm-lcmaps</module>
     <module>ncm-maui</module>
     <module>ncm-mkgridmap</module>
+    <module>ncm-moab</module>
   </modules>
 
 </project>

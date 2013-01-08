@@ -1,0 +1,33 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+moab: NCM component to configure moab server.
+
+=head1 DESCRIPTION
+
+The I<moab> component manages the configuration for the Moab and/or Maui
+scheduler. By default the configuration file resides in
+/opt/moab/moab.cfg for Moab and /var/spool/maui/.cfg for Maui.  
+
+=head1 RESOURCES
+
+=head2 mode (default moab)
+
+Make configurations for moab or maui (eg location of config file)
+
+=head2 configPath (/opt/moab or /var/spool/maui)
+
+The absolute path for the moab or maui configuration directory. 
+
+=head2 configFile (moab.cfg or maui.cfg)
+
+The file name for the moab or maui configuration file.
+
+
+
+=cut
