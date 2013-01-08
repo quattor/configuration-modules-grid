@@ -1,0 +1,122 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+# Coding style: emulate <TAB> characters with 4 spaces, thanks!
+################################################################################
+
+=head1 NAME
+
+lcas: NCM component to manage LCAS configuration file(s)
+
+=head1 DESCRIPTION
+
+The I<lcas> component writes the LCAS configuration file(s). The
+primary file is the LCAS database, listing the plugin modules
+to be called (in the order specified in the profile).
+
+Optionally, it can write the module configuration files as well
+(as just plain files, one line for every entry in the content
+list). The header can be suppressed, if ever there is a module
+that chokes on the pound-sign comments at the top.
+
+The I<lcas> component can manage several different LCAS databases and associated module
+configuration files.
+
+=head1 MAIN RESOURCES
+
+=head2 /software/components/lcas/dbpath
+
+Deprecated. Mutually exclusive with /software/components/lcas/db.
+
+=head2 /software/components/lcas/module
+
+Deprecated. Mutually exclusive with /software/components/lcas/db.
+
+=head2 /software/components/lcas/db : list (optional)
+
+List of LCAS databases and associated module configaration files to configure. For each database,
+the following attributes can be specified.
+
+=head3 path : string (required)
+
+The database file name. This attribute is required for any database entry.
+
+Default: none.
+
+=head3 module : list (optional)
+
+A list of each module to configure in the database, with their arguments and optionally their
+associated configuration file. See next section for supported module attributes.
+
+Default: none
+
+=head1 MODULE RESOURCES
+
+For each module, the following attributes can be specified.
+
+=head2 path : string (required)
+
+The plugin module file name. The path may be relative to the LCAS search path but it is
+recommended to specify a full path. This attribute is required for any module.
+
+Default: none
+
+=head2 args : string (optional)
+
+Arguments to this module (like: the name of the module's config file).
+
+Default: none
+
+=head2 conf : nlist (optional)
+
+Optional: write out the contents of a single configuration file
+for this plugin module. The following attributes (nlist keys) are available
+for the configuration file.
+
+=head3 path : string (required)
+
+Location (absolute path) of the module configuration file. This attribute
+is required if a configuration file is configured.
+
+Default: none
+
+=head2 noheader : boolean (required)
+
+When set to true, suppress the initial comments normally added at the head of the configuration file.
+This attribute is required if a configuration file is configured.
+
+Default: false (header added)
+
+=head2 content : list of string (optional)
+
+Configuration file content as a list of string. Each list element will be added to
+the file as a separate line, keeping the specified order.
+
+=head1 DEPENDENCIES
+
+None.
+
+=head1 BUGS
+
+None known.
+
+=head1 AUTHOR
+
+David Groep <davidg@nikhef.nl>
+
+=head1 MAINTAINER
+
+David Groep <davidg@nikhef.nl>, Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 VERSION
+
+1.1.0
+
+=head1 SEE ALSO
+
+ncm-ncd(1)
+
+
+=cut
