@@ -1,0 +1,57 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+The I<gridmapdir> component manages the gridmapdir directory.
+
+=head1 DESCRIPTION
+
+The I<gridmapdir> component manages the gridmapdir directory used for the
+mapping of pool accounts.
+
+=head1 RESOURCES
+
+=head2 gridmapdir (required)
+
+The location of the configuration file.  Normally this should not be
+changed. 
+
+=head2 poolaccounts (required)
+
+An nlist with the pool account prefix as the name and a long as the
+size of the pool.
+
+=head2 sharedGridmapdir : string (optional)  
+
+If defined must indicate the path of a shared gridmapdir. In this case, gridmapdir as defined in 'gridmapdir' property
+is made a symlink of this directory.
+
+=head1 DEPENDENCIES
+
+None.
+
+=head1 BUGS
+
+None known.
+
+=head1 AUTHOR
+
+Charles Loomis <charles.loomis@cern.ch>
+
+=head1 MAINTAINER
+
+Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 VERSION
+
+2.0.1
+
+=head1 SEE ALSO
+
+ncm-ncd(1)
+
+=cut

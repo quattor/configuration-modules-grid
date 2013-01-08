@@ -47,6 +47,7 @@
     <module>ncm-glitestartup</module>
     <module>ncm-globuscfg</module>
     <module>ncm-gold</module>
+    <module>ncm-gridmapdir</module>
   </modules>
 
 </project>
