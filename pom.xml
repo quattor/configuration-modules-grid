@@ -41,6 +41,7 @@
     <module>ncm-condorconfig</module>
     <module>ncm-dcache</module>
     <module>ncm-dpmlfc</module>
+    <module>ncm-frontiersquid</module>
   </modules>
 
 </project>
