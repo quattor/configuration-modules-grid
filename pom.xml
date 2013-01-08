@@ -64,6 +64,7 @@
     <module>ncm-pbsserver</module>
     <module>ncm-vomrs</module>
     <module>ncm-vomsclient</module>
+    <module>ncm-wlconfig</module>
   </modules>
 
 </project>

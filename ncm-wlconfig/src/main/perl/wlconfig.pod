@@ -1,0 +1,229 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+ncm-wlconfig: NCM wlconfig component 
+
+=head1 DESCRIPTION
+
+The I<ncm-wlconfig> component manages the configuration files of the WP1
+NetworkServer, LogMonitor, JobController, and WorkloadManager
+services.  All of these services read the /opt/edg/etc/edg_wl.conf
+file. 
+
+=head1 RESOURCES
+
+=head2 configFile (edg_wl.conf)
+
+The name of the configuration file.  It will be created in the
+location EDG_LOCATION/etc.  
+
+=head2 user (edguser)
+
+The username to use to run the services. 
+
+=head2 grisCache (1)
+
+If set to "1" it enables the UseCacheInsteadOfGris flag.  This is used
+by the NetworkServer and the WorkloadManager.
+
+=head2 jobController
+
+=head3 condorSubmit ()
+
+The absolute filename of the condor_submit executable.
+
+=head3 condorRemove ()
+
+The absolute filename of the condor_rm executable.
+
+=head3 condorQuery ()
+
+The absolute filename of the condor_q executable.
+
+=head3 condorSubmitDAG ()
+
+The absolute filename of the condor_submit_dag executable.
+
+=head3 condorRelease ()
+
+The absolute filename of the condor_release executable.
+
+=head3 submitFile
+
+The directory where the temporary files are created (CondorG submit
+file and job wrapper scripts). 
+
+=head3 outputFile
+
+The directory where the standard output and error streams of CondorG
+are cached.
+
+=head3 queueFile
+
+The JobController input queue of requests.
+
+=head3 log/file
+
+The absolute file name of the JobController log file. 
+
+=head3 log/level (5)
+
+The level for the logging. 
+
+=head3 container (1000)
+
+The number of jobs after which the JobController must re-read the
+IdRepositoryName LogMonitor file. 
+
+=head2 LogMonitor
+
+=head3 jobsPerCondorLog (1000)
+
+The number of jobs whose events are recorded for each single CondorG
+log file.  I.e. every jobsPerCondorLog jobs, the log file is changed.
+
+=head3 mainLoopDuration (10)
+
+It defines how often the LogMonitor reads the CondorG log file.
+I.e. every mainLoopDuration seconds the LogMonitor reads these files. 
+
+=head3 condorLogDir
+
+The directory where the CondorG log file are created.
+
+=head3 condorRecycleDir
+
+The directory where the CondorG log files which have already been read
+are stored. 
+
+=head3 internalMonitorDir
+
+The directory where some files needed by the LogMonitor service are
+created and stored. 
+
+=head3 idRepositoryName (irepository.dat)
+
+The name of the file used by the LogMonitor for internal purposes (the
+storage of the jobID/CondorID correspondance). 
+
+=head3 abortedJobsTimeout (600)
+
+The timeout (in seconds) to have a cancelled job forgotten by the
+LogMonitor (useful when the job hangs in the CondorG queue). 
+
+=head3 log/file
+
+The absolute file name of the JobController log file. 
+
+=head3 log/level (5)
+
+The level for the logging. 
+
+=head2 NetworkServer
+
+=head3 iiHost, iiPort, iiDN, iiTimeout
+
+The contact parameters for the II.  The host must be defined by the
+user.  The default values are 2135, "mds-vo-name=local, o=grid", and
+30 for the iiPort, iiDN, and iiTimeout parameters, respectively. 
+
+=head3 grisPort, grisDN, grisTimeout
+
+The contact parameters for the GRISes.  The default values are 2135,
+"mds-vo-name=local, o=grid", and 20 for the grisPort, grisDN, and
+grisTimeout parameters, respectively.
+
+=head3 listeningPort (7772)
+
+The port used by the NetworkServer to receive requests. 
+
+=head3 masterThreads (8)
+
+The maximum number of simultaneous connections with UserInterfaces. 
+
+=head3 dispatcherThreads (8)
+
+The maximum number of simultaneous connections (to forward the
+incoming requests) with the WorkloadManager.
+
+=head3 sandboxStagingPath
+
+The absolute pathname of the sandbox staging directory.  It is also
+the location where the .BrokerInfo file is stored. 
+
+=head3 quotaManagement
+
+Boolean indicating whether the system should check file quotas for the
+input sandboxes. 
+
+=head3 quotaManagement, quotaSandboxSize
+
+The quotaManagement flag is a boolean indicating whether or not the
+quotas should be checked for the input sandboxes.  The
+quotaSandboxSize is the maximum size of a single input sandbox. 
+
+=head3 quotaAdjustment, quotaAdjustmentAmount
+
+The quotaAdjustment is a boolean indicating whether or not dynamic
+quotas should be used (i.e. the system administrator has not set a
+system quota).  The adjustment amount is the value by which the
+dynamic quota is increased/decreased as jobs enter and leave the
+system. 
+
+=head3 reservedDiskPercentage (2.0)
+
+Is a double representing the percentage of the disk (storing the
+sandboxes) which the administrator wants to keep unassigned.  So if
+the free space is less than this amount, no new jobs can be accepted. 
+
+=head3 log/file
+
+The absolute file name of the JobController log file. 
+
+=head3 log/level (5)
+
+The level for the logging. 
+
+=head2 WorkloadManager
+
+=head3 pipeDepth (1)
+
+The maximum size of the buffer between the dispatcher and worker
+threads. 
+
+=head3 workerThreads (1)
+
+The size of the workerThread pool.
+
+=head3 dispatcherType (filelist)
+
+Defines the type of the input queue of requests.  
+
+=head3 inputFile
+
+Input queue of the requests for the WorkloadManager. 
+
+=head3 maxRetryCount (10)
+
+The maximum number of times the WorkloadManager can try to re-schedule
+and re-submit a job in case of system failures.  
+
+=head3 hostProxyFile
+
+This must be the same as the X509_USER_PROXY value specified in the
+edg-wl-ns start up script. 
+
+=head3 log/file
+
+The absolute file name of the JobController log file. 
+
+=head3 log/level (5)
+
+The level for the logging. 
+
+=cut
