@@ -50,6 +50,7 @@
     <module>ncm-gridmapdir</module>
     <module>ncm-gsissh</module>
     <module>ncm-hydraserver</module>
+    <module>ncm-lbconfig</module>
   </modules>
 
 </project>
