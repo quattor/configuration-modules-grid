@@ -46,6 +46,7 @@
     <module>ncm-gip2</module>
     <module>ncm-glitestartup</module>
     <module>ncm-globuscfg</module>
+    <module>ncm-gold</module>
   </modules>
 
 </project>
