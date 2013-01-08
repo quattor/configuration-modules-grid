@@ -1,0 +1,3 @@
+HostProxyFile = "<%/system/glite/config/GLITE_X509_PROXY|${WMS_LOCATION_VAR}/glite/wms.proxy%>";
+LBProxy = <%LBProxy|true%>;
+DGUser = "<%/system/glite/config/GLITE_USER|glite%>";

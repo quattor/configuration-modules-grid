@@ -1,0 +1,192 @@
+ServerRoot "/etc/httpd"
+
+Timeout			300
+KeepAlive		Off
+MaxKeepAliveRequests	100
+KeepAliveTimeout	15
+
+LoadModule log_config_module	/usr/lib64/httpd/modules/mod_log_config.so
+LoadModule ssl_module		/usr/lib64/httpd/modules/mod_ssl.so
+LoadModule gridsite_module	/usr/lib64/httpd/modules/mod_gridsite.so
+LoadModule mime_module		/usr/lib64/httpd/modules/mod_mime.so
+LoadModule dir_module		/usr/lib64/httpd/modules/mod_dir.so
+LoadModule alias_module		/usr/lib64/httpd/modules/mod_alias.so
+LoadModule cgi_module		/usr/lib64/httpd/modules/mod_cgi.so
+LoadModule env_module		/usr/lib64/httpd/modules/mod_env.so
+LoadModule fcgid_module 	/usr/lib64/httpd/modules/mod_fcgid.so
+#LoadModule fastcgi_module 	/usr/lib64/httpd/modules/mod_fastcgi.so
+#LoadModule status_module 	/usr/lib64/httpd/modules/mod_status.so
+
+# can be used by other modules (i.e. Gridsite) before the cgi executable (which uses DefaultInitEnv) is called
+SetEnv OPENSSL_ALLOW_PROXY_CERTS 1
+SetEnv OPENSSL_ALLOW_PROXY 1
+PassEnv LD_LIBRARY_PATH HOSTNAME
+PassEnv WMS_LOCATION_VAR WMS_LOCATION_LOG WMS_LOCATION_TMP WMS_LOCATION_SBIN WMS_LOCATION_LIBEXEC WMS_LOCATION_LOG
+PassEnv GLITE_HOST_CERT GLITE_HOST_KEY GLITE_SD_PLUGIN GLITE_PR_TIMEOUT
+PassEnv X509_VOMS_DIR X509_CERT_DIR
+PassEnv LCMAPS_LOG_LEVEL LCMAPS_DEBUG_LEVEL LCG_GFAL_INFOSYS
+
+<IfModule mod_fcgid.c>
+AddHandler fcgid-script fcgi
+SetHandler fcgid-script
+# NOTICE: still using 'old names' with mod_fcgid version 2.2
+# 'new names' will mostly prepend 'Fcgid'
+IPCCommTimeout 600
+IdleTimeout 600
+ProcessLifeTime 0
+BusyTimeout 7200
+SocketPath ${WMS_LOCATION_VAR}/fastcgi
+MaxRequestsPerProcess ${GLITE_WMS_WMPROXY_MAX_SERVED_REQUESTS}
+# new name: FcgidMaxProcessesPerClass. set to 1 for debugging
+DefaultMaxClassProcessCount 100
+# new name: FcgidMinProcessesPerClass
+DefaultMinClassProcessCount 1
+MaxProcessCount 150
+DefaultInitEnv WMS_LOCATION_VAR ${WMS_LOCATION_VAR}
+DefaultInitEnv WMS_LOCATION_LOG ${WMS_LOCATION_LOG}
+DefaultInitEnv WMS_LOCATION_TMP ${WMS_LOCATION_TMP}
+DefaultInitEnv GLITE_WMS_WMPROXY_WEIGHTS_UPPER_LIMIT ${GLITE_WMS_WMPROXY_WEIGHTS_UPPER_LIMIT}
+DefaultInitEnv GLITE_WMS_WMPROXY_MAX_SERVED_REQUESTS ${GLITE_WMS_WMPROXY_MAX_SERVED_REQUESTS}
+# to specify per process options
+#FcgidCmdOptions /opt/glite/bin/glite_wms_wmproxy_server ...
+</IfModule>
+
+<IfModule mod_fastcgi.c>
+FastCgiIpcDir ${WMS_LOCATION_VAR}/fastcgi
+AddHandler fastcgi-script fcgi
+SetHandler fastcgi-script
+FastCgiConfig -restart -restart-delay 5 -idle-timeout 3600 -maxProcesses 30 -maxClassProcesses 20 -minProcesses 2 -listen-queue-depth 200 -gainValue 0.75 -killInterval 180 -updateInterval 180 -singleThreshold 15 -initial-env LD_LIBRARY_PATH -initial-env WMS_LOCATION_VAR -initial-env WMS_LOCATION_LOG -initial-env WMS_LOCATION_TMP -initial-env OPENSSL_ALLOW_PROXY_CERTS -initial-env OPENSSL_ALLOW_PROXY  -initial-env RGMA_HOME -initial-env GLITE_SD_VO -initial-env GLITE_SD_PLUGIN -initial-env LCG_GFAL_INFOSYS -initial-env HOSTNAME -initial-env GLITE_WMS_WMPROXY_WEIGHTS_UPPER_LIMIT -initial-env GLITE_WMS_WMPROXY_MAX_SERVED_REQUESTS
+# Uncomment this line to start server in STATIC mode
+#FastCgiServer /opt/glite/bin/glite_wms_wmproxy_server -restart-delay 5 -idle-timeout 3600 -processes 5 -initial-env LD_LIBRARY_PATH -initial-env WMS_LOCATION_VAR -initial-env WMS_LOCATION_LOG -initial-env WMS_LOCATION_TMP -initial-env RGMA_HOME -initial-env GLITE_SD_VO -initial-env GLITE_SD_PLUGIN -initial-env LCG_GFAL_INFOSYS -initial-env HOSTNAME -initial-env GLITE_WMS_WMPROXY_WEIGHTS_UPPER_LIMIT -initial-env GLITE_WMS_WMPROXY_MAX_SERVED_REQUESTS
+</IfModule>
+
+TypesConfig /etc/mime.types
+
+User  ${GLITE_USER}
+Group ${GLITE_WMS_GROUP}
+PidFile ${WMS_LOCATION_VAR}/httpd-wmproxy.pid
+DocumentRoot ${WMS_LOCATION_VAR}
+
+<Directory />
+    AllowOverride None
+</Directory>
+
+# LogLevel: emerg, alert, crit, error, warn, notice, info, debug 
+LogLevel <%ApacheLogLevel|warn%>
+LogFormat "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+
+CustomLog	${WMS_LOCATION_LOG}/httpd-wmproxy-access.log combined
+ErrorLog       ${WMS_LOCATION_LOG}/httpd-wmproxy-errors.log
+
+HostnameLookups Off
+
+######################################################################
+# Secured and authenticated HTTPS on port 7443
+######################################################################
+#Warning: GridSite versions <= 1.1.10 are NOT compatible with the SHM SSL cache!!!
+#SSLSessionCache         shmcb:/var/cache/mod_ssl/scache_data(512000)
+SSLSessionCache         shmht:/var/cache/mod_ssl/scache_data(512000)
+#SSLSessionCache         dbm:/var/cache/mod_ssl/scache_data(512000)
+#SSLSessionCache         none 
+SSLSessionCacheTimeout  300
+SSLRandomSeed startup file:/dev/urandom 512
+SSLRandomSeed connect builtin
+SSLMutex sem
+SSLProtocol all
+
+################################################################################
+# Uncomment loading of the status_module above and lines below for enabling status
+# report about server activity and performance. Make sure the directory 'status'
+# exists in DocumentRoot and contains a .gacl file containing the authorized DNs.  
+################################################################################
+#<IfModule mod_status.c>
+#<Location /status/server-status>
+#SetHandler server-status
+#</Location>
+#ExtendedStatus On
+#</IfModule>
+
+Listen 7443
+<VirtualHost *:7443>
+
+## You MUST put your server's fully qualified domain name here
+## This, the DOMAIN part of the https://DOMAIN/... URLs you want
+ServerName <%/system/network/hostname%>.<%/system/network/domainname%>:7443
+ 
+SSLEngine               on
+SSLCertificateFile      ${GLITE_HOST_CERT}
+SSLCertificateKeyFile   ${GLITE_HOST_KEY}
+SSLCACertificatePath    ${X509_CERT_DIR}
+SSLCARevocationPath    ${X509_CERT_DIR}
+#SSLSessionCacheTimeout  600
+SSLVerifyClient         optional
+SSLVerifyDepth          10
+SSLOptions              +ExportCertData +StdEnvVars
+
+## real-gridsite-admin.cgi is used to serve the Manage Directory links in footers,
+## and to allow you to edit files and ACLs via your browser.
+ScriptAlias /real-gridsite-admin.cgi /usr/sbin/real-gridsite-admin.cgi
+ScriptAlias /glite_wms_wmproxy_server /usr/bin/glite_wms_wmproxy_server
+
+## This exports various bits of info into the CGI environment
+## variables (and is needed for gridsite-admin.cgi to work.)
+GridSiteEnvs           on
+
+## If this is greater than zero, we will accept GSI Proxies for clients
+## (full client certificates - eg inside web browsers - are always ok)
+GridSiteGSIProxyLimit  6
+
+<Directory ${WMS_LOCATION_VAR}>
+ ## This sets up GACL authorization for this server.
+ GridSiteAuth		on
+
+ ## This exports various bits of info into the CGI environment 
+ ## variables (and is needed for gridsite-admin.cgi to work.)
+ GridSiteEnvs           on
+
+ ## Nice GridSite directory listings (without truncating file names!)
+ GridSiteIndexes	on
+
+ ## If this is on, GridSite will look for gridsitehead.txt and
+ ## gridsitefoot.txt in the current directory or its parents, and
+ ## use them to replace the <body> and </body> tags in .html files.
+ GridSiteHtmlFormat	on
+
+ ## This is the path of directories (and all their subdirectories) for
+ ## GACL to search when it encounters a dn-list credential. The DN List
+ ## files are plain text, one DN per line, and must have the full url
+ ## as the file name, but URL Encoded - eg with urlencode(1)
+ GridSiteDNlists /etc/grid-security/dn-lists/:/var/www/dn-lists/
+
+ ## This is used to form the URL at which DN Lists "owned" by this 
+ ## server are exported. https://FULL.SERVER.NAME/dn-lists/file
+ ## ALL FILES WITH URLs ON THIS SERVER WILL BE EXPORTED IRRESPECTIVE
+ ## OF WHERE THEY ARE FOUND ON THE DN-LISTS PATH!!
+ GridSiteDNlistsURI	/dn-lists/
+
+ ## If this is greater than zero, we will accept GSI Proxies for clients
+ ## (full client certificates - eg inside web browsers - are always ok)
+ GridSiteGSIProxyLimit	6
+
+ ## This directive allows authorized people to write/delete files 
+ ## from non-browser clients - eg with htcp(1)
+ GridSiteMethods	GET PUT DELETE MOVE
+
+ ## These directives (and the ScriptAlias above) allow authorized
+ ## people to manage files, ACLs and DN Lists through their web
+ ## browsers via HTTPS. The value of GridSiteAdminFile appears to
+ ## exist in every directory, but is internally redirected by
+ ## mod_gridsite to the value of GridSiteAdminURI (the ScriptAlias
+ ## then maps that onto the real-gridsite-admin.cgi executable.)
+ GridSiteAdminURI	/real-gridsite-admin.cgi
+ GridSiteAdminFile	gridsite-admin.cgi
+
+ ## This directive allows setting permissions to uploaded files 
+ ## It takes two parameters, one of GroupNone, GroupRead,
+ ## and one of WorldNone or WorldRead 
+ ## It requires GridSite version >= 1.1.9
+ GridSiteDiskMode GroupRead WorldRead
+
+</Directory>
+</VirtualHost>
+

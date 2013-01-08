@@ -1,0 +1,12 @@
+ErrorStorage = "<%ErrorStorage|${GLITE_LOCATION_LOG}%>";
+OutputStorage = "<%OutputStorage|${GLITE_LOCATION_TMP}%>";
+ListenerStorage = "<%ListenerStorage|${GLITE_LOCATION_TMP}%>";
+virtualorganisation = "<%virtualorganisation|egee%>";
+rank = <%rank|-other.GlueCEStateEstimatedResponseTime%>;
+requirements = "<%requirements|other.GlueCEStateStatus == Production%>";
+RetryCount = <%RetryCount|3%>;
+ShallowRetryCount = <%ShallowRetryCount|3%>;
+WMProxyEndPoints = {"https://ghemon.cnaf.infn.it:7443/glite_wms_wmproxy_server"};
+MyProxyServer = "<%MyProxyServer|kuiken.nikhef.nl%>";
+LBServiceDiscoveryType  = "<%LBServiceDiscoveryType|org.glite.lb.server%>";
+WMProxyServiceDiscoveryType = "<%WMProxyServiceDiscoveryType|org.glite.wms.wmproxy%>";
