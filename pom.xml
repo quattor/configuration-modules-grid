@@ -62,6 +62,7 @@
     <module>ncm-pbsclient</module>
     <module>ncm-pbsknownhosts</module>
     <module>ncm-pbsserver</module>
+    <module>ncm-vomrs</module>
   </modules>
 
 </project>
