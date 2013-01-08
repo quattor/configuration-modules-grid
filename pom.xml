@@ -56,6 +56,7 @@
     <module>ncm-lcgmonjob</module>
     <module>ncm-lcmaps</module>
     <module>ncm-maui</module>
+    <module>ncm-mkgridmap</module>
   </modules>
 
 </project>
