@@ -53,6 +53,7 @@
     <module>ncm-lbconfig</module>
     <module>ncm-lcas</module>
     <module>ncm-lcgbdii</module>
+    <module>ncm-lcgmonjob</module>
   </modules>
 
 </project>
