@@ -68,6 +68,7 @@
     <module>ncm-wmsclient</module>
     <module>ncm-wmslb</module>
     <module>ncm-yaim</module>
+    <module>ncm-yaim_usersconf</module>
   </modules>
 
 </project>
