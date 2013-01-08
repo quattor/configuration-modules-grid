@@ -45,6 +45,7 @@
     <module>ncm-gacl</module>
     <module>ncm-gip2</module>
     <module>ncm-glitestartup</module>
+    <module>ncm-globuscfg</module>
   </modules>
 
 </project>
