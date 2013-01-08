@@ -58,6 +58,7 @@
     <module>ncm-maui</module>
     <module>ncm-mkgridmap</module>
     <module>ncm-moab</module>
+    <module>ncm-myproxy</module>
   </modules>
 
 </project>
