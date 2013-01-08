@@ -1,0 +1,212 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=head1 NAME
+
+The I<lcgbdii> component manages the configuration file of BDII service.  
+
+=head1 DESCRIPTION
+
+The I<lcgbdii> component manages the BDII configuration.
+
+=head1 RESOURCES
+
+Check schema for the full list of resources. Due to some changes in BDII configuration between all versions,
+some resources marked optional in the schema for backward compatibility are in fact required to properly
+configure recent BDII versions.
+
+=head2 archiveSize : long (optional)
+
+The number of updates that the changes should be logged (BDII v5 and later).
+
+=head2 autoUpdate : string (yes or no)
+
+Whether or not to auto-update.  Valid values are "yes" and "no".
+
+Default : no
+
+=head2 autoModify : string (yes or no)
+
+Whether or not to automatically modify this file.
+
+Default : no
+
+=head2 bind : string
+
+The binding string. 
+
+Default: "mds-vo-name=local,o=grid"
+
+=head2 breatheTime : long
+
+The time between LDAP queries.
+
+Default: 60
+
+=head2 configFile : string (required)
+
+The location of the LCG BDII configuration file.
+
+Default: /opt/bdii/etc/bdii.conf
+
+=head2 dir
+
+The base directory for the BDII code and configuration files. 
+
+Default: /opt/bdii
+
+=head2 fixGlue : string (yes or no, optional)
+
+Fixes some common schema errors like publishing duplicate attributes ()BDII v5 and later, recommeded value : yes).
+
+=head2 isCache : string (yes or no)
+
+Whether or not to reject entries which already match the binding string.
+
+Default : no
+
+=head2 ldifDir : string
+
+Location of GIP static ldfi files. New and required in BDII v5 and later.
+
+=head2 logFile : string (optional)
+
+The location of the LCG BDII log file. This property is required for BDII v5.
+
+Default: none
+
+=head2 logLevel : string (one of ERROR, WARNING, INFO, DEBUG)
+
+BDII verbosity level. New in BDII v5 (recommended value: ERROR)
+
+Default: none.
+
+=head2 modifyDN : string (yes or no)
+
+Whether or not this BDII fixes DNs to match binding string.
+
+Default : no
+
+=head2 pluginDir : string
+
+Location of GIP plugins. New and required in BDII v5 and later.
+
+=head2 port : port number
+
+Port used by BDII (v5 and later). Exclusive of portRead and portsWrite.
+
+Default: none
+
+=head2 portRead : port number
+
+The port to read from (version <= 4). 
+
+Default: none
+
+=head2 portsWrite : list of port numbers
+
+The list of ports to write to (version <= 4).
+
+Default: none
+
+=head2 providerDir : string
+
+Location of GIP providers. New and required in BDII v5 and later.
+
+=head2 RAMDisk : string (yes or no, optional)
+
+Use a RAM disk for the database files. It is advisable to have at least 4GB of RAM.
+(BDII_top v3.2.10-3 and later, recommeded value : yes).
+
+=head2 readTimeout : long (optional)
+
+Time to wait for LDAP sources to return. New in BDII v5 (typically 300).
+
+=head2 schemaFile
+
+Name of file listing the schemas used by BDII.  This is required for LCG 2.5.0 or above.
+
+Default: /opt/bdii/etc/schemas
+
+=head2 schemas : list of strings (optional)
+
+List of file names for the schema files used. 
+
+Default: none
+
+=head2 searchFilter : string (optional)
+
+The LDAP filter.
+
+=head2 searchTimeout : long (optional)
+
+The LDAP timeout in seconds. Deprecated in BDII v5.
+
+=head2 slapadd : string (optional)
+
+The location of the slapadd executable. Deprecated in BDII v5 and later.
+
+=head2 slapd : string (optional)
+
+The location of the slapd executable. Deprecated in BDII v5 and later.
+
+=head2 slapdConf : string
+
+The location of slapd configuration file to use.
+
+Default:  /opt/bdii/etc/glue-slapd.conf
+
+=head2 slapdDebugLevel : long (0 to 5)
+
+slapd verbosity level. Deprecated in BDII v5 and later.
+
+=head2 updateLdif
+
+The URL for the update LDIF file.
+
+=head2 updateUrl
+
+The URL for the update file. 
+
+=head2 urls (optional)
+
+A hash containing all of the update URLs.  The keys are for
+documentation purposes only. 
+
+This resource is required for BDII v4 and later.
+
+=head2 user : string
+
+The default user for running the BDII daemon.
+
+Default: edguser
+
+=head1 DEPENDENCIES
+
+None.
+
+=head1 BUGS
+
+None known.
+
+=head1 AUTHOR
+
+Charles Loomis <charles.loomis@cern.ch>
+
+=head1 MAINTAINER
+
+Charles Loomis <charles.loomis@cern.ch>, Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 VERSION
+
+2.7.2
+
+=head1 SEE ALSO
+
+ncm-ncd(1)
+
+
+=cut
