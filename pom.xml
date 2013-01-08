@@ -42,6 +42,7 @@
     <module>ncm-dcache</module>
     <module>ncm-dpmlfc</module>
     <module>ncm-frontiersquid</module>
+    <module>ncm-gacl</module>
   </modules>
 
 </project>

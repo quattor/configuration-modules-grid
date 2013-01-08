@@ -1,0 +1,49 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=begin comment
+
+Be sure to put a blank line before and after every formatting command
+
+=end comment
+
+=head1 NAME
+
+gacl : gacl NCM component.
+
+=head1 DESCRIPTION
+
+This component allows to manage grid ACL file.
+
+=head1 RESOURCES
+
+=head1 DEPENDENCIES
+
+None.
+
+=head1 BUGS
+
+None known.
+
+=head1 AUTHOR
+
+Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 MAINTAINER
+
+Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 VERSION
+
+1.0.0
+
+=head1 SEE ALSO
+
+ncm-ncd(1)
+
+
+=cut
+
