@@ -44,6 +44,7 @@
     <module>ncm-frontiersquid</module>
     <module>ncm-gacl</module>
     <module>ncm-gip2</module>
+    <module>ncm-glitestartup</module>
   </modules>
 
 </project>

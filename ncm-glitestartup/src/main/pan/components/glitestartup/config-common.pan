@@ -1,0 +1,18 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+
+unique template components/${project.artifactId}/config-common;
+
+include { 'components/${project.artifactId}/schema' };
+include { 'components/${project.artifactId}/functions' };
+
+# Set prefix to root of component configuration.
+prefix '/software/components/${project.artifactId}';
+
+'version' = '${no-snapshot-version}';
+#'package' = 'NCM::Component';
+
+'active' ?= true;
+'dispatch' ?= true;
