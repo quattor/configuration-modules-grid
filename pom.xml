@@ -65,6 +65,7 @@
     <module>ncm-vomrs</module>
     <module>ncm-vomsclient</module>
     <module>ncm-wlconfig</module>
+    <module>ncm-wmsclient</module>
   </modules>
 
 </project>
