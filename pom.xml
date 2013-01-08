@@ -38,6 +38,7 @@
 
   <modules>
     <module>ncm-apel</module>
+    <module>ncm-condorconfig</module>
   </modules>
 
 </project>
