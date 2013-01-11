@@ -1,0 +1,6 @@
+*~
+target/
+*.#*
+junit_output.xml
+.prove
+cover_db
