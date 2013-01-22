@@ -31,7 +31,7 @@
 #
 #######################################################################
 
-package NCM::Component::dpmlfc;
+package NCM::Component::${project.artifactId};
 
 use strict;
 use NCM::Component;
@@ -61,7 +61,7 @@ use Net::Domain qw(hostname hostfqdn hostdomain);
 
 
 # Define paths for convenience. 
-my $dm_install_dir_default = "/";
+my $dm_install_root_default = "";
 
 # Define some commands explicitly
 my $chkconfig = "/sbin/chkconfig";
@@ -261,24 +261,6 @@ my %srmv22_config_rules = (
         "ULIMIT_N" => "maxOpenFiles:srmv22;".LINE_FORMAT_PARAM,
        );
 
-my $xroot_config_file = "/etc/sysconfig/xrootd";
-my %xroot_config_rules = (
-        "ALICEACCLOC" => "xrootTokenAuthLibDir:GLOBAL;".LINE_FORMAT_PARAM,
-        "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
-        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
-        "MANAGERHOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
-        "MONALISAHOST" => "xrootMonALISAHost:GLOBAL;".LINE_FORMAT_ENVVAR,
-        "RUN_XROOTDAEMON" => "ALWAYS->xroot_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-        "TTOKENAUTHZ_AUTHORIZATIONFILE" => "xrootAuthzConf:GLOBAL;".LINE_FORMAT_ENVVAR,
-        "XRDCONFIG" => "xrootConfig:GLOBAL;".LINE_FORMAT_ENVVAR,
-        "XROOTD_GROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
-        "XRDOFS" => "xrootOfsPlugin:GLOBAL;".LINE_FORMAT_PARAM,
-        "XRDLOCATION" => "xrootInstallDir:GLOBAL;".LINE_FORMAT_PARAM,
-        "XRDLOGDIR" => "logfile:xroot;".LINE_FORMAT_PARAM,
-        "XRDPORT" => "port:xroot;".LINE_FORMAT_ENVVAR,
-        "XRROOTD_USER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-       );
-
 my $trust_roles = "dpm,dpns,rfio,gsiftp";
 my $trust_config_file = "/etc/shift.conf";
 my %trust_config_rules = (
@@ -331,7 +313,6 @@ my %config_files = (
         "srmv2" => \$srmv2_config_file,
         "srmv22" => \$srmv22_config_file,
         "trusts" => \$trust_config_file,
-        "xroot" => \$xroot_config_file,
         "lfc" => \$lfc_config_file,
         "lfc-dli" => \$lfcdli_config_file,
        );
@@ -345,7 +326,6 @@ my %config_rules = (
         "srmv1" => \%srmv1_config_rules,
         "srmv2" => \%srmv2_config_rules,
         "srmv22" => \%srmv22_config_rules,
-        "xroot" => \%xroot_config_rules,
         "trusts" => \%trust_config_rules,
         "lfc" => \%lfc_config_rules,
         "lfc-dli" => \%lfcdli_config_rules,
@@ -368,7 +348,6 @@ my %services = (
     "srmv1" => "srmv1",
     "srmv2" => "srmv2",
     "srmv22" => "srmv2.2",
-    "xroot" => "",    # will be defined by xrootSpecificActions() according to node type
     "lfc" => "lfcdaemon",
     "lfc-dli" => "lfc-dli",
     #"trusts" => "role:dpm,dpns,gsiftp,rfio,xroot",   # shift.conf modifications are automaticaly detected without a need to restart daemons
@@ -435,27 +414,12 @@ my $hosts_roles;
 
 # Global context variables containing used by functions
 my $config;  # reference to configuration passed to Configure()
-my $dm_install_dir;
+my $dm_install_root;
 my $dm_bin_dir;
-
-# xroot related global variables
-my %xrootd_daemon_prefix = ('head' => 'dpm-manager-',
-                            'disk' => 'dpm-',
-                           );
-# xrootd_services is used to track association between a daemon name
-# (the key) and its associatated service name.
-# Because the daemon/service name of Cluster Management Service changed from olb to cms,
-# the appropriate CMS entry will be added to xrootd_services based on configuration property
-# 'cmsDaemon' (used as a selector in xrootd_cms_services).
-my %xrootd_services = ('xrootd' => 'xrd',
-                      );
-my %xrootd_cms_services = ('olbd' => 'olb',
-                           'cmsd' => 'cms',
-                          );
 
 # Pan path for the component configuration, variable to host the profile contents and other
 # constants related to profile
-use constant PANPATH => "/software/components/dpmlfc";
+use constant PANPATH => "/software/components/${project.artifactId}";
 my $profile;
 
 
@@ -480,15 +444,16 @@ sub Configure($$@) {
     $self->defineCurrentProduct($product);
 
     $self->loadGlobalOption("installDir");
-    $dm_install_dir = $self->getGlobalOption("installDir");
-    unless ( defined($dm_install_dir) ) {
-      $dm_install_dir = $dm_install_dir_default;
+    $dm_install_root = $self->getGlobalOption("installDir");
+    unless ( defined($dm_install_root) ) {
+      $dm_install_root = $dm_install_root_default;
     }
-    $self->setGlobalOption("installDir",$dm_install_dir);
-    if ((length($dm_install_dir) == 0) || ($dm_install_dir eq "/")) {      
+    $self->setGlobalOption("installDir",$dm_install_root);
+    if ((length($dm_install_root) == 0) || ($dm_install_root eq "/")) {
+      $dm_install_root = "";
       $dm_bin_dir = "/usr/bin";
     } else {
-      $dm_bin_dir = $dm_install_dir . "/bin";      
+      $dm_bin_dir = $dm_install_root . "/bin";      
     }
     
     if ( $product eq "DPM" ) {
@@ -570,22 +535,20 @@ sub Configure($$@) {
       }
     }
 
-    # Update configuration files for every configured role
+    # Update configuration files for every configured role.
+    # xroot is a special case as it is managed by a separate component, ncm-xrootd.
     for my $role (@{$hosts_roles}) {
-      if ( $self->hostHasRoles($role) ) {
-        $self->info("Checking configuration for ".$role);
-        # Do it before standard config as it defines some xroot parameters
-        # according to xroot node type.
-        if ( $role eq 'xroot' ) {
-          $self->xrootSpecificConfig();
+      if ( $role ne 'xroot' ) {
+        if ( $self->hostHasRoles($role) ) {
+          $self->info("Checking configuration for ".$role);
+          $self->updateRoleConfig($role);
+          for my $service ($self->getRoleServices($role)) {
+            $self->enableService($service);
+          }
+        } else {
+          $self->info("Checking that role ".$role." is disabled...");        
+          $self->updateRoleConfig($role,1);
         }
-        $self->updateRoleConfig($role);
-        for my $service ($self->getRoleServices($role)) {
-          $self->enableService($service);
-        }
-      } else {
-        $self->info("Checking that role ".$role." is disabled...");        
-        $self->updateRoleConfig($role,1);
       }
     }
 
@@ -2238,222 +2201,5 @@ sub updateRoleConfig () {
   }
 }
 
-
-# Function to configure xrootd specific configuration files.
-# Based on YAIM.
-
-sub xrootSpecificConfig () {
-  my ($self) = @_;
-  my $function_name = "xrootSpecificConfig";
-  my $xroot_role = 'xroot';
-  my $restart_services = 0;
-  
-  $self->info('Checking xroot specific configuration...');
-  
-  # Retrieve xrootd configuration and update xrootd_services based on option 'cmsDaemon'
-  my $xroot_config;
-  if ( exists($profile->{options}->{dpm}->{xroot})) {
-    $xroot_config = $profile->{options}->{dpm}->{xroot};
-  }else {
-    $self->info('xroot options not defined. Using defaults.')
-  }
-  my $xroot_bin_dir = $dm_bin_dir;
-  my $xroot_headnode = $self->hostHasRoles('dpns');
-  my $xroot_diskserver = $self->hostHasRoles('gsiftp');
-  my $xroot_token_auth = defined($xroot_config->{authzConf});
-  $xrootd_services{$xroot_config->{cmsDaemon}} = $xrootd_cms_services{$xroot_config->{cmsDaemon}};
-
-  # Load a few options from DPM/xroot config
-  if ( $xroot_config->{ofsPlugin} ) {
-    $self->setGlobalOption("xrootOfsPlugin",$xroot_config->{ofsPlugin});
-    $self->debug(1,"Global option 'xrootOfsPlugin' defined to ".$self->getGlobalOption("xrootOfsPlugin"));
-  }
-  if ( $xroot_config->{MonALISAHost} ) {
-    $self->setGlobalOption("xrootMonALISAHost",$xroot_config->{MonALISAHost});
-    $self->debug(1,"Global option 'xrootMonALISAHost' defined to ".$self->getGlobalOption("xrootMonALISAHost"));
-  }
-  if ( $xroot_config->{installDir} ) {
-    $self->setGlobalOption("xrootInstallDir",$xroot_config->{installDir});
-    $self->debug(1,"Global option 'xrootInstallDir' defined to ".$self->getGlobalOption("xrootInstallDir"));
-    $xroot_bin_dir = $self->getGlobalOption("xrootInstallDir") . "/bin";
-  }
-  if ( $xroot_config->{tokenAuthLibDir} ) {
-    $self->setGlobalOption("xrootTokenAuthLibDir",$xroot_config->{tokenAuthLibDir});
-    $self->debug(1,"Global option 'xrootTokenAuthLibDir' defined to ".$self->getGlobalOption("xrootTokenAuthLibDir"));
-  }
-      
-  # Build xrootd configuration file (based on template provided in distribution, if it exists).
-  # The template was not present in the first version of DPM-xrootd.
-  my $xrootd_config_dir = $xroot_config->{configDir};
-  unless ( $xrootd_config_dir =~ /^\s*\// ) {
-    $xrootd_config_dir = $dm_install_dir . '/etc/' . $xrootd_config_dir;
-  }
-  if ( defined($xroot_config->{config}) ) {
-    my $xrootd_config_file = $xroot_config->{config};
-    unless ( $xrootd_config_file =~ /^\s*\// ) {
-      $xrootd_config_file = $dm_install_dir . '/etc/' . $xroot_config->{config};
-    }
-    # Global option tracks only the file name without its path as the sysconfig file requires only the name.
-    if ( $xroot_config->{config} ) {
-      $self->setGlobalOption("xrootConfig",basename($xrootd_config_file));
-      $self->debug(1,"Global option 'xrootConfig' defined to ".$self->getGlobalOption("xrootConfig"));
-    }
-    my $xrootd_config_template = $xrootd_config_file . '.templ';
-    if ( -f $xrootd_config_template ) {
-      if ( !compare($xrootd_config_template,$xrootd_config_file) ) {
-        $self->debug(1,"$function_name: xrootd configuration file ($xrootd_config_file) is up-to-date");
-      } else {
-        $self->info("Updating xrootd configuration file ($xrootd_config_file) with template ($xrootd_config_template)");
-        if ( copy ($xrootd_config_template,$xrootd_config_file) ) {
-          $restart_services = 1;
-        } else {
-          $self->warn("Error creating xrootd configuration file ($xroot_config_file)");
-        }
-      }
-    } else {
-      $self->debug(1,"$function_name: xrootd configuration file template ($xrootd_config_template) not found. Configuration file ($xrootd_config_file) must be created manually.");
-    }
-  }
-  
-  # Build Authz configuration file for token-based authz
-  if ( $xroot_token_auth ) {
-    # Build authz.cf
-    $self->info("Token-based authentication used: checking authz.cf");
-    my $exported_vo_path_root = $self->NSGetRoot();
-    my $xroot_authz_conf_file = $xroot_config->{authzConf};
-    unless ( $xroot_authz_conf_file =~ /^\s*\// ) {
-      $xroot_authz_conf_file = $xrootd_config_dir . "/" . $xroot_authz_conf_file;
-    };
-    $self->setGlobalOption("xrootAuthzConf",$xroot_authz_conf_file);
-    $self->debug(1,"Global option 'xrootAuthzConf' defined to ".$self->getGlobalOption("xrootAuthzConf"));
-    my $xroot_token_priv_key;
-    if ( defined($xroot_config->{tokenPrivateKey}) ) {
-      $xroot_token_priv_key = $xrootd_config_dir . '/' . $xroot_config->{tokenPrivateKey};
-    } else {
-      $xroot_token_priv_key = $xrootd_config_dir . '/pvkey.pem';    
-    }
-    my $xroot_token_pub_key;
-    if ( defined($xroot_config->{tokenPublicKey}) ) {
-      $xroot_token_pub_key = $xrootd_config_dir . '/' . $xroot_config->{tokenPublicKey};
-    } else {
-      $xroot_token_pub_key = $xrootd_config_dir . '/pkey.pem';    
-    }
-    my $xroot_authz_conf_contents = "Configuration file for xroot authz generated by quattor - DO NOT EDIT.\n\n" .
-                                    "# Keys reside in ".$xrootd_config_dir."\n" .
-                                    "KEY VO:*       PRIVKEY:".$xroot_token_priv_key." PUBKEY:".$xroot_token_pub_key."\n\n" .
-                                    "# Restrict the name space for export\n";
-    if ( $xroot_config->{exportedVOs} ) {
-      for my $vo (@{$xroot_config->{exportedVOs}} ) {
-        my $exported_vo_path = $exported_vo_path_root.'/'.$vo;      
-        $xroot_authz_conf_contents .= "EXPORT PATH:".$exported_vo_path." VO:*     ACCESS:ALLOW CERT:*\n";
-      }
-    } else {
-      $self->warn("dpm-xroot: export enabled for all VOs. You should consider restrict to one VO only.");
-      $xroot_authz_conf_contents .= "EXPORT PATH:".$exported_vo_path_root." VO:*     ACCESS:ALLOW CERT:*\n";
-    } 
-  
-    $xroot_authz_conf_contents .= "\n# Define operations requiring authorization.\n";
-    $xroot_authz_conf_contents .= "# NOAUTHZ operations honour authentication if present but don't require it.\n";
-    if ( $xroot_config->{accessRules} ) {
-      for my $rule (@{$xroot_config->{accessRules}}) {
-        my $auth_ops = join '|', @{$rule->{authenticated}};
-        my $noauth_ops = join '|', @{$rule->{unauthenticated}};
-        $xroot_authz_conf_contents .= "RULE PATH:".$rule->{path}.
-                                      " AUTHZ:$auth_ops| NOAUTHZ:$noauth_ops| VO:".$rule->{vo}." CERT:".$rule->{cert}."\n";
-      }
-    } else {
-      $xroot_authz_conf_contents .= "\n# WARNING: no access rules defined in quattor configuration.\n";
-    }
-    my $changes = LC::Check::file($xroot_authz_conf_file,
-                                  backup => $config_bck_ext,
-                                  contents => encode_utf8($xroot_authz_conf_contents),
-                                  owner => $self->getDaemonUser(),
-                                  group => $self->getDaemonGroup(),
-                                  mode => 0400,
-                                 );
-    if ( $changes > 0 ) {
-      $restart_services = 1;
-    } elsif ( $changes < 0 ) {
-      $self->error("Error updating xrootd authorization configuration ($xroot_authz_conf_file)");
-    }
-  
-    # Set right permissions on token public/private keys
-    for my $key ($xroot_token_priv_key,$xroot_token_pub_key) {
-      if ( -f $key ) {
-        $self->debug(1,"$function_name: Checking permission on $key");
-        $changes = LC::Check::status($key,
-                                     owner => $self->getDaemonUser(),
-                                     group => $self->getDaemonGroup(),
-                                     mode => 0400
-                                    );
-        unless (defined($changes)) {
-          $self->error("Error setting permissions on xrootd token key $key");
-        }
-      } else {
-          $self->warn("xrootd token key $key not found.");
-      }  
-    }
-  } else {
-    $self->debug(1,"Token-based authentication disabled.");
-  }
-
-  # Build the list of daemons to run on the current node according to node type
-  #   - Disk server must run olbd (service olb) and xrootd (service xrd)
-  #   - DPM head node must run manager-olbd (service manager-olb) and manager-xrootd (service manager-xrd)
-  #   - A head node acting also as a disk server must run both
-  # This is managed by buildind a list of prefix to add before the daemon/service name.
-  my @xroot_daemon_prefixes;
-  if ( $xroot_headnode ) {
-    push @xroot_daemon_prefixes,$xrootd_daemon_prefix{head};
-  }
-  if ( $xroot_diskserver ) {
-    push @xroot_daemon_prefixes,$xrootd_daemon_prefix{disk};      
-  }
-
-  # Create symlinks to service daemons according to node type
-  
-  for my $prefix (@xroot_daemon_prefixes) {
-    for my $daemon (keys(%xrootd_services)) {
-      my $link_name = $xroot_bin_dir . '/' . $prefix . $daemon;
-      my $link_target = $xroot_bin_dir . '/' . $daemon;
-      if ( !-x $link_target ) {
-        $self->warn("$link_target missing or not executable. Check your DPM installation.");
-      }
-      if ( -l $link_name ) {
-        $self->debug(1,"$function_name: $link_name already exists. Nothing done.");
-      } else {
-        if ( -e $link_name ) {
-          $self->error("$link_name already exists but is not a symlink.");
-          next;
-        } else {
-          my $status = symlink $link_target, $link_name;
-          if ( $status == 1 ) {
-            $self->info("Symlink $link_name defined as $link_target");
-            $restart_services = 1;
-          } else {
-            $self->error("Error defining symlink $link_name as $link_target");
-          }
-        }
-      }
-    }
-  }
-  
-  # Define services associated with 'xroot' role according to xroot node type
-  # and check if a configuration change involves restarting the services.
-  
-  my @xroot_service_list;
-  for my $prefix (@xroot_daemon_prefixes) {
-    for my $daemon (keys(%xrootd_services)) {
-      my $service = $xrootd_services{$daemon};
-      my $service_name = $prefix . $service;
-      $self->debug(1,"$function_name: adding service $service_name to role '$xroot_role'");
-      push @xroot_service_list, $service_name;
-    }
-    $services{$xroot_role} = join (",", @xroot_service_list);
-    if ( $restart_services ) {
-      $self->serviceRestartNeeded($xroot_role);
-    }
-  }
-}
 
 1;      # Required for PERL modules

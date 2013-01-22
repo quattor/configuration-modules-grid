@@ -37,6 +37,8 @@ DPM and LFC accept the same global options but there is a separate set for each 
 =head2 /software/components/dpmlfc/options/PRODUCT/accessProtocols : list (optional, DPM only)
 
 List of access protocols supported on disk servers. Supported protocols are : https, gsiftp, rfio, xroot.
+Note that xrootd configuration itself, including the DPM/Xrootd plug-in, must be configured with
+ncm-xrootd.
 
 Default: None (default configuration provided by RPM will be used)
 
@@ -123,79 +125,6 @@ This option defines the userid used to connect to the database.
 
 Default : userid used to run daemons
 
-
-=head1 XROOT OPTIONS (DPM)
-
-If xroot protocol is enabled in DPM, this is possible to define some xroot parameters common to all nodes.
-
-=head2 /software/components/dpmlfc/options/dpm/xroot/authzConf
-
-This option defines the name of the authz configuration file. The name can be a path relative to 
-'configDir' or an absolute path.
-
-Default : xrd.authz.cf (in 'configDir')
-
-
-=head2 /software/components/dpmlfc/options/dpm/xroot/config
-
-This option defines the name of the xroot daemon configuration file.
-
-Default : default value of XRDCONFIG variable in /etc/sysconfig/dpm-xrd.example
-
-
-=head2 /software/components/dpmlfc/options/dpm/xroot/configDir (string)
-
-This option defines the location of xroot configuration files. It can be a path relative to /opt/lcg/etc
-(or the directory where DPM is installed) or an absolute path.
-
-Default : xroot (relative to /etc under DPM installation path)
-
-
-=head2 /software/components/dpmlfc/options/dpm/xroot/exportedVOs (list of string)
-
-List of VOs exported through xrootd. Note that the list is currently restricted to one element.
-
-Default: All VOs (not recommended)
-
-=head2 /software/components/dpmlfc/options/dpm/xroot/ofsPlugin
-
-This option specified the Ofs plugin to use. Ofs plugin defines the type of authentication to use.
-
-Default: default value of XRDOFS variable in /etc/sysconfig/dpm-xrd.example
-
-=head2 /software/components/dpmlfc/options/dpm/xroot/tokenPrivateKey
-
-This option specifies the name of the file containing the private key to use with token-based authentication (Ofs plugin = TokenAuthzOfs).
-
-Default: pvkey.pem
-
-=head2 /software/components/dpmlfc/options/dpm/xroot/tokenPublicKey
-
-This option specifies the name of the file containing the public key to use with token-based authentication (Ofs plugin = TokenAuthzOfs).
-
-Default: pkey.pem
-
-=head2 /software/components/dpmlfc/options/dpm/xroot/accessRules : list of nlist (optional)
-
-This option specifies the rules defining the operations requiring authentication and those permitted without 
-authentication (authentication will be used if present). This is a list where each element is a nlist with the
-following attributes:
-
-=over
-
-=item path Nampespace path the rule applies to. Mandatory, no default.
-
-=item authenticated list of operations requiring authentication. Possible values are: read, write, write-once, delete.
-Mandatory, no default.
-
-=item unauthenticated list of operations allowed without authentication. Possible values are: same as authenticated.
-Mandatory, no default.
-
-=item vo VO the rule applies to. Default: * (all VOs).
-
-=item cert DN the rule applies to. Default: * (all DNs)
-
-=back
 
 =head1 DAEMON INSTANCE OPTIONS (DPM and LFC)
 

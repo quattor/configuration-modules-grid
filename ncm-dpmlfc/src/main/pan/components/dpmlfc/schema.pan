@@ -129,43 +129,6 @@ type ${project.artifactId}_component_lfc_node_config = {
         "disableAutoVirtualIDs" ? boolean
 };
 
-# xrootd authentication plug-in allow to specify operations requiring
-# authentication and those allowed without authentication (authentication will be
-# used if present).
-type ${project.artifactId}_component_xroot_access_rules = {
-  'path' : string
-  'authenticated' : string[]
-  'unauthenticated' : string[]
-  'vo' : string = '*'
-  'cert' : string = '*'
-} with component_dpmlfc_xroot_access_rules_valid(SELF);
-
-# xrootd has several specific options
-type ${project.artifactId}_component_xroot_fed_options = {
-  'remote_cmsd_manager' : string
-  'remote_xrd_manager' : string
-  'cmsd_options' ? string
-  'xrootd_options' ? string
-  'redir_local_port' ? long
-};
-
-type ${project.artifactId}_component_xroot_options = {
-        "installDir" ? string
-        "tokenAuthLibDir" ? string
-        "ofsPlugin" : string = 'Ofs'
-        "cmsDaemon" : string = 'cmsd' with match(SELF,'cmsd|olbd')
-        "configDir" : string = 'xrootd'
-        "config"    : string = 'xrd.dpm.cf'
-        "exportedVOs" ? string[]
-        "MonALISAHost" ? string
-        "authzConf" : string = 'xrd.authz.cf'
-        "tokenPrivateKey" ? string
-        "tokenPublicKey" ? string
-        "accessRules" ? ${project.artifactId}_component_xroot_access_rules[]
-        "isRedirector" ? boolean = false
-        "federation" ? ${project.artifactId}_component_xroot_fed_options
-};
-
 type ${project.artifactId}_component_db_conn_options = {
         "configfile"    ? string
         "configmode"    ? string = '600'
@@ -181,7 +144,6 @@ type ${project.artifactId}_component_global_options = {
         "user"        ? string
         "group"       ? string
         "db"          ? ${project.artifactId}_component_db_conn_options
-        "xroot"       ? ${project.artifactId}_component_xroot_options
         "installDir"  ? string = '/'
         "gridmapfile" ? string
         "gridmapdir"  ? string
