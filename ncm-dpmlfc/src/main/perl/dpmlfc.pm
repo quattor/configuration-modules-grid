@@ -9,19 +9,15 @@
 # LFC (Logical File Catalog) configuration management. It hs been designed
 # to be very flexible and need no major change to handle changes in
 # configuration file format, by using parsing rules to update the contents
-# of configuration files. When provided, this component uses .templ files
-# (templates) to produce the actual configuration files, maintaining the
-# ability to manually edit these files for lines not managed by this component.
-# .templ files can be used as documentation about what should be produced by
-# this component.
+# of configuration files. 
 #
 # Configuration files are modified only if their contents need to be changed,
 # not at every run of the component. In case of changes, the services depending
 # on the modified files are restared.
 #
 # Adding support for a new configuration variable should be pretty easy.
-# Basically, if this is role specific variable, you just need to define it in
-# a template and use add a parsing rule that use it in the %xxx_config_rules
+# Basically, if this is a role specific variable, you just need add a 
+# parsing rule that use it in the %xxx_config_rules
 # for the configuration file. If this is a global variable, you also need to
 # load it from the configuration file as this is done for other configuration
 # variables (at the beginning of Configure()). Look at the comments before
@@ -31,7 +27,7 @@
 # modifying.
 #
 # In case of problems, use --debug option of ncm-ncd. This will produce a lot
-# of debugging information. 3 debugging levels are available (1, 2, 3).
+# of debugging information. 2 debugging levels are available (1, 2).
 #
 #######################################################################
 
@@ -42,7 +38,6 @@ use NCM::Component;
 use vars qw(@ISA $EC);
 @ISA = qw(NCM::Component);
 $EC=LC::Exception::Context->new->will_store_all;
-use NCM::Check;
 
 use EDG::WP4::CCM::Element;
 
@@ -52,11 +47,13 @@ use File::Compare;
 use File::Basename;
 use File::stat;
 
-use LC::File qw(file_contents);
 use LC::Check;
+use CAF::FileWriter;
+use CAF::FileEditor;
 use CAF::Process;
 
 use Encode qw(encode_utf8);
+use Fcntl qw(SEEK_SET);
 
 local(*DTA);
 
@@ -64,9 +61,7 @@ use Net::Domain qw(hostname hostfqdn hostdomain);
 
 
 # Define paths for convenience. 
-my $base = "/software/components/dpmlfc";
-my $dm_install_dir_default = "/opt/lcg";
-my $xroot_options_base = $base."/options/dpm/xroot";
+my $dm_install_dir_default = "/";
 
 # Define some commands explicitly
 my $chkconfig = "/sbin/chkconfig";
@@ -74,25 +69,18 @@ my $servicecmd = "/sbin/service";
 
 my $dpm_def_host;
 
-# Entry DEFAULT is tried first for any role. 
-# If not found, the role-specific entry is tried: this is to handle
-# template files which used non-standard extensions in early versions,
-# like xrootd template file.
-my %config_template_ext = ('DEFAULT', '.templ',
-                           'xroot', '.example',
-                          );
-
 my $config_bck_ext = ".old";    # Replaced version extension
 #my $config_prod_ext = ".new";    # For testing purpose only
 my $config_prod_ext = "";    # For testing purpose only
 
 
 # Constants use to format lines in configuration files
-my $line_format_param = 1;
-my $line_format_envvar = 2;
-my $line_format_trust = 3;
-my $line_format_def = $line_format_param;
-
+use constant LINE_FORMAT_PARAM => 1;
+use constant LINE_FORMAT_ENVVAR => 2;
+use constant LINE_FORMAT_TRUST => 3;
+use constant LINE_VALUE_AS_IS => 0;
+use constant LINE_VALUE_BOOLEAN => 1;
+my $line_format_def = LINE_FORMAT_PARAM;
 
 # dpm and lfc MUST be the first element in their respective @xxx_roles array to 
 # correctly apply defaults
@@ -134,181 +122,203 @@ my %lfc_comp_max_servers = (
          );
 
 
-# Following hashes define parsing rules to build a configuration (from a template
-# or a new one). Hash key is the line keyword in configuration file and 
+# Following hashes define parsing rules to build a configuration.
+# Hash key is the line keyword in configuration file and 
 # hash value is the parsing rule for the keyword value. Parsing rule format is :
-#       [role_condition->]option_name:option_role[,option_role,...];line_fmt
+#       [role_condition->]option_name:option_role[,option_role,...];line_fmt[;value_fmt]
 # 'role_condition' is a role that must be present on the local machine for the
-# rule to be applied.
+# rule to be applied or ALWAYS if the rule must be applied even if the role is disabled
+# (mainly used for RUN_xxxDAEMON variables).
 # 'option_name' is the name of an option that will be retrieved from the configuration
 # 'option_role' is the role the option is attached to (for example 'host:dpns'
 # means 'host' option of 'dpns' role. 'GLOBAL' is a special value for 'option_role'
 # indicating that the option is global option and not a role specific option.
-# 'line_fmt' indicate the line format for the parameter : 3 formats are 
+# 'line_fmt' indicates the line format for the parameter : 3 formats are 
 # supported :
 #  - envvar : a sh shell environment variable definition (export VAR=val)
 #  - param : a sh shell variable definition (VAR=val)
 #  - trust : a 'keyword value' line, as used by /etc/shift.conf
 # Line format has an impact on hosts list if there is one. For trust format,
 # each host in the local domain is inserted with its FQDN and local host is removed. 
-#
+# 'value_fmt' allows special formatting of the value. This is mainly used for boolean
+# values so that they are encoded as 'yes' or 'no'.
 # If there are several servers for a role the option value from all the servers# is used for 'host' option, and only the server corresponding to current host
 # for other options.
 my $copyd_config_file = "/etc/sysconfig/dpmcopyd";
 my %copyd_config_rules = (
-        "DPM_HOST" => "host:dpm;$line_format_envvar",
-        "DPNS_HOST" => "host:dpns;$line_format_envvar",
-        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;$line_format_param",
-        "DPMCOPYDLOGFILE" => "logfile:copyd;$line_format_param",
-        "DPMUSER" => "user:GLOBAL;$line_format_param",
-        "DPMGROUP" => "group:GLOBAL;$line_format_param",
-        "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
-        "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
-        "DPMCOPYD_PORT" => "port:copyd;$line_format_envvar",
-        "LD_ASSUME_KERNEL" =>"assumekernel:copyd;$line_format_envvar",
-        "ALLOW_COREDUMP" =>"allowCoreDump:copyd;$line_format_envvar",
+        "ALLOW_COREDUMP" =>"allowCoreDump:copyd;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
+        "DPMCOPYDLOGFILE" => "logfile:copyd;".LINE_FORMAT_PARAM,
+        #"DPMCOPYD_PORT" => "port:copyd;".LINE_FORMAT_PARAM,
+        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
+        ##"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
+        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
+        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
+        "RUN_DPMCOPYDAEMON" => "ALWAYS->copyd_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "ULIMIT_N" => "maxOpenFiles:copyd;".LINE_FORMAT_PARAM,
        );
 
 my $dpm_config_file = "/etc/sysconfig/dpm";
 my %dpm_config_rules = (
-      "DPNS_HOST" => "host:dpns;$line_format_envvar",
-      "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;$line_format_param",
-      "DPMDAEMONLOGFILE" => "logfile:dpm;$line_format_param",
-      "DPMUSER" => "user:GLOBAL;$line_format_param",
-      "DPMGROUP" => "group:GLOBAL;$line_format_param",
-      "DPM_PORT" => "port:dpm;$line_format_envvar",
-      "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
-      "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
-      "LD_ASSUME_KERNEL" =>"assumekernel:dpm;$line_format_envvar",
-      "ALLOW_COREDUMP" =>"allowCoreDump:dpm;$line_format_envvar",
+      "ALLOW_COREDUMP" =>"allowCoreDump:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+      "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+      "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
+      "DPMDAEMONLOGFILE" => "logfile:dpm;".LINE_FORMAT_PARAM,
+      #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
+      #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
+      #"DPM_PORT" => "port:dpm;".LINE_FORMAT_PARAM,
+      "DPM_USE_SYNCGET" => "useSyncGet:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+      "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
+      "NB_FTHREADS" => "fastThreads:dpm;".LINE_FORMAT_PARAM,
+      "NB_STHREADS" => "slowThreads:dpm;".LINE_FORMAT_PARAM,
+      "RUN_DPMDAEMON" => "ALWAYS->dpm_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+      "ULIMIT_N" => "maxOpenFiles:dpm;".LINE_FORMAT_PARAM,
            );
 
 my $dpns_config_file = "/etc/sysconfig/dpnsdaemon";
 my %dpns_config_rules = (
-       "DPNSDAEMONLOGFILE" => "logfile:dpns;$line_format_param",
-       "DPMUSER" => "user:GLOBAL;$line_format_param",
-       "DPMGROUP" => "group:GLOBAL;$line_format_param",
-       "DPNS_PORT" => "port:dpns;$line_format_envvar",
-       "NSCONFIGFILE" => "dbconfigfile:GLOBAL;$line_format_param",
-       "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
-       "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
-       "LD_ASSUME_KERNEL" =>"assumekernel:dpns;$line_format_envvar",
-       "ALLOW_COREDUMP" =>"allowCoreDump:dpns;$line_format_envvar",
+       "ALLOW_COREDUMP" =>"allowCoreDump:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+       #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
+       #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
+       "DPNSDAEMONLOGFILE" => "logfile:dpns;".LINE_FORMAT_PARAM,
+       #"DPNS_PORT" => "port:dpns;".LINE_FORMAT_PARAM,
+       "NB_THREADS" => "threads:dpns;".LINE_FORMAT_PARAM,
+       "NSCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
+       "RUN_DPNSDAEMON" => "ALWAYS->dpns_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+       "RUN_READONLY" => "readonly:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+       "ULIMIT_N" => "maxOpenFiles:dpns;".LINE_FORMAT_PARAM,
       );
 
 my $gsiftp_config_file = "/etc/sysconfig/dpm-gsiftp";
 my %gsiftp_config_rules = (
-         "DPM_HOST" => "host:dpm;$line_format_envvar",
-         "DPNS_HOST" => "host:dpns;$line_format_param",
-         "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
-         "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
+         "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
+         "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+         "FTPLOGFILE" => "logfile:gsiftp;".LINE_FORMAT_PARAM,
+         "GLOBUS_TCP_PORT_RANGE" => "portRange:gsiftp;".LINE_FORMAT_PARAM,
+         "OPTIONS" => "startupOptions:gsiftp;".LINE_FORMAT_PARAM,
+         "RUN_DPMFTP" => "ALWAYS->gsiftp_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
         );
 
 my $rfio_config_file = "/etc/sysconfig/rfiod";
 my %rfio_config_rules = (
-       "DPNS_HOST" => "host:dpns;$line_format_envvar",
-       "RFIOLOGFILE" => "logfile:rfio;$line_format_param",
-       "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
-       "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
+       "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+       "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
+       "OPTIONS" => "startupOptions:rfio;".LINE_FORMAT_PARAM,
+       "RFIOLOGFILE" => "logfile:rfio;".LINE_FORMAT_PARAM,
+       "RFIO_PORT_RANGE" => "portRange:rfio;".LINE_FORMAT_PARAM,
+       "RUN_RFIOD" => "ALWAYS->rfio_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+       "ULIMIT_N" => "maxOpenFiles:rfio;".LINE_FORMAT_PARAM,
        );
 
 my $srmv1_config_file = "/etc/sysconfig/srmv1";
 my %srmv1_config_rules = (
-        "DPM_HOST" => "host:dpm;$line_format_envvar",
-        "DPNS_HOST" => "host:dpns;$line_format_envvar",
-        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;$line_format_param",
-        "SRMV1CONFIGFILE" => "configfile:srmv1;$line_format_param",
-        "SRMV1DAEMONLOGFILE" => "logfile:srmv1;$line_format_param",
-        "DPMUSER" => "user:GLOBAL;$line_format_param",
-        "DPMGROUP" => "group:GLOBAL;$line_format_param",
-        "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
-        "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
-        "SRMV1_PORT" => "port:srmv1;$line_format_envvar",
-        "LD_ASSUME_KERNEL" =>"assumekernel:srmv1;$line_format_envvar",
-        "ALLOW_COREDUMP" =>"allowCoreDump:srmv1;$line_format_envvar",
+        "ALLOW_COREDUMP" =>"allowCoreDump:srmv1;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
+        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
+        #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
+        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
+        "RUN_SRMV1DAEMON" => "ALWAYS->srmv1_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "SRMV1DAEMONLOGFILE" => "logfile:srmv1;".LINE_FORMAT_PARAM,
+        #"SRMV1_PORT" => "port:srmv1;".LINE_FORMAT_PARAM,
+        "ULIMIT_N" => "maxOpenFiles:srmv1;".LINE_FORMAT_PARAM,
        );
 
 my $srmv2_config_file = "/etc/sysconfig/srmv2";
 my %srmv2_config_rules = (
-        "DPM_HOST" => "host:dpm;$line_format_envvar",
-        "DPNS_HOST" => "host:dpns;$line_format_envvar",
-        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;$line_format_param",
-        "SRMV2DAEMONLOGFILE" => "logfile:srmv2;$line_format_param",
-        "DPMUSER" => "user:GLOBAL;$line_format_param",
-        "DPMGROUP" => "group:GLOBAL;$line_format_param",
-        "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
-        "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
-        "SRMV2_PORT" => "port:srmv2;$line_format_envvar",
-        "LD_ASSUME_KERNEL" =>"assumekernel:srmv2;$line_format_envvar",
-        "ALLOW_COREDUMP" =>"allowCoreDump:srmv2;$line_format_envvar",
+        "ALLOW_COREDUMP" =>"allowCoreDump:srmv2;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
+        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
+        #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
+        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
+        "RUN_SRMV2DAEMON" => "ALWAYS->srmv2_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "SRMV2DAEMONLOGFILE" => "logfile:srmv2;".LINE_FORMAT_PARAM,
+        #"SRMV2_PORT" => "port:srmv2;".LINE_FORMAT_PARAM,
+        "ULIMIT_N" => "maxOpenFiles:srmv2;".LINE_FORMAT_PARAM,
        );
 
 my $srmv22_config_file = "/etc/sysconfig/srmv2.2";
 my %srmv22_config_rules = (
-        "DPM_HOST" => "host:dpm;$line_format_envvar",
-        "DPNS_HOST" => "host:dpns;$line_format_envvar",
-        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;$line_format_param",
-        "SRMV22DAEMONLOGFILE" => "logfile:srmv22;$line_format_param",
-        "DPMUSER" => "user:GLOBAL;$line_format_param",
-        "DPMGROUP" => "group:GLOBAL;$line_format_param",
-        "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
-        "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
-        "SRMV2_2_PORT" => "port:srmv22;$line_format_envvar",
-        "LD_ASSUME_KERNEL" =>"assumekernel:srmv22;$line_format_envvar",
-        "ALLOW_COREDUMP" =>"allowCoreDump:srmv22;$line_format_envvar",
+        "ALLOW_COREDUMP" =>"allowCoreDump:srmv22;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
+        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
+        #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
+        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
+        "NB_THREADS" => "threads:srmv22;".LINE_FORMAT_PARAM,
+        "RUN_SRMV2DAEMON" => "ALWAYS->srmv22_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "SRMV22DAEMONLOGFILE" => "logfile:srmv22;".LINE_FORMAT_PARAM,
+        #"SRMV2_2_PORT" => "port:srmv22;".LINE_FORMAT_PARAM,
+        "ULIMIT_N" => "maxOpenFiles:srmv22;".LINE_FORMAT_PARAM,
        );
 
-my $xroot_config_file = "/etc/sysconfig/dpm-xrd";
+my $xroot_config_file = "/etc/sysconfig/xrootd";
 my %xroot_config_rules = (
-        "ALICEACCLOC" => "xrootTokenAuthLibDir:GLOBAL;$line_format_param",
-        "DPM_HOST" => "host:dpm;$line_format_envvar",
-        "DPNS_HOST" => "host:dpns;$line_format_envvar",
-        "MANAGERHOST" => "host:dpm;$line_format_envvar",
-        "MONALISAHOST" => "xrootMonALISAHost:GLOBAL;$line_format_envvar",
-        "TTOKENAUTHZ_AUTHORIZATIONFILE" => "xrootAuthzConf:GLOBAL;$line_format_envvar",
-        "XRDCONFIG" => "xrootConfig:GLOBAL;$line_format_envvar",
-        "XRDOFS" => "xrootOfsPlugin:GLOBAL;$line_format_param",
-        "XRDLOCATION" => "xrootInstallDir:GLOBAL;$line_format_param",
-        "XRDLOGDIR" => "logfile:xroot;$line_format_param",
-        "XRDPORT" => "port:xroot;$line_format_envvar",
-        "XRDUSER" => "user:GLOBAL;$line_format_param",
+        "ALICEACCLOC" => "xrootTokenAuthLibDir:GLOBAL;".LINE_FORMAT_PARAM,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
+        "MANAGERHOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+        "MONALISAHOST" => "xrootMonALISAHost:GLOBAL;".LINE_FORMAT_ENVVAR,
+        "RUN_XROOTDAEMON" => "ALWAYS->xroot_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "TTOKENAUTHZ_AUTHORIZATIONFILE" => "xrootAuthzConf:GLOBAL;".LINE_FORMAT_ENVVAR,
+        "XRDCONFIG" => "xrootConfig:GLOBAL;".LINE_FORMAT_ENVVAR,
+        "XROOTD_GROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
+        "XRDOFS" => "xrootOfsPlugin:GLOBAL;".LINE_FORMAT_PARAM,
+        "XRDLOCATION" => "xrootInstallDir:GLOBAL;".LINE_FORMAT_PARAM,
+        "XRDLOGDIR" => "logfile:xroot;".LINE_FORMAT_PARAM,
+        "XRDPORT" => "port:xroot;".LINE_FORMAT_ENVVAR,
+        "XRROOTD_USER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
        );
 
 my $trust_roles = "dpm,dpns,rfio,gsiftp";
 my $trust_config_file = "/etc/shift.conf";
 my %trust_config_rules = (
-        "DPM PROTOCOLS" => "accessProtocols:GLOBAL;$line_format_trust",
-        "DPM TRUST" => "dpm->host:dpns,xroot;$line_format_trust",
-        "DPNS TRUST" => "dpns->host:dpm,srmv1,srmv2,srm22,rfio;$line_format_trust",
-        "RFIOD TRUST" => "rfio->host:dpm,rfio;$line_format_trust",
-        "RFIOD WTRUST" => "rfio->host:dpm,rfio;$line_format_trust",
-        "RFIOD RTRUST" => "rfio->host:dpm,rfio;$line_format_trust",
-        "RFIOD XTRUST" => "rfio->host:dpm,rfio;$line_format_trust",
-        "RFIOD FTRUST" => "rfio->host:dpm,rfio;$line_format_trust",
-        "RFIO DAEMONV3_WRMT 1" => ";$line_format_trust",
-        "DPM REQCLEAN" => "dpm->requestMaxAge:dpm;$line_format_trust",
+        "DPM PROTOCOLS" => "accessProtocols:GLOBAL;".LINE_FORMAT_TRUST,
+        "DPM TRUST" => "dpm->host:dpns,xroot;".LINE_FORMAT_TRUST,
+        "DPNS TRUST" => "dpns->host:dpm,srmv1,srmv2,srm22,rfio;".LINE_FORMAT_TRUST,
+        "RFIOD TRUST" => "rfio->host:dpm,rfio;".LINE_FORMAT_TRUST,
+        "RFIOD WTRUST" => "rfio->host:dpm,rfio;".LINE_FORMAT_TRUST,
+        "RFIOD RTRUST" => "rfio->host:dpm,rfio;".LINE_FORMAT_TRUST,
+        "RFIOD XTRUST" => "rfio->host:dpm,rfio;".LINE_FORMAT_TRUST,
+        "RFIOD FTRUST" => "rfio->host:dpm,rfio;".LINE_FORMAT_TRUST,
+        "RFIO DAEMONV3_WRMT 1" => ";".LINE_FORMAT_TRUST,
+        "DPM REQCLEAN" => "dpm->requestMaxAge:dpm;".LINE_FORMAT_TRUST,
        );
 
 my $lfc_config_file = "/etc/sysconfig/lfcdaemon";
 my %lfc_config_rules = (
       "LFCDAEMONLOGFILE" => "logfile:lfc",
-      "NSCONFIGFILE" => "dbconfigfile:GLOBAL;$line_format_param",
-      "LFCUSER" => "user:GLOBAL;$line_format_param",
-      "LFCGROUP" => "group:GLOBAL;$line_format_param",
-      "LFC_PORT" => "port:lfc;$line_format_envvar",
-      "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
-      "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
+      #"LFCGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
+      #"LFC_PORT" => "port:lfc;".LINE_FORMAT_ENVVAR,
+      #"LFCUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
+      "NB_THREADS" => "threads:lfc;".LINE_FORMAT_PARAM,
+      "NSCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
+      "RUN_DISABLEAUTOVIDS" => "disableAutoVirtualIDs:lfc;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+      "RUN_LFCDAEMON" => "ALWAYS->lfc_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+      "RUN_READONLY" => "readonly:lfc;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+      "ULIMIT_N" => "maxOpenFiles:lfc;".LINE_FORMAT_PARAM,
            );
 
 my $lfcdli_config_file = "/etc/sysconfig/lfc-dli";
 my %lfcdli_config_rules = (
-         "LFC_HOST" => "host:lfc",
          "DLIDAEMONLOGFILE" => "logfile:lfc-dli",
-         "DLI_PORT" => "port:lfc-dli;$line_format_envvar",
-         "LFCUSER" => "user:GLOBAL;$line_format_param",
-         "LFCGROUP" => "group:GLOBAL;$line_format_param",
-         "GRIDMAP" => "gridmapfile:GLOBAL;$line_format_param",
-         "GRIDMAPDIR" => "gridmapdir:GLOBAL;$line_format_param",
+         #"DLI_PORT" => "port:lfc-dli;".LINE_FORMAT_ENVVAR,
+         "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
+         "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
+         #"LFCGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
+         "LFC_HOST" => "host:lfc",
+         #"LFCUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
+         "RUN_DLIDAEMON" => "ALWAYS->lfc-dli_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+         "ULIMIT_N" => "maxOpenFiles:lfc-dli;".LINE_FORMAT_PARAM,
         );
 
 my %config_files = (
@@ -380,8 +390,8 @@ my %db_roles = (
 
 # Define file where is stored DB connection information
 my %db_conn_config = (
-          "DPM" => "/opt/lcg/etc/DPMCONFIG",
-          "LFC" => "/opt/lcg/etc/NSCONFIG",
+          "DPM" => "/etc/DPMCONFIG",
+          "LFC" => "/etc/NSCONFIG",
          );
 my %db_conn_config_mode = (
           "DPM" => "600",
@@ -443,6 +453,12 @@ my %xrootd_cms_services = ('olbd' => 'olb',
                            'cmsd' => 'cms',
                           );
 
+# Pan path for the component configuration, variable to host the profile contents and other
+# constants related to profile
+use constant PANPATH => "/software/components/dpmlfc";
+my $profile;
+
+
 ##########################################################################
 sub Configure($$@) {
 ##########################################################################
@@ -452,6 +468,8 @@ sub Configure($$@) {
   $this_host_name = hostname();
   $this_host_domain = hostdomain();
   $this_host_full = join ".", $this_host_name, $this_host_domain;
+
+  $profile = $config->getElement(PANPATH)->getTree();
 
   # Process separatly DPM and LFC configuration
   
@@ -467,7 +485,11 @@ sub Configure($$@) {
       $dm_install_dir = $dm_install_dir_default;
     }
     $self->setGlobalOption("installDir",$dm_install_dir);
-    $dm_bin_dir = $dm_install_dir . "/bin";
+    if ((length($dm_install_dir) == 0) || ($dm_install_dir eq "/")) {      
+      $dm_bin_dir = "/usr/bin";
+    } else {
+      $dm_bin_dir = $dm_install_dir . "/bin";      
+    }
     
     if ( $product eq "DPM" ) {
       $hosts_roles = \@dpm_roles;
@@ -477,6 +499,19 @@ sub Configure($$@) {
       $comp_max_servers = \%lfc_comp_max_servers;
     }
 
+    # Check that the product is configured, else there is no point in doing
+    # what follows, even though this is mainly harmless.
+    my $product_configured = 0;
+    foreach my $role (@$hosts_roles) {
+      if ( exists($profile->{$role}) ) {
+        $product_configured = 1; 
+        last;  
+      }
+    }
+    if ( ! $product_configured ) {
+      $self->debug(1,"Product $product not configured: skipping its configuration");
+      next;  
+    }
 
     # Retrieve some general options
     # Don't define 'user' global option with a default value to keep it
@@ -491,16 +526,15 @@ sub Configure($$@) {
 
 
     # Define with product default value if not specified
-    my $db_options_base = $base."/options/".lc($product)."/db/";
-    if ( $config->elementExists($db_options_base."configfile") ) {
-      $self->setGlobalOption("dbconfigfile",$config->getElement($db_options_base."configfile")->getValue());
+    if ( my $v = $self->getDbOption('configfile') ) {
+      $self->setGlobalOption("dbconfigfile",$v);
       $self->debug(1,"Global option 'dbconfigfile' defined to ".$self->getGlobalOption("dbconfigfile"));
     } else {
       $self->setGlobalOption("dbconfigfile",$db_conn_config{$product});
       $self->debug(1,"Global option 'dbconfigfile' set to default : ".$self->getGlobalOption("dbconfigfile"));
     }
-    if ( $config->elementExists($db_options_base."configmode") ) {
-      $self->setGlobalOption("dbconfigmode",$config->getElement($db_options_base."configmode")->getValue());
+    if ( my $v = $self->getDbOption('configmode') ) {
+      $self->setGlobalOption("dbconfigmode",$v);
       $self->debug(1,"Global option 'dbconfigmode' defined to ".$self->getGlobalOption("dbconfigmode"));
     } else {
       $self->setGlobalOption("dbconfigmode",$db_conn_config_mode{$product});
@@ -508,43 +542,31 @@ sub Configure($$@) {
     }
 
 
-    # At least $base/dpm or $base/lfc must exist
+    # At least $profile->{dpm} or $profile->{lfc} must exist
 
     for my $role (@{$hosts_roles}) {
-      my $comp_base = "$base/$role";
-      if ($config->elementExists("$comp_base")) {
-        my @servers = $config->getElement("$comp_base")->getList();
-        if ( @servers <= ${$comp_max_servers}{$role} ) {
+      if ( exists($profile->{$role}) ) {
+        my $servers = $profile->{$role};
+        if ( %{$servers} <= ${$comp_max_servers}{$role} ) {
           my $def_host;
-          for my $server (@servers) {
-            my %server_config = $server->getHash();
-            my $role_host;
-            if (exists($server_config{host})) {
-              $role_host = $server_config{host}->getValue();
-              if ( ($role eq "dpm") || ($role eq "lfc") ) {
-                if ( $role eq "lfc" ){
-                  if ( $self->hostHasRoles("dpns") ) {
-                    $self->error("LFC server and DPNS server cannot be run on the same node. Skipping LFC configuration.");
-                    return 0;
-                  }
+          while ( my ($role_host,$host_params) = each(%{$servers}) ) {
+            if ( ($role eq "dpm") || ($role eq "lfc") ) {
+              if ( $role eq "lfc" ){
+                if ( $self->hostHasRoles("dpns") ) {
+                  $self->error("LFC server and DPNS server cannot be run on the same node. Skipping LFC configuration.");
+                  return 0;
                 }
-                $def_host = $role_host;
               }
-            } else {
-              if ( ($role eq "dpm") || ($role eq "lfc") ) {
-                $self->error("Error : No $product host defined.");
-                return 1;
-              } else {
-                $role_host = $def_host;
-              }
-            }
-            
-            $self->addHostInRole($role,$role_host,\%server_config);
+            }            
+            $self->setGlobalOption($role."_service_enabled",1);
+            $self->addHostInRole($role,$role_host,$host_params);
           }
         } else {
           $self->error("Too many ".uc($role)." servers (maximum=${$comp_max_servers}{$role})");
           return 0;
         }
+      } else {
+        $self->setGlobalOption($role."_service_enabled",0);        
       }
     }
 
@@ -557,15 +579,18 @@ sub Configure($$@) {
         if ( $role eq 'xroot' ) {
           $self->xrootSpecificConfig();
         }
-        $self->updateConfigFile($role);
+        $self->updateRoleConfig($role);
         for my $service ($self->getRoleServices($role)) {
           $self->enableService($service);
         }
+      } else {
+        $self->info("Checking that role ".$role." is disabled...");        
+        $self->updateRoleConfig($role,1);
       }
     }
 
     if ( $product eq "DPM" ) {
-      $self->updateConfigFile("trusts") if $self->hostHasRoles($trust_roles);
+      $self->updateRoleConfig("trusts") if $self->hostHasRoles($trust_roles);
     }
 
     # Build init script to control all enabled services
@@ -610,15 +635,13 @@ sub Configure($$@) {
 
   # If product is DPM and current node is DPNS server or if product is LFC and
   # this node runs lfc daemon, do namespace configuration for VOs
-  my $vos_base = $base.'/vos';
   for my $product (@products) {
     $self->defineCurrentProduct($product);
     if ( $self->hostHasRoles($nameserver_role{$product}) ) {
       $self->info("Checking namespace configuration for supported VOs...");
       $self->NSRootConfig();
-      if (  $config->elementExists($vos_base) ) {
-        my $vos_config = $config->getElement($vos_base);
-        my $vos = $vos_config->getTree();
+      if ( exists($profile->{vos}) ) {
+        my $vos = $profile->{vos};
         for my $vo (sort(keys(%$vos))) {
           # A VO may be present without any specific setting
           my %vo_args;
@@ -636,10 +659,8 @@ sub Configure($$@) {
   # is present in the profile, configure pools.
   $self->defineCurrentProduct("DPM");
   if ( $self->hostHasRoles('dpm') ) {
-    my $pool_base = $base.'/pools';
-    if ( $config->elementExists($pool_base) ) {
-      my $pools_config = $config->getElement($pool_base);
-      my $pools = $pools_config->getTree();
+    if ( exists($profile->{pools}) ) {
+      my $pools = $profile->{pools};
       for my $pool (sort(keys(%$pools))) {
         my $pool_args = %{$pools->{$pool}};
         $self->DPMConfigurePool($pool,%{$pool_args});
@@ -1191,12 +1212,12 @@ sub loadGlobalOption () {
 
   my $product = $self->getCurrentProduct();
 
-  my $options_base = $base."/options/".lc($product)."/";
-
-  if ( $config->elementExists($options_base.$option) ) {
-    my $value = $config->getElement($options_base.$option)->getTree();
+  if ( exists($profile->{options}->{lc($product)}->{$option}) ) {
+    my $value = $profile->{options}->{lc($product)}->{$option};
     $self->setGlobalOption($option,$value);
-    $self->debug(2,"Global option '$option' found : ".$self->getGlobalOption($option));
+    $self->debug(2,"$function_name: Global option '$option' found : ".$self->getGlobalOption($option));
+  } else {
+    $self->debug(2,"$function_name: Global option '$option' not found : ");    
   }
 
 
@@ -1218,14 +1239,12 @@ sub getDbOption () {
 
   my $product = $self->getCurrentProduct();
 
-  my $options_base = $base."/options/".lc($product)."/db/";
-
-  if ( $config->elementExists($options_base.$option) ) {
-    return $config->getElement($options_base.$option)->getValue();
+  if ( exists($profile->{options}->{lc($product)}->{db}->{$option}) ) {
+    return $profile->{options}->{lc($product)}->{db}->{$option};
   } else {
-      $self->debug(1,"DB option '$option' not found for product $product");
-      return undef;
-    }
+    $self->debug(1,"DB option '$option' not found for product $product");
+    return undef;
+  }
 
 
 }
@@ -1308,12 +1327,10 @@ sub createDbConfigFile () {
   my $product = $self->getCurrentProduct();
   $self->debug(1,"$function_name: Creating database configuration file for $product");
 
-  my $db_config_base = $base."/options/".lc($product)."/db";
-  unless ( $config->elementExists("$db_config_base") ) {
-    $self->warn("Cannot configure DB connection : configuration missing ($db_config_base)");
+  unless ( exists($profile->{options}->{lc($product)}->{db}) ) {
+    $self->warn("Cannot configure DB connection : configuration missing in profile");
     return 1;
   }
-  $db_config_base .= "/";
 
   my $do_db_config = 1;
 
@@ -1774,14 +1791,14 @@ sub getRoleHostsList () {
 # key).
 # Each list contains for each role the list of hosts configured
 # with this role. Host list is a hash, with hash key the host name and 
-# hash value a reference to the configuration hash returned by getElement()
-# for this host.
+# hash value a reference to the host configuration hash retrieved from
+# the profile.
 # For each non qualified host name, add local domain name
 #
 # Arguments
 #       role : role for which the hosts list must be normalized
 #       host : host to add (a short name is interpreted a local domain name)
-#       role : configuration hash returned by getElement() for the host
+#       role : host configuration hash
 sub addHostInRole () {
   my $function_name = "addHostInRole";
   my $self = shift;
@@ -1957,11 +1974,11 @@ sub formatConfigLine () {
 
   my $config_line = "";
 
-  if ( $line_fmt == $line_format_param ) {
-    $config_line = "$keyword=$value\t\t\t# Line generated by Quattor";
-  } elsif ( $line_fmt == $line_format_envvar ) {
-    $config_line = "export $keyword=$value\t\t# Line generated by Quattor";
-  } elsif ( $line_fmt == $line_format_trust ) {
+  if ( $line_fmt == LINE_FORMAT_PARAM ) {
+    $config_line = "$keyword=$value";
+  } elsif ( $line_fmt == LINE_FORMAT_ENVVAR ) {
+    $config_line = "export $keyword=$value";
+  } elsif ( $line_fmt == LINE_FORMAT_TRUST ) {
     $config_line = $keyword;
     $config_line .= " $value" if $value;
     # In trust (shift.conf) format, there should be only one blank between
@@ -1972,12 +1989,12 @@ sub formatConfigLine () {
     $self->error("$function_name: unsupported line format");
   }
 
-  $self->debug(1,"$function_name: Configuration line : >>$config_line<<");
+  $self->debug(2,"$function_name: Configuration line : >>$config_line<<");
   return $config_line;
 }
 
 
-# This function returns host config (hash returned by getElement()).
+# This function returns host config.
 #
 # Arguments
 #       role : role for which the hosts list must be normalized
@@ -2003,227 +2020,68 @@ sub getHostConfig () {
 }
 
 
-# Create list of lines matching a specific rule in a rules list
-# This list in array, with array index corresponding to the order in
-# the rules list.
-# Each list element is an array, with one element for each line matching the
-# corresponding rule. Each element describing a line is a hash describing
-# the line number (LINENUM) and the line format (LINEFORMAT).
-#
-# Created list is returned.
+# Update configuration file content,  applying configuration rules.
 #
 # Arguments :
-#        config_rules : rules list
-sub createRulesMatchesList () {
-  my $function_name = "createRulesMatchesList";
+#       file_name: name of the file to update
+#       config_rules: config rules corresponding to the file to build
+#       role_disabled (optional): flag indicating that role is disabled (D: 0)
+#                                 only rules with condition=ALWAYS will be applied
+
+sub updateConfigFile () {
+  my $function_name = "updateConfigFile";
   my $self = shift;
 
+  my $file_name = shift;
+  unless ( $file_name ) {
+    $self->error("$function_name: 'file_name' argument missing");
+    return 1;
+  }
   my $config_rules = shift;
   unless ( $config_rules ) {
     $self->error("$function_name: 'config_rules' argument missing");
     return 1;
   }
 
-  $self->{RULESMATCHES} = [];
+  my $role_disabled = shift;
+  unless ( defined($role_disabled) ) {
+    # Assume role is enabled
+    $role_disabled = 0;
+  }
 
+  my $fh = CAF::FileEditor->new($file_name, log => $self);
+  seek($fh, 0, SEEK_SET);
+
+  # Check that config file has an appropriate header
+  my $intro_pattern = "# This file is managed by Quattor";
+  my $intro = "# This file is managed by Quattor - DO NOT EDIT lines generated by Quattor";
+  $fh->add_or_replace_lines(qr/^$intro_pattern/,
+                            qr/^$intro$/,
+                            $intro."\n#\n",
+                            BEGINNING_OF_FILE,
+                           );
+  
+  # Loop over all config rule entries.
+  # Config rules are stored in a hash whose key is the variable to write
+  # and whose value is the rule itself.
+  # Each rule format is '[condition->]attribute:role[,role...];line_fmt' where
+  #     condition: a role that must be configured on local host or ALWAYS 
+  #                if the variable must be configured even if the service is disabled.
+  #     role and attribute: a role attribute that must be substituted
+  #     line_fmt: the format to use when building the line
+  # An empty rule is valid and means that the keyword part must be
+  # written as is, using the line_fmt specified.
+  
   my $rule_id = 0;
-  for my $keyword (keys(%{$config_rules})) {
-    ${$self->{RULESMATCHES}}[$rule_id] = [];
-    $rule_id++;
-  }
+  while ( my ($keyword,$rule) = each(%{$config_rules}) ) {
 
-  return $self->{RULESMATCHES};
-}
-
-
-# Function returning reference to list of lines matching a configuration rule
-#
-# Arguments :
-#        rule_id : rule indentifier for which to retrieve matches
-sub getRuleMatches () {
-  my $function_name = "getRuleMatches";
-  my $self = shift;
-
-  my $rule_id = shift;
-  unless ( defined($rule_id) ) {
-    $self->error("$function_name: 'rule_id' argument missing");
-    return 1;
-  }
-
-  return ${$self->{RULESMATCHES}}[$rule_id];
-}
-
-
-# Function to add a line in RulesMatchingList
-#
-# Arguments :
-#        rule_id : rule indentifier for which to retrieve matches
-#        line_num : matching line number (in the config file)
-#        line_fmt : format of the line (see buildConfigContents)
-sub addInRulesMatchesList () {
-  my $function_name = "addInRulesMatchesList";
-  my $self = shift;
-
-  my $rule_id = shift;
-  unless ( defined($rule_id) ) {
-    $self->error("$function_name: 'rule_id' argument missing");
-    return 1;
-  }
-  my $line_num = shift;
-  unless ( defined($line_num) ) {
-    $self->error("$function_name: 'line_num' argument missing");
-    return 1;
-  }
-  my $line_fmt = shift;
-  unless ( defined($line_fmt) ) {
-    $self->error("$function_name: 'line_fmt' argument missing");
-    return 1;
-  }
-
-  $self->debug(1,"$function_name: adding line $line_num (line fmt=$line_fmt) to rule $rule_id list");
-  my $list = $self->getRuleMatches($rule_id);
-  my %line;
-  $line{LINENUM} = $line_num;
-  $line{LINEFORMAT} = $line_fmt;
-  push @{$list}, \%line;
-
-}
-
-
-# Function returning line number corresponding to one element in RulesMatchingList or 'undef' if there is no more element
-#
-# Arguments :
-#        rule_id : rule indentifier for which to retrieve matches
-#        entry_num : rule match number
-sub getRulesMatchesLineNum () {
-  my $function_name = "getRulesMatchesLineNum";
-  my $self = shift;
-
-  my $rule_id = shift;
-  unless ( defined($rule_id) ) {
-    $self->error("$function_name: 'rule_id' argument missing");
-    return 1;
-  }
-  my $entry_num = shift;
-  unless ( defined($entry_num) ) {
-    $self->error("$function_name: 'entry_num' argument missing");
-    return 1;
-  }
-
-  my $list = $self->getRuleMatches($rule_id);
-  my $entry =  ${$list}[$entry_num];
-
-  return ${$entry}{LINENUM};
-}
-
-
-# Function returning line format corresponding to one element in RulesMatchingList or 'undef' if there is no more element
-#
-# Arguments :
-#        rule_id : rule indentifier for which to retrieve matches
-#        entry_num : rule match number
-sub getRulesMatchesLineFmt () {
-  my $function_name = "getRulesMatchesLineFmt";
-  my $self = shift;
-
-  my $rule_id = shift;
-  unless ( defined($rule_id) ) {
-    $self->error("$function_name: 'rule_id' argument missing");
-    return 1;
-  }
-  my $entry_num = shift;
-  unless ( defined($entry_num) ) {
-    $self->error("$function_name: 'entry_num' argument missing");
-    return 1;
-  }
-
-  my $list = $self->getRuleMatches($rule_id);
-  my $entry =  ${$list}[$entry_num];
-
-  return ${$entry}{LINEFORMAT};
-}
-
-
-# Build a new configuration file content, using template contents if any and
-# applying configuration rules to transform the template.
-#
-# Arguments :
-#       config_rules : config rules corresponding to the file to build
-#       template_contents (optional) : config file template to be edit with rules.
-#                                      If not present build a new file content.
-sub buildConfigContents () {
-  my $function_name = "buildConfigContents";
-  my $self = shift;
-
-  my $config_rules = shift;
-  unless ( $config_rules ) {
-    $self->error("$function_name: 'config_rules' argument missing");
-    return 1;
-  }
-  my $template_contents = shift;
-
-  my @newcontents;
-  my @rule_lines;
-  my $file_line_offset = 1;  # Used in debugging messages
-  my $rule_id = 0;
-
-  # Intialize this array of array (each array element is an array containing
-  # each line where the keyword is present)
-  $self->createRulesMatchesList($config_rules);
-
-
-  if ( $template_contents ) {
-    my $line_num = 0;
-    my $intro = "# This file is managed by Quattor - DO NOT EDIT lines generated by Quattor\n#";
-    my @previous_contents = split /\n/, $template_contents;
-
-    if ($previous_contents[0] ne $intro) {
-      push @newcontents, "$intro\n#" ;
-      $line_num++;
-      my @intro_lines = split /\cj/, $intro;  # /\cj/ matches embedded \n
-      $file_line_offset += @intro_lines;
-    }
-
-    # In a template file, keyword must appear in a line in one of the following
-    # format (keyword is case sensitive but may contain spaces) :
-    #    something KEYWORD=value (ex: RFIOLOGFILE=/var/log/rfiod/log)
-    #    KEYWORD  value (ex : RFIOD TRUST grid05.lal.in2p3.fr)
-    #    something param_name=<KEYWORD> (ex : export DPNS_HOST=<DPNS_hosname>
-    for my $line (@previous_contents) {
-      $rule_id = 0;
-      for my $keyword (keys(%{$config_rules})) {
-  if ( $line =~ /^\#*\s*$keyword\s+/ ) {
-    $self->addInRulesMatchesList($rule_id,$line_num,$line_format_trust);
-  } elsif ( $line =~ /$keyword=<.*>/ ) {
-    $self->addInRulesMatchesList($rule_id,$line_num,$line_format_envvar);
-  } elsif ( $line =~ /$keyword=/ ) {
-    $self->addInRulesMatchesList($rule_id,$line_num,$line_format_param);
-  }
-  $rule_id++;
-      }
-      push @newcontents, $line;
-      $line_num++;
-    }
-  } else {
-    my $intro = "# This file is managed by Quattor - DO NOT EDIT";
-    push @newcontents, "$intro\n#";
-    my @intro_lines = split /\cj/, $intro;  # /\cj/ matches embedded \n
-    $file_line_offset += @intro_lines;
-  }
-
-  # Each rule format is '[condition->]attribute:role[,role...]' where
-  #     condition : a role that must be configured on local host
-  #     role and attribute : a role attribute that must be substituted
-  # An empty rule is valid and means that only the keyword part must be
-  # written.
-
-  $rule_id = 0;
-  for my $keyword (keys(%{$config_rules})) {
-    my $rule = ${$config_rules}{$keyword};
-
-    ($rule, my $line_fmt) = split /;/, $rule;
+    # Split different elements of the rule
+    ($rule, my $line_fmt, my $value_fmt) = split /;/, $rule;
     unless ( $line_fmt ) {
       $line_fmt = $line_format_def;
+    }
+    unless ( $value_fmt ) {
+      $value_fmt = LINE_VALUE_AS_IS;
     }
 
     (my $condition, my $tmp) = split /->/, $rule;
@@ -2232,7 +2090,10 @@ sub buildConfigContents () {
     } else {
       $condition = "";
     }
-    next if $condition && !$self->hostHasRoles($condition);
+    next if $role_disabled && ($condition ne "ALWAYS");
+    next if $condition && ($condition ne "ALWAYS") && !$self->hostHasRoles($condition);
+    $self->debug(1,"$function_name: processing rule ".$rule_id."(variable=>>>".$keyword.
+                      "<<<, condition=>>>".$condition."<<<, rule=>>>".$rule."<<<, fmt=".$line_fmt.")");
 
     my $config_value = "";
     my @roles;
@@ -2241,6 +2102,7 @@ sub buildConfigContents () {
       @roles = split /\s*,\s*/, $roles;
     }
 
+    # Build the value to be substitued for each role specified.
     # Role=GLOBAL is a special case indicating a global option instead of a
     # role option
     for my $role (@roles) {
@@ -2249,73 +2111,109 @@ sub buildConfigContents () {
         if ( ref($value_tmp) eq "ARRAY" ) {
           $config_value = join " ", @$value_tmp;
         } else {
-          $config_value = $value_tmp;
+          if ( $value_fmt == LINE_VALUE_BOOLEAN ) {
+            if ( $value_tmp ) {
+              $config_value = '"yes"';
+            } else {
+              $config_value = '"no"';
+            }
+          } else {          
+            $config_value = $value_tmp;
+          }
         }
       } else {
-  if ( $attribute eq "host" ) {
-    $config_value .= $self->getHostsList($role)." ";
-  } elsif ( $attribute ) {
-    # Use first host with  this role
-    my $role_hosts = $self->getHostsList($role);
-    if ( $role_hosts ) {
-      my @role_hosts = split /\s+/, $role_hosts;
-      my $server_config = $self->getHostConfig($role,$role_hosts[0]);
-      if ( exists(${$server_config}{$attribute}) ) {
-        $config_value .= ${$server_config}{$attribute}->getValue()." ";
-      } else {
-        $self->debug(1,"$function_name: attribute $attribute not found for component ".uc($role));
-      }
+        if ( $attribute eq "host" ) {
+          $config_value .= $self->getHostsList($role)." ";
+        } elsif ( $attribute ) {
+          my $role_hosts = $self->getHostsList($role);
+          if ( $role_hosts ) {
+            # Use first host with  this role if current host is not enabled for
+            # the role. Not really sensible to refer a host specific configuration
+            # for a role not executed on the local host.
+            my $h;
+            if ( grep(/$this_host_full/,$role_hosts) ) {
+              $h = $this_host_full;
+            } else {              
+              my @role_hosts = split /\s+/, $role_hosts;
+              $h = $role_hosts[0];
+            }
+            my $server_config = $self->getHostConfig($role,$h);
+            if ( exists($server_config->{$attribute}) ) {
+              my $v;
+              if ( $value_fmt == LINE_VALUE_BOOLEAN ) {
+                if ( $server_config->{$attribute} ) {
+                  $v = '"yes"';
+                } else {
+                  $v = '"no"';
+                }
+              } else {
+                $v= $server_config->{$attribute};                
+              }
+              $config_value .= $v." ";
+            } else {
+              $self->debug(1,"$function_name: attribute $attribute not found for component ".uc($role));
+            }
           } else {
-        $self->error("No host with role ".uc($role)." found");
-    }
-  }
+              $self->error("No host with role ".uc($role)." found");
+          }
+        }
+          $self->debug(2,"$function_name: adding attribute".$attribute."for role ".$role." (config_value=".$config_value.")");
       }
     }
 
     # $attribute empty means an empty rule : in this case,just write the keyword
     # no line is written if attribute is defined and value is empty.
     # If rule_id has matches in the RulesMatchesList, it means we are updating an existing file (template)
+    my $newline;
+    my $keyword_pattern;
     if ( $attribute ) {
-      my $entry_num = 0;
-      if ( $self->getRulesMatchesLineNum($rule_id,$entry_num) ) {
-  while ( my $line = $self->getRulesMatchesLineNum($rule_id,$entry_num) ) {
-    my $file_line = $line + $file_line_offset;
-    my $line_fmt = $self->getRulesMatchesLineFmt($rule_id,$entry_num);
-    $config_value = $self->formatHostsList($config_value,$line_fmt) if $attribute eq "host";
-    if ( $config_value ) {
-      $newcontents[$line] = $self->formatConfigLine($keyword,$config_value,$line_fmt);
-      $self->debug(1,"$function_name: template line $file_line replaced");
-    }
-    $entry_num++;
-  }
-      } else {
-  $config_value = $self->formatHostsList($config_value,$line_fmt) if $attribute eq "host";
-  if ( $config_value ) {
-    push @newcontents, $self->formatConfigLine($keyword,$config_value,$line_fmt);
-    $self->debug(1,"$function_name: configuration line added");
-  }
+      $config_value = $self->formatHostsList($config_value,$line_fmt) if $attribute eq "host";
+      if ( $config_value ) {
+        $newline = $self->formatConfigLine($keyword,$config_value,$line_fmt);
+      }
+      if ( $line_fmt == LINE_FORMAT_PARAM ) {
+        $keyword_pattern = "#?\\s*$keyword=";
+      } elsif ( $line_fmt == LINE_FORMAT_ENVVAR ) {
+        $keyword_pattern = "#?\\s*export $keyword=";
+      } elsif ( $line_fmt == LINE_FORMAT_TRUST ) {
+        $keyword_pattern = "#?\\s*$keyword\\s+";
       }
     } else {
-      push @newcontents, $self->formatConfigLine($keyword,"", $line_fmt);
-      $self->debug(1,"$function_name: configuration line added");
+      $keyword_pattern = "#?\\s*$keyword";
+      $keyword_pattern =~ s/\s+/\\s+/g;
+      $newline = $self->formatConfigLine($keyword,"", $line_fmt);
+    }
+
+    if ( $newline ) {
+      $self->debug(1,"$function_name: checking expected configuration line ($newline) with pattern >>>".$keyword_pattern."<<<");
+      $fh->add_or_replace_lines(qr/^$keyword_pattern/,
+                                qr/^$newline$/,
+                                $newline."\t\t# Line generated by Quattor\n",
+                                ENDING_OF_FILE,
+                               );      
     }
 
     $rule_id++;
   }
 
-  my $newcontents = join "\n",@newcontents;
-  $newcontents .= "\n";    # Add LF after last line
-  return $newcontents;
+  # Update configuration file if content has changed
+  my $changes = $fh->close();
+
+  return $changes;
 }
 
 
-# Create a new configuration file, using a template if any available and
-# applying configuration rules to transform the template.
+# Update a role configuration file, applying the appropriate configuration rules.
+# This function retrieves the config file associated with role and then calls
+# updateConfigFile() to actually do the update. It flags the service associated
+# with the role for restart if the config file was changed.
 #
 # Arguments :
 #       role : role a configuration file must be build for
-sub updateConfigFile () {
-  my $function_name = "updateConfigFile";
+#       role_disabled (optional): flag indicating that role is disabled (D: 0)
+#                                 only rules with condition=ALWAYS will be applied
+sub updateRoleConfig () {
+  my $function_name = "updateRoleConfig";
   my $self = shift;
 
   my $role = shift;
@@ -2324,53 +2222,20 @@ sub updateConfigFile () {
     return 1;
   }
 
-  $self->debug(1,"$function_name: building configuration file for role ".uc($role));
-
-  my $template_contents;
-  
-  # Load template configuration file.
-  # If a template file with the default extension is not found, try the role-specific extension (if defined).
-  # This is to accomodate non-standard extension eventually changed to the standard one, as with xrootd: in this
-  # case the old extension must be ignored if it still exists.
-  my @template_ext;
-  my $template_file;
-  push @template_ext, $config_template_ext{'DEFAULT'};
-  if ( $config_template_ext{$role} ) {
-    push @template_ext, $config_template_ext{$role};
-  }
-  for my $ext (@template_ext) {
-    $self->debug(2,"Checking if ".${$config_files{$role}}." template exists with extension $ext");
-    $template_file = ${$config_files{$role}}.$ext;
-    if ( -e $template_file ) {
-      last;
-    }
-  }
-  if ( -e $template_file ) {
-    $self->debug(1,"$function_name: template file $template_file found, reading it");
-    $template_contents = file_contents($template_file);
-    $self->debug(3,"$function_name: template contents :\n$template_contents");
-  } else {
-    $self->debug(1,"$function_name: template file not found ($template_file). Building a new file from scratch...");
+  my $role_disabled = shift;
+  unless ( defined($role_disabled) ) {
+    # Assume role is enabled
+    $role_disabled = 0;
   }
 
-  my $config_contents=$self->buildConfigContents($config_rules{$role}, $template_contents);
-  $self->debug(3,"$function_name: Configuration file new contents :\n$config_contents");
+  $self->debug(1,"$function_name: building configuration file for role ".uc($role)." (".${$config_files{$role}}.")");
 
-  # Update configuration file if content has changed
-  my $changes = LC::Check::file(${$config_files{$role}}.$config_prod_ext,
-                                backup => $config_bck_ext,
-                                contents => $config_contents
-                               );
-  unless (defined($changes)) {
-    $self->error("error creating ".uc($role)."configuration file ($config_files{$role}");
-    return;
-  }
+  my $changes=$self->updateConfigFile(${$config_files{$role}},$config_rules{$role},$role_disabled);
 
-  # Keep track of services that need to be restarted if changes have been made
+    # Keep track of services that need to be restarted if changes have been made
   if ( $changes > 0 ) {
     $self->serviceRestartNeeded($role);
   }
-
 }
 
 
@@ -2387,8 +2252,8 @@ sub xrootSpecificConfig () {
   
   # Retrieve xrootd configuration and update xrootd_services based on option 'cmsDaemon'
   my $xroot_config;
-  if ( $config->elementExists($xroot_options_base) ) {
-    $xroot_config = $config->getElement($xroot_options_base)->getTree();
+  if ( exists($profile->{options}->{dpm}->{xroot})) {
+    $xroot_config = $profile->{options}->{dpm}->{xroot};
   }else {
     $self->info('xroot options not defined. Using defaults.')
   }
