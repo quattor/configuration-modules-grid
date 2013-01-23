@@ -1,0 +1,140 @@
+# ${license-info}
+# ${developer-info}
+# ${author-info}
+# ${build-info}
+#
+
+=begin comment
+
+Be sure to put a blank line before and after every formatting command
+
+=end comment
+
+=head1 NAME
+
+dpmlfc : NCM component to manage Xrootd configuration.
+
+=head1 DESCRIPTION
+
+This component allows to manage configuration of Xrootd services.
+
+=head1 Xrootd hosts
+
+This resource describes the hosts participating to the Xrootd cluster. They are specified as a 
+nlist where the key is the host name and the value is a nlist specifying host specific options.
+Valid properties in this nlist are:
+
+=head2 roles : list of strings (required)
+
+Specify the Xrootd roles instanciated on the host. Valid values are : disk, redir, fredredir.
+
+Default : none
+
+=head1 Xrootd options
+
+=head2 /software/components/${project.artifactId}/options/authzConf
+
+This option defines the name of the authz configuration file. The name can be a path relative to 
+'configDir' or an absolute path.
+
+Default : xrd.authz.cf (in 'configDir')
+
+
+=head2 /software/components/${project.artifactId}/options/config
+
+This option defines the name of the xroot daemon configuration file.
+
+Default : default value of XRDCONFIG variable in /etc/sysconfig/dpm-xrd.example
+
+
+=head2 /software/components/${project.artifactId}/options/configDir (string)
+
+This option defines the location of xroot configuration files. It can be a path relative to /opt/lcg/etc
+(or the directory where DPM is installed) or an absolute path.
+
+Default : xroot (relative to /etc under DPM installation path)
+
+
+=head2 /software/components/${project.artifactId}/options/exportedVOs (list of string)
+
+List of VOs exported through xrootd. Note that the list is currently restricted to one element.
+
+Default: All VOs (not recommended)
+
+=head2 /software/components/${project.artifactId}/options/ofsPlugin
+
+This option specified the Ofs plugin to use. Ofs plugin defines the type of authentication to use.
+
+Default: default value of XRDOFS variable in /etc/sysconfig/dpm-xrd.example
+
+=head2 /software/components/${project.artifactId}/options/tokenPrivateKey
+
+This option specifies the name of the file containing the private key to use with token-based authentication (Ofs plugin = TokenAuthzOfs).
+
+Default: pvkey.pem
+
+=head2 /software/components/${project.artifactId}/options/tokenPublicKey
+
+This option specifies the name of the file containing the public key to use with token-based authentication (Ofs plugin = TokenAuthzOfs).
+
+Default: pkey.pem
+
+=head2 /software/components/${project.artifactId}/options/accessRules : list of nlist (optional)
+
+This option specifies the rules defining the operations requiring authentication and those permitted without 
+authentication (authentication will be used if present). This is a list where each element is a nlist with the
+following attributes:
+
+=over
+
+=item path Nampespace path the rule applies to. Mandatory, no default.
+
+=item authenticated list of operations requiring authentication. Possible values are: read, write, write-once, delete.
+Mandatory, no default.
+
+=item unauthenticated list of operations allowed without authentication. Possible values are: same as authenticated.
+Mandatory, no default.
+
+=item vo VO the rule applies to. Default: * (all VOs).
+
+=item cert DN the rule applies to. Default: * (all DNs)
+
+=back
+
+=head1 Other component options
+
+=head2 /software/components/${project.artifactId}/restartServices : boolean (required)
+
+Specify if the component must restart services whose configuration has been modified. This
+is useful if restart of Xrootd services is controlled from another component. 
+
+Default : true
+
+
+=head1 DEPENDENCIES
+
+None.
+
+=head1 BUGS
+
+None known.
+
+=head1 AUTHOR
+
+Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 MAINTAINER
+
+Michel Jouvin <jouvin@lal.in2p3.fr>
+
+=head1 VERSION
+
+1.9.1
+
+=head1 SEE ALSO
+
+ncm-ncd(1)
+
+
+=cut
+
