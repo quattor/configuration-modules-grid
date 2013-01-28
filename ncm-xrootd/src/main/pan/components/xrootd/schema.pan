@@ -70,7 +70,6 @@ type ${project.artifactId}_component_access_rules = {
 
 type ${project.artifactId}_component_token_authz_options = {
   "authzConf" : string = '/etc/grid-security/xrootd/TkAuthz.Authorization'
-  "authzLibraries" : string[]
   "allowedFQANs" : string[]
   "authorizedPaths" : string[]
   "principal" : string
@@ -113,6 +112,7 @@ type ${project.artifactId}_component_global_options = {
   "installDir" ? string
   "configDir" : string = 'xrootd'
   "ofsPlugin" : string = 'Ofs'
+  "authzLibraries" : string[]
   "daemonUser" : string
   "daemonGroup" : string
   "restartServices" : boolean = true

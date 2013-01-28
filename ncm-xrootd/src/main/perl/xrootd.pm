@@ -150,7 +150,7 @@ my %redir_config_rules = (
       "dpm.fqan" => "dpm->allowedFQANs:tokenAuthz;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
       "dpm.principal" => "dpm->principal:tokenAuthz;".LINE_FORMAT_XRDCFG,
       "dpm.replacementprefix" => "dpm->replacementPrefix:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_STRING_HASH,
-      "ofs.authlib" => "dpm->authzLibraries:tokenAuthz;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
+      "ofs.authlib" => "authzLibraries:GLOBAL;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
       "TTOKENAUTHZ_AUTHORIZATIONFILE" => "authzConf:tokenAuthz;".LINE_FORMAT_XRDCFG_SETENV,
      );
 
@@ -266,7 +266,7 @@ sub Configure($$@) {
   
     
   # Build Authz configuration file for token-based authz
-  if ( defined($xrootd_options->{tokenAuthz}) ) {
+  if ( exists($xrootd_options->{tokenAuthz}) ) {
     # Build authz.cf
     my $token_auth_conf = $xrootd_options->{tokenAuthz};
     $self->info("Token-based authorization used: checking its configuration...");
@@ -903,7 +903,9 @@ sub updateConfigFile () {
       }
       $self->debug(2,"$function_name: condition option set = '$cond_option_set', condition attribute = '$cond_attribute'");
       if ( $cond_attribute ) {
-        next unless exists($config_options->{$cond_option_set}->{$cond_attribute});
+        # Due to an exists() flaw, testing directly exists($config_options->{$cond_option_set}->{$cond_attribute}) will spring
+        # into existence $config_options->{$cond_option_set} if it doesn't exist.
+        next unless exists($config_options->{$cond_option_set}) && exists($config_options->{$cond_option_set}->{$cond_attribute});
       } elsif ( $cond_option_set ) {
         next unless exists($config_options->{$cond_option_set});
       }
@@ -924,17 +926,21 @@ sub updateConfigFile () {
       for my $option_set (@option_sets) {
         my $attr_value;
         if ( $option_set eq "GLOBAL" ) {
-          if ( ! exists($config_options->{$attribute}) ) {
+          if ( exists($config_options->{$attribute}) ) {
+            $attr_value = $config_options->{$attribute};
+          } else {
             $self->debug(1,"$function_name: attribute '$attribute' not found in global option set");
             $attribute_present = 0;
           }
-          $attr_value = $config_options->{$attribute};
         } else {
-          if ( ! exists($config_options->{$option_set}->{$attribute}) ) {
+          # Due to an exists() flaw, testing directly exists($config_options->{$cond_option_set}->{$cond_attribute}) will spring
+          # into existence $config_options->{$cond_option_set} if it doesn't exist.
+          if ( exists($config_options->{$option_set}) && exists($config_options->{$option_set}->{$attribute}) ) {
+            $attr_value = $config_options->{$option_set}->{$attribute};
+          } else {
             $self->debug(1,"$function_name: attribute '$attribute' not found in option set '$option_set'");
             $attribute_present = 0;
           } 
-          $attr_value = $config_options->{$option_set}->{$attribute};
         }
 
         # If attribute is not defined in the present configuration, check if there is a matching
