@@ -30,6 +30,23 @@ function ${project.artifactId}_component_node_config_valid = {
   true;
 };
 
+# Validation of options
+function ${project.artifactId}_component_options_valid = {
+  # If token-based authentication is enabled and DPM/Xrootd plugin is
+  # used, must check that Authz librarie is specified and that 
+  # DPM/Xrootd options principal and authorizedPaths are also present.
+  if ( is_defined(SELF['tokenAuthz']) ) {
+    if ( !is_defined(SELF['authzLibraries']) ||
+         !is_defined(SELF['dpm']['principal']) ||
+         !is_defined(SELF['dpm']['authorizedPaths']) ) {
+      error("DPM/Xrootd plugin with token-based authz enabled requires 'authzLibraries',\n"+
+                                                  "'dpm/principal' and 'dpm/authorizedPaths'");
+      return(false);
+    };
+  };
+  true;
+};
+
 # Validation of xroot access rules
 function ${project.artifactId}_component_access_rules_valid = {
   if ( !is_defined(SELF) ) {
@@ -70,9 +87,6 @@ type ${project.artifactId}_component_access_rules = {
 
 type ${project.artifactId}_component_token_authz_options = {
   "authzConf" : string = '/etc/grid-security/xrootd/TkAuthz.Authorization'
-  "allowedFQANs" : string[]
-  "authorizedPaths" : string[]
-  "principal" : string
   "tokenPrivateKey" ? string = '/etc/grid-security/xrootd/pvkey.pem'
   "tokenPublicKey" ? string = '/etc/grid-security/xrootd/pubkey.pem'
   "accessRules" : ${project.artifactId}_component_access_rules[]
@@ -92,6 +106,9 @@ type ${project.artifactId}_component_dpm_options = {
   "dpnsHost" : string
   "defaultPrefix" ? string
   "replacementPrefix" ? string{}
+  "mappedFQANs" ? string[]
+  "authorizedPaths" ? string[]
+  "principal" ? string
 };
 
 type ${project.artifactId}_component_fed_options = {
@@ -111,7 +128,6 @@ type ${project.artifactId}_component_instances = {
 type ${project.artifactId}_component_global_options = {
   "installDir" ? string
   "configDir" : string = 'xrootd'
-  "ofsPlugin" : string = 'Ofs'
   "authzLibraries" : string[]
   "daemonUser" : string
   "daemonGroup" : string

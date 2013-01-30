@@ -12,11 +12,45 @@ Be sure to put a blank line before and after every formatting command
 
 =head1 NAME
 
-dpmlfc : NCM component to manage Xrootd configuration.
+${project.artifactId} : NCM component to manage Xrootd configuration.
 
 =head1 DESCRIPTION
 
 This component allows to manage configuration of Xrootd services.
+
+The configuration description for Xrootd is made of 2 distinct parts:
+
+=over
+
+=item Hosts
+This is a description of all hosts participating to the Xrootd service with their role (disk server,
+redirector, federated redirector).
+
+=item Cluster-wide options
+These resources describe the configuration of the Xrootd cluster that applies to all the nodes
+participating to the service.
+
+=back
+
+Cluster-wide options are found under configuration path /software/components/${project.artifactId}. For the
+complete list of options, see the schema. The main ones are described here.
+
+There are several subsets of options:
+
+=over
+
+=item General options
+These options are properties found directly under /software/components/${project.artifactId}.
+
+=item Service-specific options
+They are options that apply to a specific service or component of Xrootd. Examples are the DPM/Xrootd
+plugin, the token-based authentication, Xrootd instances. These subsets are resources located under 
+/software/components/${project.artifactId}.
+
+=back
+
+Options can be required or optional. When they are required, if a default value is provided, it is not
+necessary to define them explicitly: the default value will be used if they are not provided.
 
 =head1 Xrootd hosts
 
@@ -30,86 +64,258 @@ Specify the Xrootd roles instanciated on the host. Valid values are : disk, redi
 
 Default : none
 
-=head1 Xrootd options
+=head1 Xrootd general options
 
-=head2 /software/components/${project.artifactId}/options/authzConf
+These options are properties found directly under /software/components/${project.artifactId}/options. Main ones
+are described below.
 
-This option defines the name of the authz configuration file. The name can be a path relative to 
-'configDir' or an absolute path.
+=head2 authzLibraries: list of string (required)
 
-Default : xrd.authz.cf (in 'configDir')
+This option describes the list of authorization libraries (plugins) to use.
+
+Default: none
+
+=head2 configDir: string (required)
+
+This option described where the Xrootd configuration information is located. This can be either an 
+absolute path or a path related to installDir (see below).
+
+Default: etc/xrootd
+
+=head2 installDir: string (required)
+
+Directory parent of the Xrootd installation.
+
+Default: /
+
+=head2 daemonGroup: string (required)
+
+Group that Xrootd daemons run under.
+
+Default: none
+
+=head2 daemonUser: string (required)
+
+Userid that Xrootd daemons run under.
+
+Default: none
+
+=head2 MonALISAHost: string (optional)
+
+MonALISA host to report Xrootd statistics to.
+
+Default: none
+
+=head2 ofsPlugin: string (required)
+
+Specifies the Xrootd plugin to use for the file-system backend.
+
+Default: Ofs
+
+=head2 restartServices : boolean (required)
+
+This flag indicated if Xrootd services must be restarted after a configuration change.
+
+Default: true
 
 
-=head2 /software/components/${project.artifactId}/options/config
+=head1 Xrootd instances
 
-This option defines the name of the xroot daemon configuration file.
-
-Default : default value of XRDCONFIG variable in /etc/sysconfig/dpm-xrd.example
-
-
-=head2 /software/components/${project.artifactId}/options/configDir (string)
-
-This option defines the location of xroot configuration files. It can be a path relative to /opt/lcg/etc
-(or the directory where DPM is installed) or an absolute path.
-
-Default : xroot (relative to /etc under DPM installation path)
-
-
-=head2 /software/components/${project.artifactId}/options/exportedVOs (list of string)
-
-List of VOs exported through xrootd. Note that the list is currently restricted to one element.
-
-Default: All VOs (not recommended)
-
-=head2 /software/components/${project.artifactId}/options/ofsPlugin
-
-This option specified the Ofs plugin to use. Ofs plugin defines the type of authentication to use.
-
-Default: default value of XRDOFS variable in /etc/sysconfig/dpm-xrd.example
-
-=head2 /software/components/${project.artifactId}/options/tokenPrivateKey
-
-This option specifies the name of the file containing the private key to use with token-based authentication (Ofs plugin = TokenAuthzOfs).
-
-Default: pvkey.pem
-
-=head2 /software/components/${project.artifactId}/options/tokenPublicKey
-
-This option specifies the name of the file containing the public key to use with token-based authentication (Ofs plugin = TokenAuthzOfs).
-
-Default: pkey.pem
-
-=head2 /software/components/${project.artifactId}/options/accessRules : list of nlist (optional)
-
-This option specifies the rules defining the operations requiring authentication and those permitted without 
-authentication (authentication will be used if present). This is a list where each element is a nlist with the
-following attributes:
+There are two main services in a Xrootd cluster:
 
 =over
 
-=item path Nampespace path the rule applies to. Mandatory, no default.
+=item xrootd
+Several instances of this service can coexist on the same host, one for each of its roles (disk, redirector,
+federated redirector). Information about these instances are found under 
+/software/components/${project.artifactId}/options/xrootdInstances. One xrootd instance must exist on
+every xrootd host.
 
-=item authenticated list of operations requiring authentication. Possible values are: read, write, write-once, delete.
-Mandatory, no default.
-
-=item unauthenticated list of operations allowed without authentication. Possible values are: same as authenticated.
-Mandatory, no default.
-
-=item vo VO the rule applies to. Default: * (all VOs).
-
-=item cert DN the rule applies to. Default: * (all DNs)
+=item cmsd
+There must be one cmsd instance for each federation the Xrootd is participated in. Information about these instances are found under 
+/software/components/${project.artifactId}/options/cmsdInstances.
 
 =back
 
-=head1 Other component options
+In both cases, the properties (options) available are the same.
 
-=head2 /software/components/${project.artifactId}/restartServices : boolean (required)
+=head2 configFile: string (required)
 
-Specify if the component must restart services whose configuration has been modified. This
-is useful if restart of Xrootd services is controlled from another component. 
+The name of the Xrootd configuration file describing the instance configuration. This file must be located
+in the directory pointed by configDir (see above).
 
-Default : true
+Default: none
 
+=head2 logFile: string (required)
+
+Full path of the instance log file.
+
+Default: none
+
+=head2 type: list of strings (required)
+
+The type of the instance. Can be disk, redir and fedredir for xrootd service. And only fedredir for 
+cmsd service.
+
+Default: none
+
+=head1 DPM/Xrootd plugin options
+
+This set of options describes the configuration of the DPM Xrootd plugin. This set is optional and must
+not be defined if the DPM/Xrootd plugin is not used. It is found under 
+/software/components/${project.artifactId}/options/dpm.
+
+Main options are described below.
+
+=head2 coreMaxSize : long (optional)
+
+Max size of core dump files.
+
+Default: none
+
+=head2 defaultPrefix: string (optional)
+
+Prefix to be added to every file path specified by users to make the actual file path.
+
+Default: none
+
+=head2 dpmConnectionRetry: long (optional)
+
+Max number of retries when connecting to DPM service.
+
+Default: none
+
+=head2 dpmHost: string (required)
+
+Name of the host running the DPM service (dpm daemon).
+
+Default: none
+
+=head2 dpnsConnectionRetry: long (optional)
+
+Max number of retries when connecting to DPNS service.
+
+Default: none
+
+=head2 dpnsHost: string (required)
+
+Name of the host running the DPNS service (dpm daemon).
+
+Default: none
+
+=head2 replacementPrefix: nlist of strings (optional)
+
+It allows to specify the actual path prefix to substitute (nlist value) to a user-specified path starting
+by a string matching the nlist key. This option, if present, takes precedence over 
+defaultPrefix (see above) if the path is matching. For example:
+
+replacementPrefix = nlist('/cms', '/dpm/example.com/home/cms');
+
+This will convert /cms/myfile to /dpm/example.com/home/cms/myfile.
+
+Default: none
+
+
+=head1 Token-based authentication
+
+This set of options describes the configuration of token-based authorization. This set is optional and must
+not be defined if token-based authentication is not enabled. It is found under 
+/software/components/${project.artifactId}/options/tokenAuthz.
+
+Main options are described below.
+
+=head2 accessRules: list of nlist (required)
+
+This nlist allows to build the accessRules for token-based authentication, based on whether the
+user is authenticated or not and other informations. See Xrootd documentation for details.
+
+Each entry in the list is a nlist with the following required properties:
+
+=over
+
+=item path
+The Xrootd path the rule apply to. This is a string, it must be present and has no default.
+
+=item authenticated
+Operations allowed for authenticated users. This is a list of string, it must be present and has 
+no default
+
+=item unauthenticated
+Operations allowed for unauthenticated users. This is a list of string, it must be present and
+has no default
+
+=item cert
+
+A specific certificate that must be presented by the user for the rule to apply. This is a string, it must
+be present and default to '*' (no restriction based on certificate).
+
+=item vo
+
+A specific VO that must be presented by the user (in the token) for the rule to apply. 
+This is a string, it must be present and default to '*' (no restriction based on VO).
+
+=back
+
+=head2 authzConf: string (required)
+
+Full path of the configuration file for token-based authorization.
+
+Default: /etc/grid-security/xrootd/TkAuthz.Authorization
+
+=head2 allowedFQANs: list of string (required)
+
+The VOMS FQANs that are matched in DPM ACLs when the token-based authorization is used.
+
+=head2 authorizedPaths: list of string (required)
+
+The prefix of DPM paths that can be accessed when using token-based authorization.
+
+Default: none
+
+=head2 exportedPathRoot: string (required)
+
+Xrootd path that is accessible through token-based authorization. This can be used to restrict
+data accessible throgh this authorization to a subset of the data available in the whole cluster.
+
+Default: none
+
+=head2 exportedVOs: nlist (required)
+
+List of VOs (retrieved from the token) allowed to access the XRootd cluster through token-based 
+authorization. It is specified as a nlist where the key is the VO name and the value an 
+optional nlist allowing to specify the path related to exportedPathRoot associated with the 
+VO ('path' property). When empty, the VO name is used.
+
+Note that it is strongly recommended to export only one VO with token-based authorization.
+
+Default: none
+
+=head2 principal : string (required)
+
+The principal (user) to use to find the matching gridmap entry when token-based authentication is used.
+
+Default: none
+ 
+=head2 tokenPrivateKey string (required)
+
+Full path of the token private key (that must be created outside of this configuration module).
+
+Default: /etc/grid-security/xrootd/pvkey.pem
+
+=head2 tokenPublicKey string (required)
+
+Full path of the token public key (that must be created outside of this configuration module).
+
+Default: /etc/grid-security/xrootd/pubkey.pem
+
+
+  "exportedVOs" : ${project.artifactId}_component_exported_path{}
+  "exportedPathRoot" : string
+
+
+=head1 Federation options
+
+To be documented.
 
 =head1 DEPENDENCIES
 
