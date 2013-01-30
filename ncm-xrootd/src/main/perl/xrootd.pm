@@ -145,11 +145,11 @@ my %disk_config_rules = (
        );
 
 my %redir_config_rules = (
-      "dpm.defaultprefix" => "dpm->defaultPrefix:dpm;".LINE_FORMAT_XRDCFG,
-      "dpm.fixedidrestrict" => "dpm->authorizedPaths:tokenAuthz;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-      "dpm.fqan" => "dpm->allowedFQANs:tokenAuthz;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-      "dpm.principal" => "dpm->principal:tokenAuthz;".LINE_FORMAT_XRDCFG,
-      "dpm.replacementprefix" => "dpm->replacementPrefix:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_STRING_HASH,
+      "dpm.defaultprefix" => "defaultPrefix:dpm;".LINE_FORMAT_XRDCFG,
+      "dpm.fixedidrestrict" => "authorizedPaths:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
+      "dpm.fqan" => "mappedFQANs:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
+      "dpm.principal" => "principal:dpm;".LINE_FORMAT_XRDCFG,
+      "dpm.replacementprefix" => "replacementPrefix:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_STRING_HASH,
       "ofs.authlib" => "authzLibraries:GLOBAL;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
       "TTOKENAUTHZ_AUTHORIZATIONFILE" => "authzConf:tokenAuthz;".LINE_FORMAT_XRDCFG_SETENV,
      );
