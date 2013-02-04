@@ -10,7 +10,7 @@
 
   <packaging>pom</packaging>
   <version>1.3.3-SNAPSHOT</version>
-  <name>@COMP@ NCM component.</name>
+  <name>NCM component to configure WMS client</name>
 
   <repositories>
     <repository>
