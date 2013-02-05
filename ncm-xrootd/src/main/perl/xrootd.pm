@@ -104,6 +104,8 @@ my %role_max_servers = (
 # 'condition': an option or an option set that must exist for the rule to be applied.
 #              Both option_set and option_name:option_set are accepted (see below).
 #              Only one option set is allowed and only existence, not value is tested.
+#              In addition, the condition may be negated (option or option_set must
+#              not exist) by prepending a '!' to it.
 #
 # 'option_name' is the name of an option that will be retrieved from the configuration
 # 'option_set' is the set of options the option is located in (for example 'dpnsHost:dpm'
@@ -155,6 +157,17 @@ my %redir_config_rules = (
      );
 
 my %fedredir_config_rules = (
+       "all.export" => "validPathPrefix:fedparams;".LINE_FORMAT_XRDCFG,
+       "dpm.defaultprefix" => "!namePrefix:fedparams->defaultPrefix:dpm;".LINE_FORMAT_XRDCFG,
+       "dpm.namelib" => "n2nLibrary:fedparams;".LINE_FORMAT_XRDCFG,
+       "dpm.namecheck" => "namePrefix:fedparams;".LINE_FORMAT_XRDCFG,
+       "dpm.replacementprefix" => "!namePrefix:fedparams->replacementPrefix:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_STRING_HASH,
+       "xrootfedxrdmanager" => "federationXrdManager:fedparams;".LINE_FORMAT_XRDCFG_SET,
+       "xrootfedcmsdmanager" => "federationCmsdManager:fedparams;".LINE_FORMAT_XRDCFG_SET,
+       "xrootfedlport" => "localPort:fedparams;".LINE_FORMAT_XRDCFG_SET,
+       "xrootd.redirect" => "redirectParams:fedparams;".LINE_FORMAT_XRDCFG,
+       "LFC_HOST" => "lfcHost:fedparams;".LINE_FORMAT_XRDCFG_SETENV,
+       "X509_USER_PROXY" => "proxyLocation:fedparams;".LINE_FORMAT_XRDCFG_SETENV,
        );
 
 my %config_rules = (
@@ -173,7 +186,7 @@ my %xrootd_daemon_prefix = ('head' => '',
                            );
 # xrootd_services is used to track association between a daemon name
 # (the key) and its associatated service names (can be a comma separated list).
-my %xrootd_services = ('cmsd' => 'xrootd',
+my %xrootd_services = ('cmsd' => 'cmsd',
                        'xrootd' => 'xrootd',
                       );
 
@@ -231,42 +244,57 @@ sub Configure($$@) {
 
 
   # Update configuration file for each role (Xrootd instance) held by the local node.
+  # Role 'fedredir' requires some specific processing:
+  #   - There is a matching instance of cmsd to start for each xrootd instances, sharing
+  #     the same configuration file. The schema should enforce the consistency, thus 
+  #     it is not checked here.
+  #   - Each fedredir instance belongs to a federation whose parameters are described
+  #     in hash 'federations' in option. As the parser cannot deal with such a structure
+  #     copy the relevant federation parameters in 'fedparams' option set for each instance.
+  
   my $roles = $xrootd_config->{hosts}->{$this_host_full}->{roles};
   if ( defined($xrootd_options->{xrootdInstances}) ) {    
     while ( my ($instance,$params) = each(%{$xrootd_options->{xrootdInstances}}) ) {
       my $instance_type = $params->{type};
       if ( grep(/^$instance_type$/,@$roles) ) {
         $self->info("Checking xrootd instance '$instance' configuration ($params->{configFile})...");
+        if ( $instance_type eq 'fedredir' ) {
+          my $federation = $params->{federation};
+          $self->debug(2,"Copying parameters for federation $federation to 'fedparams' option set");
+          $xrootd_options->{fedparams} = $xrootd_options->{federations}->{$federation};
+          # Normally enforced by schema validation...
+          if ( exists($xrootd_options->{cmsdInstances}) && exists($xrootd_options->{cmsdInstances}->{$instance}) ) {
+            # cmsd configuration file is normally the same as the xrootd instance
+            if ( $xrootd_options->{cmsdInstances}->{$instance}->{configFile} ne $params->{configFile} ) {
+              my $changes = $self->updateConfigFile($xrootd_options->{cmsdInstances}->{$instance}->{configFile},
+                                                    $config_rules{$instance_type},
+                                                    $xrootd_options);        
+              if ( $changes < 0 ) {
+                $self->error("Error updating cmsd configuration for instance $instance_type (".
+                                      $xrootd_options->{cmsdInstances}->{$instance}->{configFile}.")");
+              }
+            }
+          } else {
+            $self->error("No cmsd instance matching the xrootd fedredir instance '$instance'");
+          }
+        }
         my $changes = $self->updateConfigFile($params->{configFile},$config_rules{$instance_type},$xrootd_options);
         if ( $changes > 0 ) {
-          $self->serviceRestartNeeded('xrootd');
+          $self->serviceRestartNeeded('xrootd',$instance);
+          if ( $instance_type eq 'fedredir' ) {
+            $self->debug(1,"Xrootd instance $instance is a fedredir: add matching cmsd instance to the restart list.");
+            $self->serviceRestartNeeded('cmsd',$instance);
+          };
         } elsif ( $changes < 0 ) {
           $self->error("Error updating xrootd configuration for instance $instance_type (".$params->{configFile}.")");
         }
       }
     }
   }
-  # CMSD instances must all be instanciated on a federated redirector
-  my $instance_type = "fedredir";
-  if ( grep(/^$instance_type$/,@$roles) ) {
-    if ( defined($xrootd_options->{cmsdInstances}) ) {
-      while ( my ($instance,$params) = each(%{$xrootd_options->{cmsdInstances}}) ) {
-        $self->info("Checking cmsd instance '$instance' configuration ($params->{configFile})...");
-        my $changes = $self->updateConfigFile($params->{configFile},$config_rules{$instance_type},$xrootd_options);
-        if ( $changes > 0 ) {
-          $self->serviceRestartNeeded('cmsd');
-        } elsif ( $changes < 0 ) {
-          $self->error("Error updating xrootd configuration for instance $instance_type (".$params->{configFile}.")");
-        }  
-      }  
-    } else {
-      $self->warn("Current host is a fedredir but has no CMSD instances configured");
-    }
-  }    
-  
+
     
   # Build Authz configuration file for token-based authz
-  if ( exists($xrootd_options->{tokenAuthz}) ) {
+  if ( exists($xrootd_options->{tokenAuthz}) && grep(/^redir$/,@$roles) ) {
     # Build authz.cf
     my $token_auth_conf = $xrootd_options->{tokenAuthz};
     $self->info("Token-based authorization used: checking its configuration...");
@@ -367,7 +395,15 @@ sub Configure($$@) {
     $self->info("Checking DPM/Xrootd plugin configuration ($xrootd_sysconfig_file)...");
     my $changes = $self->updateConfigFile($xrootd_sysconfig_file,\%xrootd_sysconfig_rules,$xrootd_options);
     if ( $changes > 0 ) {
-      $self->serviceRestartNeeded('xrootd,cmsd');
+      # Add the services to the restart list only if there is not already some instances of the 
+      # service to be restarted. This is done to avoid unnecessary restart of an instance if the
+      # change in DPM/Xrootd sysconfig file is not affecting it. As there is no reliable way to predict
+      # the instances that may be affected by a particular change in this file, the rationale is that
+      # if the configuration file of an instance has been updated, thus the change in this config file
+      # probably only affects this instance. If there was no other changes related that put an instance
+      # on the restart list, restart every instance both for xrootd and cmsd. This will also stop
+      # instances that are no longer part of the configuration.
+      $self->serviceRestartNeeded('xrootd,cmsd','',1);
     } elsif ( $changes < 0 ) {
       $self->error("Error updating xrootd sysconfig file ($xrootd_sysconfig_file)");
     }
@@ -392,7 +428,13 @@ sub Configure($$@) {
 # It is valid to pass a role with no associated services (nothing done).
 #
 # Arguments :
-#  roles : roles the associated services need to be restarted (comma separated list)
+#  roles : roles for which the associated services need to be restarted (comma separated list)
+#  instance (optional): service instance to restart. When no instance is specified, all service
+#                       instances are restarted. If several roles are specified, the instance
+#                       will be applied to all roles.
+#  if_no_instance : flag to prevent addition of a service in the list if no instance was
+#                   specified and if there is already some instances of the service
+#                   in the restart list. This is used to avoid restarting too many instances.
 sub serviceRestartNeeded () {
   my $function_name = "serviceRestartNeeded";
   my $self = shift;
@@ -401,6 +443,11 @@ sub serviceRestartNeeded () {
   unless ( $roles ) {
     $self->error("$function_name: 'roles' argument missing");
     return 0;
+  }
+  my $instance = shift;
+  my $if_no_instance = shift;
+  unless ( defined($if_no_instance) ) {
+    $if_no_instance = 0;
   }
 
   my $list;
@@ -414,9 +461,20 @@ sub serviceRestartNeeded () {
   for my $role (@roles) {
     my @services = split /\s*,\s*/, $xrootd_services{$role};
     foreach my $service (@services) {      
-      unless ( exists(${$list}{$service}) ) {
+      unless ( exists($list->{$service}) ) {
         $self->debug(1,"$function_name: adding '$service' to the list of service needed to be restarted");
-        ${$list}{$service} = "";
+        $list->{$service} = {};
+      }
+      if ( $instance ) {
+        $self->debug(1,"$function_name: adding instance $instance of $service");
+        $list->{$service}->{$instance} = '';
+      } elsif ( keys(%{$list->{$service}}) != 0 ) {
+        if ( $if_no_instance ) {
+          $self->debug(1,"Service $service already has some instances in the restart list: ignoring attempt to restart all instances");
+        } else {           
+          # Reset to all instances
+          $list->{$service} = {};
+        }
       }
     }
   }
@@ -437,7 +495,32 @@ sub getServiceRestartList () {
     $self->debug(2,"$function_name: list doesn't exist");
     return undef
   }
+}
 
+
+# Return if a specific service is already in the restart list
+#
+# Arguments:
+#   - service: name of the service to check
+sub serviceRestartEnabled () {
+  my $function_name = "serviceRestartEnabled";
+  my $self = shift;
+
+  my $service = shift;
+  unless ( $service ) {
+    $self->error("$function_name: 'service' argument missing");
+    return 0;
+  }
+
+  $self->debug(2,"$function_name: Checking if service $service is already in the restart list");
+
+  my $list = $self->getServiceRestartList();
+
+  if ( exists($list->{$service}) ) {
+    return 1;
+  } else {
+    return 0;
+  }  
 }
 
 
@@ -458,8 +541,14 @@ sub restartServices () {
   if ( my $list = $self->getServiceRestartList() ) {
     $self->debug(1,"$function_name: list of services to restart : ".join(" ",keys(%{$list})));
     for my $service (keys %{$list}) {
-      $self->info("Restarting service $service");
-      CAF::Process->new([SERVICECMD, $service, "stop"],log=>$self)->run();
+      my @instances = keys(%{$list->{$service}});
+      my @cmd = (SERVICECMD, $service, "stop");
+      if ( @instances > 0 ) {
+        @cmd = (@cmd, @instances);
+      }
+      $self->info("Restarting service $service instances ".join(" ",@instances));
+      $self->debug(1,"Restart command: ".join(" ",@cmd));
+      CAF::Process->new(\@cmd,log=>$self)->run();
       if ( $? ) {
         # Service can be stopped, don't consider failure to stop as an error
         $self->warn("\tFailed to stop $service");
@@ -467,6 +556,8 @@ sub restartServices () {
       sleep 5;    # Give time to the daemon to shut down
       my $attempt = 5;
       my $status;
+      # Start all instances in case some have not yet been started or have been stopped manually.
+      # This is harmless to start an already started instance.
       my $command = CAF::Process->new([SERVICECMD, $service, "start"],log=>$self);
       $command->run();
       $status = $?;
@@ -614,7 +705,7 @@ sub formatConfigLine () {
     $config_line = "export $keyword=$value";
   } elsif ( $line_fmt == LINE_FORMAT_XRDCFG_SETENV ) {
     $config_line = "setenv $keyword = $value";
-  } elsif ( $line_fmt == LINE_FORMAT_XRDCFG_SETENV ) {
+  } elsif ( $line_fmt == LINE_FORMAT_XRDCFG_SET ) {
     $config_line = "set $keyword = $value";
   } elsif ( $line_fmt == LINE_FORMAT_XRDCFG ) {
     $config_line = $keyword;
@@ -896,18 +987,33 @@ sub updateConfigFile () {
 
     unless ( $condition eq "" ) {
       $self->debug(1,"$function_name: checking condition >>>$condition<<<");
+      # Condition may be negated if it starts with a !
+      my $negate = 0;
+      if ( $condition =~ /^!/ ) {
+        $negate = 1;
+        $condition =~ s/^!//;
+      }
       my ($cond_attribute,$cond_option_set) = split /:/, $condition;
       unless ( $cond_option_set ) {
         $cond_option_set = $cond_attribute;
         $cond_attribute = "";
       }
-      $self->debug(2,"$function_name: condition option set = '$cond_option_set', condition attribute = '$cond_attribute'");
+      $self->debug(2,"$function_name: condition option set = '$cond_option_set', ".
+                         "condition attribute = '$cond_attribute', negate=$negate");
       if ( $cond_attribute ) {
         # Due to an exists() flaw, testing directly exists($config_options->{$cond_option_set}->{$cond_attribute}) will spring
         # into existence $config_options->{$cond_option_set} if it doesn't exist.
-        next unless exists($config_options->{$cond_option_set}) && exists($config_options->{$cond_option_set}->{$cond_attribute});
+        if ( $negate ) {
+          next if exists($config_options->{$cond_option_set}) && exists($config_options->{$cond_option_set}->{$cond_attribute});          
+        } else {          
+          next unless exists($config_options->{$cond_option_set}) && exists($config_options->{$cond_option_set}->{$cond_attribute});
+        }
       } elsif ( $cond_option_set ) {
-        next unless exists($config_options->{$cond_option_set});
+        if ( $negate ) {
+          next if exists($config_options->{$cond_option_set});
+        } else {         
+          next unless exists($config_options->{$cond_option_set});
+        }
       }
     }
 

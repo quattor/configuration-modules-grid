@@ -132,7 +132,8 @@ federated redirector). Information about these instances are found under
 every xrootd host.
 
 =item cmsd
-There must be one cmsd instance for each federation the Xrootd is participated in. Information about these instances are found under 
+There must be one cmsd instance for each federation the Xrootd is participated in (a cmsd instance must
+exist matching each xrootd instance of type 'fedredir'). Information about these instances are found under 
 /software/components/${project.artifactId}/options/cmsdInstances.
 
 =back
@@ -146,6 +147,13 @@ in the directory pointed by configDir (see above).
 
 Default: none
 
+=head2 federation : string (optional)
+
+Used by 'fedredir' instances only (cms and xrootd instances). This is the identifier (see Federations below) the redirector is
+participating to.
+
+Default: none
+ 
 =head2 logFile: string (required)
 
 Full path of the instance log file.
@@ -315,7 +323,57 @@ Default: /etc/grid-security/xrootd/pubkey.pem
 
 =head1 Federation options
 
-To be documented.
+For each Xrootd federation supported (taht need to be configured) on a given Xrootd node, the federation parameters are described under
+/software/components//${project.artifactId}/options/federations. This is a nlist where the key is a federation identifier (arbitrary,
+used to refer to the federation by 'federations' property of instances) and the value a nlist with the following possible properties.
+
+=head2 federationCmsdManager : string (required)
+
+The federation cmsd manager (upper level cmsd) id. The format is : host.dom.ain+:port (note the +).
+
+Default: none
+
+=head2 federationXrdManager : string (required)
+
+The federation xrootd manager (upper level xrootd redirector) id. The format is : host.dom.ain:port (note the +).
+
+Default: none
+
+=head2 n2nLibrary' : string (optional)
+
+The name of the Name2Name library used in the federation and its parameters (library specific).
+
+Default: none
+
+=head2 namePrefix : string (optional
+
+The path prefix of the local file names that are passed to the N2N library.
+
+The federation cmsd manager id. The format is : host.dom.ain+:port (note the +).
+
+=head2 localPort : long (required)
+
+The port number of the local redirector participating to the federation.
+
+Default: none
+
+=head2 lfcHost : string (optional)
+
+The optional LFC host name if N2N library relies on LFC.
+
+Default: none
+
+=head2 validPathPrefix : string (optional)
+
+The prefix of user paths that are accepted by the federation redirector.
+
+Default: none
+
+=head2 redirectParams : string (optional)
+
+The redirect parameters in the format expected by 'xrootd.redirect' Xrootd configuration directive.
+
+Default: none
 
 =head1 DEPENDENCIES
 
