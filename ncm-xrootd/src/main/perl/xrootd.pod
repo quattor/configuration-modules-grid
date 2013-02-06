@@ -353,7 +353,13 @@ The federation cmsd manager id. The format is : host.dom.ain+:port (note the +).
 
 =head2 localPort : long (required)
 
-The port number of the local redirector participating to the federation.
+The port number of the cluster redirector participating to the federation.
+
+Default: none
+
+=head2 localRedirector : string (required)
+
+Host:port of the cluster local redirector. Typically localhost:localPort.
 
 Default: none
 
@@ -363,15 +369,36 @@ The optional LFC host name if N2N library relies on LFC.
 
 Default: none
 
-=head2 validPathPrefix : string (optional)
+=head2 lfcConnectionRetry : long (optional)
 
-The prefix of user paths that are accepted by the federation redirector.
+Connection retry when trying to connect to LFC. Ignored if lfcHost is not defined. Typical value is 0.
+
+Default: none (not defined explicitly)
+
+=head2 lfcSecurityMechanism : string (optional)
+
+Security mechanism to use when connecting to LFC. Ignored if lfcHost is not defined. Typical value is 'ID'.
+
+Default : none
+
+=head2 localRedirectParams : string (optional)
+
+The redirect parameters for the local redirector in the format expected by 'xrootd.redirect'
+Xrootd configuration directive. Typically used to redirect to federation redirector for the VO supported
+by the federation.
 
 Default: none
 
 =head2 redirectParams : string (optional)
 
-The redirect parameters in the format expected by 'xrootd.redirect' Xrootd configuration directive.
+The redirect parameters for the federation redirector in the format expected by 'xrootd.redirect'
+Xrootd configuration directive.
+
+Default: none
+
+=head2 validPathPrefix : string (optional)
+
+The prefix of user paths that are accepted by the federation redirector.
 
 Default: none
 

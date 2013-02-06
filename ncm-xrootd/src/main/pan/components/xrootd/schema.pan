@@ -164,9 +164,13 @@ type ${project.artifactId}_component_fed_options = {
   'n2nLibrary' ? string
   'namePrefix' ? string
   'localPort' : long
+  'localRedirector' : string
   'lfcHost' ? string
+  'lfcConnectionRetry' ? long
+  'lfcSecurityMechanism' ? string
   'validPathPrefix' ? string
   'redirectParams' ? string
+  'localRedirectParams' ? string
 };
 
 type ${project.artifactId}_component_instances = {
