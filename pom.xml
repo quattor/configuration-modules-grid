@@ -2,14 +2,13 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.quattor</groupId>
-  <artifactId>ncm-components</artifactId>
+  <artifactId>ncm-components-grid</artifactId>
   <packaging>pom</packaging>
 
   <version>12.12.1-SNAPSHOT</version>
 
-  <name>Node Configuration Manager - components</name>
-  <description>Modules configuring different services or portions of
-  a Linux system</description>
+  <name>Node Configuration Manager - components related to Grid services</name>
+  <description>Modules configuring different services related to computing Grid</description>
   <parent>
     <groupId>org.sonatype.oss</groupId>
     <artifactId>oss-parent</artifactId>
