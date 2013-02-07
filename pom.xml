@@ -66,7 +66,7 @@
     <module>ncm-wlconfig</module>
     <module>ncm-wmsclient</module>
     <module>ncm-wmslb</module>
-    <module>ncm-xroot</module>
+    <module>ncm-xrootd</module>
     <module>ncm-yaim</module>
     <module>ncm-yaim_usersconf</module>
   </modules>
