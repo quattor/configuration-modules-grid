@@ -48,7 +48,6 @@
     <module>ncm-gold</module>
     <module>ncm-gridmapdir</module>
     <module>ncm-gsissh</module>
-    <module>ncm-hydraserver</module>
     <module>ncm-lbconfig</module>
     <module>ncm-lcas</module>
     <module>ncm-lcgbdii</module>
