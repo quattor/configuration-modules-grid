@@ -171,6 +171,8 @@ type ${project.artifactId}_component_fed_options = {
   'validPathPrefix' ? string
   'redirectParams' ? string
   'localRedirectParams' ? string
+  "monitoringOptions" ? string
+  "reportingOptions" ? string
 };
 
 type ${project.artifactId}_component_instances = {
@@ -188,6 +190,8 @@ type ${project.artifactId}_component_global_options = {
   "daemonGroup" : string
   "restartServices" : boolean = true
   "MonALISAHost" ? string
+  "monitoringOptions" ? string
+  "reportingOptions" ? string
   "cmsdInstances" ? ${project.artifactId}_component_instances{}
   "xrootdInstances" ? ${project.artifactId}_component_instances{}
   "federations" ? ${project.artifactId}_component_fed_options{}

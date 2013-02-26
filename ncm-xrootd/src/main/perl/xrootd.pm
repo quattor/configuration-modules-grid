@@ -144,7 +144,9 @@ my %xrootd_sysconfig_rules = (
        );
 
 my %disk_config_rules = (
-       );
+      "xrd.report" => "reportingOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
+      "xrootd.monitor" => "monitoringOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
+      );
 
 my %redir_config_rules = (
       "dpmhost" => "dpmHost:dpm;".LINE_FORMAT_XRDCFG_SET,
@@ -154,6 +156,8 @@ my %redir_config_rules = (
       "dpm.principal" => "principal:dpm;".LINE_FORMAT_XRDCFG,
       "dpm.replacementprefix" => "replacementPrefix:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_STRING_HASH,
       "ofs.authlib" => "authzLibraries:GLOBAL;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
+      "xrd.report" => "reportingOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
+      "xrootd.monitor" => "monitoringOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
       "xrootd.redirect" => "localRedirectParams:GLOBAL;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_SINGLE,
       "DPM_CONRETRY" => "dpmConnectionRetry:dpm;".LINE_FORMAT_XRDCFG_SETENV,
       "DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_XRDCFG_SETENV,
@@ -171,9 +175,11 @@ my %fedredir_config_rules = (
       "dpm.replacementprefix" => "!namePrefix:fedparams->replacementPrefix:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_STRING_HASH,
       "pss.origin" => "localRedirector:fedparams;".LINE_FORMAT_XRDCFG,
       "xrd.port" => "localPort:fedparams;".LINE_FORMAT_XRDCFG,
+      "xrd.report" => "reportingOptions:fedparams;".LINE_FORMAT_XRDCFG,
       "xrootfedxrdmanager" => "federationXrdManager:fedparams;".LINE_FORMAT_XRDCFG_SET,
       "xrootfedcmsdmanager" => "federationCmsdManager:fedparams;".LINE_FORMAT_XRDCFG_SET,
       "xrootfedlport" => "localPort:fedparams;".LINE_FORMAT_XRDCFG_SET,
+      "xrootd.monitor" => "monitoringOptions:fedparams;".LINE_FORMAT_XRDCFG,
       "xrootd.redirect" => "redirectParams:fedparams;".LINE_FORMAT_XRDCFG,
       "CSEC_MECH" => "lfcHost:fedparams->lfcSecurityMechanism:fedparams;".LINE_FORMAT_XRDCFG_SETENV,
       "DPM_CONRETRY" => "dpmConnectionRetry:dpm;".LINE_FORMAT_XRDCFG_SETENV,

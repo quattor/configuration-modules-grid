@@ -106,11 +106,23 @@ MonALISA host to report Xrootd statistics to.
 
 Default: none
 
+=head2 monitoringOptions : string (optional)
+
+Options passed to xrootd.monitor directive for disk servers and local redirector.
+
+Default : none
+
 =head2 ofsPlugin: string (required)
 
 Specifies the Xrootd plugin to use for the file-system backend.
 
 Default: Ofs
+
+=head2 reportingOptions : string (optional)
+
+Options passed to xrd.report directive for disk servers and local redirector.
+
+Default : none
 
 =head2 restartServices : boolean (required)
 
@@ -389,12 +401,24 @@ by the federation.
 
 Default: none
 
+=head2 monitoringOptions : string (optional)
+
+Options passed to xrootd.monitor directive for the federation redirector.
+
+Default : none
+
 =head2 redirectParams : string (optional)
 
 The redirect parameters for the federation redirector in the format expected by 'xrootd.redirect'
 Xrootd configuration directive.
 
 Default: none
+
+=head2 reportingOptions : string (optional)
+
+Options passed to xrd.report directive for the federation redirector.
+
+Default : none
 
 =head2 validPathPrefix : string (optional)
 
