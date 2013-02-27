@@ -220,34 +220,37 @@ type ${project.artifactId}_component_service_ns = {
 };
 
 type ${project.artifactId}_component_service_wm_opts = {
-  'CeForwardParameters'       ? string
-  'CeMonitorAsyncPort'        ? long
-  'CeMonitorServices'         ? string{}
-  'DispatcherType'            ? string
-  'EnableBulkMM'              ? boolean
-  'EnableRecovery'            ? boolean
-  'ExpiryPeriod'              ? long
-  'Input'                     ? string
-  'IsmBlackList'              ? string
-  'IsmDump'                   ? string
-  'IsmIiLDAPCEFilterExt'      ? string
-  'IsmIiPurchasingRate'       ? long
-  'IsmThreads'                ? boolean
-  'IsmUpdateRate'             ? long 
-  'JobWrapperTemplateDir'     ? string
-  'LogFile'                   ? string
-  'LogLevel'                  ? long(1..6)
-  'MaxReplansCount'           ? long
-  'MatchRetryPeriod'          ? long
-  'MaxOutputSandboxSize'      ? long
-  'MaxRetryCount'             ? long
-  'PropagateToLRMS'           ? string
-  'QueueSize'                 ? long
-  'ReplanGracePeriod'         ? long
-  'RuntimeMalloc'             ? string
-  'SbRetryDifferentProtocols' ? boolean
-  'WmsRequirements'           ? string
-  'WorkerThreads'             ? long
+  'CeMonitorAsyncPort'          ? long
+  'CeMonitorServices'           ? string{}
+  'DispatcherType'              ? string
+  'EnableBulkMM'                ? boolean
+  'EnableIsmIiGlue13Purchasing' ? boolean
+  'EnableIsmIiGlue20Purchasing' ? boolean
+  'EnableRecovery'              ? boolean
+  'ExpiryPeriod'                ? long
+  'Input'                       ? string
+  'IsmBlackList'                ? string
+  'IsmDump'                     ? string
+  'IsmIiG2LDAPCEFilterExt'      ? string
+  'IsmIiG2LDAPSEFilterExt'      ? string
+  'IsmIiLDAPCEFilterExt'        ? string
+  'IsmIiPurchasingRate'         ? long
+  'IsmThreads'                  ? boolean
+  'IsmUpdateRate'               ? long 
+  'JobWrapperTemplateDir'       ? string
+  'LogFile'                     ? string
+  'LogLevel'                    ? long(1..6)
+  'MaxReplansCount'             ? long
+  'MatchRetryPeriod'            ? long
+  'MaxOutputSandboxSize'        ? long
+  'MaxRetryCount'               ? long
+  'PropagateToLRMS'             ? string
+  'QueueSize'                   ? long
+  'ReplanGracePeriod'           ? long
+  'RuntimeMalloc'               ? string
+  'SbRetryDifferentProtocols'   ? boolean
+  'WmsRequirements'             ? string
+  'WorkerThreads'               ? long
 };
 
 type ${project.artifactId}_component_service_wm_jw = {
@@ -292,6 +295,8 @@ type ${project.artifactId}_component_service_wmproxy_loadmonitor_opts = {
 
 type ${project.artifactId}_component_service_wmproxy_opts = {
 #  'ApacheLogLevel'               ? string with match(SELF,'emerg|alert|crit|error|warn|notice|info|debug')
+  'ArgusAuthz'                   ? boolean
+  'ArgusPepEndpoints'            ? string{}
   'AsyncJobStart'                ? boolean
 #  'DefaultProtocol'              ? string
   'EnableServiceDiscovery'       ? boolean

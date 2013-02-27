@@ -1,3 +1,4 @@
+ArgusAuthz = <%ArgusAuthz|false%>;
 EnableServiceDiscovery = <%EnableServiceDiscovery|false%>;
 ListMatchRootPath = "<%ListMatchRootPath|/tmp%>";
 OperationLoadScripts = [
@@ -16,4 +17,5 @@ WeightsCacheValidity = <%WeightsCacheValidity|86400%>;
 LogFile = "<%LogFile|${WMS_LOCATION_LOG}/wmproxy.log%>";
 AsyncJobStart = <%AsyncJobStart|true%>;
 GridFTPPort = <%GridFTPPort|2811%>;
+ArgusPepEndpoints = {<%ArgusPepEndpoints%>};
 MaxInputSandboxSize = <%MaxInputSandboxSize|10000000%>;

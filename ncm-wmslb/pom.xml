@@ -9,7 +9,7 @@
   <artifactId>wmslb</artifactId>
 
   <packaging>pom</packaging>
-  <version>2.0.0-SNAPSHOT</version>
+  <version>2.2.0</version>
   <name>NCM component to configure gLite  WMS and LB</name>
 
   <repositories>
@@ -29,7 +29,7 @@
     <license>
       <name>Apache 2 License</name>
       <url>http://www.opensource.org/licenses/apache2.0</url>
-      <comments>Copyright (c) Responsible Organization</comments>
+      <comments>Copyright (c) Quattor Project</comments>
     </license>
   </licenses>
 
@@ -42,15 +42,8 @@
 
   <contributors>
     <contributor>
-      <name>Jane SMITH</name>
-      <email>smith@example.com</email>
-      <roles>
-	<role>author</role>
-      </roles>
-    </contributor>
-    <contributor>
-      <name>Joe DOE</name>
-      <email>doe@example.org</email>
+      <name>Jerome Pansanel</name>
+      <email>jerome.pansanel@iphc.cnrs.fr</email>
       <roles>
 	<role>author</role>
       </roles>
