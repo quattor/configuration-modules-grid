@@ -382,7 +382,10 @@ sub Configure($$@) {
         } else {  
           $exported_full_path = $exported_vo_path_root.'/'.$vo;      
         }
-        print $fh "EXPORT PATH:".$exported_full_path." VO:".$vo."     ACCESS:ALLOW CERT:*\n";
+        # VO token should not be defined to a particular VO as the VO name is not necessarily defined
+        # in the token. The important goal of this line is to restrict the namespace portion accessible
+        # though the token-based authz.
+        print $fh "EXPORT PATH:".$exported_full_path." VO:*     ACCESS:ALLOW CERT:*\n";
       }
     } else {
       $self->warn("dpm-xroot: export enabled for all VOs. You should consider restrict to one VO only.");
