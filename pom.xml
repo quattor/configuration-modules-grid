@@ -2,14 +2,13 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.quattor</groupId>
-  <artifactId>ncm-components</artifactId>
+  <artifactId>ncm-components-grid</artifactId>
   <packaging>pom</packaging>
 
-  <version>12.12.1-SNAPSHOT</version>
+  <version>13.2.1-SNAPSHOT</version>
 
-  <name>Node Configuration Manager - components</name>
-  <description>Modules configuring different services or portions of
-  a Linux system</description>
+  <name>Node Configuration Manager - components related to Grid services</name>
+  <description>Modules configuring different services related to computing Grid</description>
   <parent>
     <groupId>org.sonatype.oss</groupId>
     <artifactId>oss-parent</artifactId>
@@ -49,7 +48,6 @@
     <module>ncm-gold</module>
     <module>ncm-gridmapdir</module>
     <module>ncm-gsissh</module>
-    <module>ncm-hydraserver</module>
     <module>ncm-lbconfig</module>
     <module>ncm-lcas</module>
     <module>ncm-lcgbdii</module>
@@ -67,8 +65,27 @@
     <module>ncm-wlconfig</module>
     <module>ncm-wmsclient</module>
     <module>ncm-wmslb</module>
+    <module>ncm-xrootd</module>
     <module>ncm-yaim</module>
     <module>ncm-yaim_usersconf</module>
   </modules>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+	<plugin>
+	  <groupId>org.apache.maven.plugins</groupId>
+	  <artifactId>maven-release-plugin</artifactId>
+	  <version>2.1</version>
+	  <configuration>
+	    <mavenExecutorId>forked-path</mavenExecutorId>
+	    <useReleaseProfile>false</useReleaseProfile>
+	    <arguments>-Psonatype-oss-release -Dgpg.useagent=true</arguments>
+	  </configuration>
+	</plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
 
 </project>

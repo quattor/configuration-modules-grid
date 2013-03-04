@@ -30,6 +30,70 @@ function ${project.artifactId}_component_node_config_valid = {
   true;
 };
 
+# Validation of options
+function ${project.artifactId}_component_options_valid = {
+  # If token-based authentication is enabled and DPM/Xrootd plugin is
+  # used, must check that Authz librarie is specified and that 
+  # DPM/Xrootd options principal and authorizedPaths are also present.
+  if ( is_defined(SELF['tokenAuthz']) ) {
+    if ( !is_defined(SELF['authzLibraries']) ||
+         !is_defined(SELF['dpm']['principal']) ||
+         !is_defined(SELF['dpm']['authorizedPaths']) ) {
+      error("DPM/Xrootd plugin with token-based authz enabled requires 'authzLibraries',\n"+
+                                                  "'dpm/principal' and 'dpm/authorizedPaths'");
+      return(false);
+    };
+  };
+
+  # Check that federation information is present if a 'fedredir' instance has been 
+  # configured.
+  if ( is_defined(SELF['xrootdInstances']) ) {
+    foreach (instance;params;SELF['xrootdInstances']) {
+      if ( params['type'] == 'fedredir' ) {
+        if ( !is_defined(SELF['cmsdInstances'][instance]) ) {
+          error("Missing cmsd instance matching xrootd 'fedredir' instance '"+instance+"'");
+          false;
+        } else if ( !is_defined(params['federation']) ) {
+          error("'federation' parameter missing for xrootd instance '"+instance+"'");
+          false;
+        } else if ( !is_defined(SELF['federations'][params['federation']]) ) {
+          error("No information provided for federation '"+params['federation']+"'");
+          false;
+        }; 
+      } else if ( is_defined(params['federation']) ) {
+        error("'federation' parameter specified for xrootd instance '"+instance+"' (type '"+params['type']+"')");
+        false;
+      };
+    };
+  };
+  if ( is_defined(SELF['cmsdInstances']) ) {
+    foreach (instance;params;SELF['cmsdInstances']) {
+      if ( !is_defined(SELF['xrootdInstances'][instance]) ) {
+        error("Missing xrootd instance matching cmsd instance '"+instance+"'");
+        false;
+      } else if ( !is_defined(params['federation']) ) {
+        error("'federation' parameter missing for cmsd instance '"+instance+"'");
+        false;
+      }; 
+    };
+  };
+  
+  # For federations, check that either n2nLibrary and namePrefix are specified or that
+  # both are absent.
+  if ( is_defined(SELF['federations']) ) {
+    foreach(federation;params;SELF['federations']) {
+      if ( (is_defined(params['n2nLibrary']) && !is_defined(params['namePrefix'])) ||
+           (!is_defined(params['n2nLibrary']) && is_defined(params['namePrefix'])) ) {
+        error("Federation '"+federation+"': n2nLibrary and namePrefix must be both specified or absent");
+        false;
+      };
+    };
+  };
+  
+  true;
+};
+
+
 # Validation of xroot access rules
 function ${project.artifactId}_component_access_rules_valid = {
   if ( !is_defined(SELF) ) {
@@ -70,10 +134,6 @@ type ${project.artifactId}_component_access_rules = {
 
 type ${project.artifactId}_component_token_authz_options = {
   "authzConf" : string = '/etc/grid-security/xrootd/TkAuthz.Authorization'
-  "authzLibraries" : string[]
-  "allowedFQANs" : string[]
-  "authorizedPaths" : string[]
-  "principal" : string
   "tokenPrivateKey" ? string = '/etc/grid-security/xrootd/pvkey.pem'
   "tokenPublicKey" ? string = '/etc/grid-security/xrootd/pubkey.pem'
   "accessRules" : ${project.artifactId}_component_access_rules[]
@@ -93,18 +153,29 @@ type ${project.artifactId}_component_dpm_options = {
   "dpnsHost" : string
   "defaultPrefix" ? string
   "replacementPrefix" ? string{}
+  "mappedFQANs" ? string[]
+  "authorizedPaths" ? string[]
+  "principal" ? string
 };
 
 type ${project.artifactId}_component_fed_options = {
-  'remote_cmsd_manager' : string
-  'remote_xrd_manager' : string
-  'cmsd_options' ? string
-  'xrootd_options' ? string
-  'redir_local_port' ? long
+  'federationCmsdManager' : string
+  'federationXrdManager' : string
+  'n2nLibrary' ? string
+  'namePrefix' ? string
+  'localPort' : long
+  'localRedirector' : string
+  'lfcHost' ? string
+  'lfcConnectionRetry' ? long
+  'lfcSecurityMechanism' ? string
+  'validPathPrefix' ? string
+  'redirectParams' ? string
+  'localRedirectParams' ? string
 };
 
 type ${project.artifactId}_component_instances = {
   "configFile" : string
+  "federation" ? string
   "logFile" : string
   "type" : string with match(SELF,'(disk|redir|fedredir)')
 };
@@ -112,17 +183,17 @@ type ${project.artifactId}_component_instances = {
 type ${project.artifactId}_component_global_options = {
   "installDir" ? string
   "configDir" : string = 'xrootd'
-  "ofsPlugin" : string = 'Ofs'
+  "authzLibraries" : string[]
   "daemonUser" : string
   "daemonGroup" : string
   "restartServices" : boolean = true
   "MonALISAHost" ? string
   "cmsdInstances" ? ${project.artifactId}_component_instances{}
   "xrootdInstances" ? ${project.artifactId}_component_instances{}
-  "federation" ? ${project.artifactId}_component_fed_options
+  "federations" ? ${project.artifactId}_component_fed_options{}
   "tokenAuthz" ? ${project.artifactId}_component_token_authz_options
   "dpm" ? ${project.artifactId}_component_dpm_options
-};
+} with ${project.artifactId}_component_options_valid(SELF);
 
 type ${project.artifactId}_component_node_config = {
   "roles" : string[]

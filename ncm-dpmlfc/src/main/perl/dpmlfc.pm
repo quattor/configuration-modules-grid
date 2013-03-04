@@ -510,6 +510,8 @@ sub Configure($$@) {
     # At least $profile->{dpm} or $profile->{lfc} must exist
 
     for my $role (@{$hosts_roles}) {
+      # By default, assume this role is disabled on local host
+      $self->setGlobalOption($role."_service_enabled",0);        
       if ( exists($profile->{$role}) ) {
         my $servers = $profile->{$role};
         if ( %{$servers} <= ${$comp_max_servers}{$role} ) {
@@ -523,15 +525,15 @@ sub Configure($$@) {
                 }
               }
             }            
-            $self->setGlobalOption($role."_service_enabled",1);
             $self->addHostInRole($role,$role_host,$host_params);
+            if ( $role_host eq $this_host_full ) {
+              $self->setGlobalOption($role."_service_enabled",1);
+            }
           }
         } else {
           $self->error("Too many ".uc($role)." servers (maximum=${$comp_max_servers}{$role})");
           return 0;
         }
-      } else {
-        $self->setGlobalOption($role."_service_enabled",0);        
       }
     }
 
