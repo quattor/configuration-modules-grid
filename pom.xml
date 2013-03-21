@@ -2,7 +2,7 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.quattor</groupId>
-  <artifactId>ncm-components-grid</artifactId>
+  <artifactId>configuration-modules-grid</artifactId>
   <packaging>pom</packaging>
 
   <version>13.2.1-SNAPSHOT</version>
@@ -29,9 +29,9 @@
 
 
   <scm>
-    <connection>scm:git:git://github.com/quattor/ncm-components-grid.git</connection>
-    <developerConnection>scm:git:git@github.com:quattor/ncm-components-grid.git</developerConnection>
-    <url>https://github.com/quattor/ncm-components-grid</url>
+    <connection>scm:git:git://github.com/quattor/configuration-modules-grid.git</connection>
+    <developerConnection>scm:git:git@github.com:quattor/configuration-modules-grid.git</developerConnection>
+    <url>https://github.com/quattor/configuration-modules-grid</url>
   </scm>
 
 
