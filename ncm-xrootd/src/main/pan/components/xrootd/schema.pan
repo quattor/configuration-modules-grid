@@ -179,6 +179,7 @@ type ${project.artifactId}_component_instances = {
   "configFile" : string
   "federation" ? string
   "logFile" : string
+  "logKeep" : long = 90
   "type" : string with match(SELF,'(disk|redir|fedredir)')
 };
 

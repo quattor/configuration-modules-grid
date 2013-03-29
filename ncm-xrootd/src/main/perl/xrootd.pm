@@ -685,6 +685,9 @@ sub formatAttributeValue () {
     if ( exists($attr_value->{configFile}) ) {
       $formatted_value .= " -c $attr_value->{configFile}";
     }
+    if ( exists($attr_value->{logKeep}) ) {
+      $formatted_value .= " -k $attr_value->{logKeep}";
+    }
     
   } elsif ( $value_fmt == LINE_VALUE_ARRAY ) {
     $formatted_value = join " ", @$attr_value;
