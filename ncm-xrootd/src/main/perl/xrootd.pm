@@ -144,7 +144,9 @@ my %xrootd_sysconfig_rules = (
        );
 
 my %disk_config_rules = (
-       );
+      "xrd.report" => "reportingOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
+      "xrootd.monitor" => "monitoringOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
+      );
 
 my %redir_config_rules = (
       "dpmhost" => "dpmHost:dpm;".LINE_FORMAT_XRDCFG_SET,
@@ -154,6 +156,8 @@ my %redir_config_rules = (
       "dpm.principal" => "principal:dpm;".LINE_FORMAT_XRDCFG,
       "dpm.replacementprefix" => "replacementPrefix:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_STRING_HASH,
       "ofs.authlib" => "authzLibraries:GLOBAL;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
+      "xrd.report" => "reportingOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
+      "xrootd.monitor" => "monitoringOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
       "xrootd.redirect" => "localRedirectParams:GLOBAL;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_SINGLE,
       "DPM_CONRETRY" => "dpmConnectionRetry:dpm;".LINE_FORMAT_XRDCFG_SETENV,
       "DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_XRDCFG_SETENV,
@@ -171,9 +175,11 @@ my %fedredir_config_rules = (
       "dpm.replacementprefix" => "!namePrefix:fedparams->replacementPrefix:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_STRING_HASH,
       "pss.origin" => "localRedirector:fedparams;".LINE_FORMAT_XRDCFG,
       "xrd.port" => "localPort:fedparams;".LINE_FORMAT_XRDCFG,
+      "xrd.report" => "reportingOptions:fedparams;".LINE_FORMAT_XRDCFG,
       "xrootfedxrdmanager" => "federationXrdManager:fedparams;".LINE_FORMAT_XRDCFG_SET,
       "xrootfedcmsdmanager" => "federationCmsdManager:fedparams;".LINE_FORMAT_XRDCFG_SET,
       "xrootfedlport" => "localPort:fedparams;".LINE_FORMAT_XRDCFG_SET,
+      "xrootd.monitor" => "monitoringOptions:fedparams;".LINE_FORMAT_XRDCFG,
       "xrootd.redirect" => "redirectParams:fedparams;".LINE_FORMAT_XRDCFG,
       "CSEC_MECH" => "lfcHost:fedparams->lfcSecurityMechanism:fedparams;".LINE_FORMAT_XRDCFG_SETENV,
       "DPM_CONRETRY" => "dpmConnectionRetry:dpm;".LINE_FORMAT_XRDCFG_SETENV,
@@ -376,7 +382,10 @@ sub Configure($$@) {
         } else {  
           $exported_full_path = $exported_vo_path_root.'/'.$vo;      
         }
-        print $fh "EXPORT PATH:".$exported_full_path." VO:".$vo."     ACCESS:ALLOW CERT:*\n";
+        # VO token should not be defined to a particular VO as the VO name is not necessarily defined
+        # in the token. The important goal of this line is to restrict the namespace portion accessible
+        # though the token-based authz.
+        print $fh "EXPORT PATH:".$exported_full_path." VO:*     ACCESS:ALLOW CERT:*\n";
       }
     } else {
       $self->warn("dpm-xroot: export enabled for all VOs. You should consider restrict to one VO only.");
@@ -675,6 +684,9 @@ sub formatAttributeValue () {
     }
     if ( exists($attr_value->{configFile}) ) {
       $formatted_value .= " -c $attr_value->{configFile}";
+    }
+    if ( exists($attr_value->{logKeep}) ) {
+      $formatted_value .= " -k $attr_value->{logKeep}";
     }
     
   } elsif ( $value_fmt == LINE_VALUE_ARRAY ) {
