@@ -6,7 +6,7 @@
   <artifactId>wlconfig</artifactId>
 
   <packaging>pom</packaging>
-  <version>13.3.1-SNAPSHOT</version>
+  <version>13.1-rc</version>
   <name>wlconfig NCM component.</name>
 
   <repositories>
