@@ -6,7 +6,7 @@
   <artifactId>globuscfg</artifactId>
 
   <packaging>pom</packaging>
-  <version>13.1-rc</version>
+  <version>13.2-rc-SNAPSHOT</version>
   <name>Component to manage Globus configuration</name>
 
   <repositories>
