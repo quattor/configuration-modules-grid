@@ -6,7 +6,7 @@
   <artifactId>gacl</artifactId>
 
   <packaging>pom</packaging>
-  <version>13.2-rc-SNAPSHOT</version>
+  <version>13.1.0-rc3</version>
   <name>gacl NCM component.</name>
 
   <repositories>
