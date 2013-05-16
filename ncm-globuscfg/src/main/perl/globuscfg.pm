@@ -155,7 +155,7 @@ sub Configure($$@) {
       $globus_version = qx/$globus_version_bin/;
     } else {
       $globus_version = '4.0';
-      $self->warn('Unable to determine Globus version: check your configuration, assuming $globus_version.');
+      $self->warn("Unable to determine Globus version: check your configuration, assuming $globus_version.");
     };
     
     # Globus base environment
