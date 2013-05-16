@@ -158,22 +158,24 @@ sub Configure($$@) {
       $self->warn("Unable to determine Globus version: check your configuration, assuming $globus_version.");
     };
     
-    # Globus base environment
-    my $globus_config_script = "(cd $globus_config->{'GLOBUS_LOCATION'}/setup/globus; ./setup-tmpdirs)";
-    $self->info("Initializing Globus configuration tools ($globus_config_script)...");
-    $output = qx%$globus_config_script 2>&1%;
-    unless ( $? ) {
-      $globus_config_script = "(cd $globus_config->{'GLOBUS_LOCATION'}/setup/globus; ./setup-globus-common)";
-      $self->info("Initializing Globus environment ($globus_config_script)...");
-      $output .= "\n" . qx%$globus_config_script 2>&1%;      
-    }
-    $self->verbose("$output");
-    if ( $? ) {
-      $self->error("Failed to initialize Globus base environment. Return value: ". $? .
+    # Globus base environment, just move along if scripts aren't found
+    if ( -f "$globus_config->{'GLOBUS_LOCATION'}/setup/globus/setup-tmpdirs" ) {
+    	my $globus_config_script = "(cd $globus_config->{'GLOBUS_LOCATION'}/setup/globus; ./setup-tmpdirs)";
+    	$self->info("Initializing Globus configuration tools ($globus_config_script)...");
+    	$output = qx%$globus_config_script 2>&1%;
+    	unless ( $? ) {
+      		$globus_config_script = "(cd $globus_config->{'GLOBUS_LOCATION'}/setup/globus; ./setup-globus-common)";
+      		$self->info("Initializing Globus environment ($globus_config_script)...");
+      		$output .= "\n" . qx%$globus_config_script 2>&1%;      
+    	}
+    	$self->verbose("$output");
+    	if ( $? ) {
+      		$self->error("Failed to initialize Globus base environment. Return value: ". $? .
                    ". Script output:");
-      $self->info("$output");
-      return 1;
-    }
+      		$self->info("$output");
+      		return 1;
+    	}
+  	}
 
     # LCAS/LCMAPS integration    
     if ( $gatekeeper || $gridftp ) {
