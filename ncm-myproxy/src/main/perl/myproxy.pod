@@ -27,6 +27,12 @@ Configuration file for MyProxy. In edg variant, this is an intermediate configur
 
 Default: /opt/edg/etc/edg-myproxy.conf
 
+=head2 daemonName : string (optional)
+
+The MyProxy daemon name.
+
+Default: myproxy
+
 =head2 trustedDNs : list of string (optional, DEPRECATED)
 
 A list containing the list of DNs to trust for proxy renewal and retrieval.  This is
