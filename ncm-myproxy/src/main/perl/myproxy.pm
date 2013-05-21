@@ -132,19 +132,25 @@ sub Configure($$@) {
       }      
     }
 
+    # Use 'myproxy' as daemon name if undefined
+    unless ( $myproxy_config->{daemonName} ) {
+        $myproxy_config->{daemonName} = 'myproxy';
+    }
+
     # Reload MyProxy daemon if running, else restart it.
     # Always restart if flavor is edg.
-    if ( system('/sbin/service myproxy status >/dev/null 2>&1') ||
-         (($myproxy_config->{flavor} eq 'edg') && ($changes > 0)) ) {
+    my $proc = CAF::Process->new (['/sbin/service', $myproxy_config->{daemonName}, 'status'], log => $self);
+    $self->info($proc->output());
+    if ( $? || (($myproxy_config->{flavor} eq 'edg') && ($changes > 0)) ) {
       $self->info("Restarting MyProxy server...");
-      my $proc = CAF::Process->new (['/sbin/service', 'myproxy', 'restart'], log => $self);
+      my $proc = CAF::Process->new (['/sbin/service', $myproxy_config->{daemonName}, 'restart'], log => $self);
       $self->info($proc->output());
       if ( $? ) {
         $self->error("MyProxy server restart failed");
       }
     } elsif ( $changes > 0 ) {
       $self->info("Reloading MyProxy server...");
-      my $proc = CAF::Process->new (['/sbin/service', 'myproxy', 'reload'], log => $self);
+      my $proc = CAF::Process->new (['/sbin/service', $myproxy_config->{daemonName}, 'reload'], log => $self);
       $self->info($proc->output());
       if ( $? ) {
         $self->error("MyProxy server reload failed");
