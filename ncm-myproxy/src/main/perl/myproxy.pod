@@ -27,9 +27,9 @@ Configuration file for MyProxy. In edg variant, this is an intermediate configur
 
 Default: /opt/edg/etc/edg-myproxy.conf
 
-=head2 daemonName : string (optional)
+=head2 daemonName : string (required)
 
-The MyProxy daemon name.
+The MyProxy daemon name. Must be either 'myproxy' or 'myproxy-server'.
 
 Default: myproxy
 
