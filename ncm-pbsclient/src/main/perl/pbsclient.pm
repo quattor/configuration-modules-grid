@@ -110,22 +110,22 @@ sub Configure {
 ##########################################################################
     my ($self,$config)=@_;
     my $changes = 0;
-  
+
     $self->info("Configuring PBS");
 
     #
     # Create the Torque client config file from configuration
     #
     my $contents = "# File managed by Quattor component ncm-pbsclient. DO NOT EDIT.\n\n";
-    
+
     our $cfgtree = $config->getElement(COMPONENTPATH)->getTree;
-    
+
     ##
     ## initPaths
     ##
     my $pbsroot    = exists($cfgtree->{pbsroot}) ? $cfgtree->{pbsroot} : DEFAULTPBSDIR;
     my $pbsmomconf = exists($cfgtree->{configPath}) ? $pbsroot . '/' . $cfgtree->{configPath} : $pbsroot . '/' . DEFAULTPBSMOMCONF;
-    my $pbsinitscript = exists($cfgtree->{initScriptPath}) ? $pbsroot . '/' . $cfgtree->{initScriptPath} : DEFAULTPBSINITSCRIPT;
+    my $pbsinitscript = exists($cfgtree->{initScriptPath}) ? $cfgtree->{initScriptPath} : DEFAULTPBSINITSCRIPT;
 
     my $pbsdir=$pbsroot;
     my $pbsmomdir=$pbsroot. '/' . DEFAULTPBSMOMDIR;
@@ -149,22 +149,22 @@ sub Configure {
         $self->error("Empty master list");
         return;
     }
-  
 
-    foreach ( @{$cfgtree->{aliases}} ) { 
+
+    foreach ( @{$cfgtree->{aliases}} ) {
         $contents.='$alias_server_name '.$_."\n";
     }
 
-    foreach ( @{$cfgtree->{pbsclient}} ) { 
+    foreach ( @{$cfgtree->{pbsclient}} ) {
         $contents.='$pbsclient '.$_."\n";
     }
 
-    foreach ( @{$cfgtree->{varattr}} ) { 
+    foreach ( @{$cfgtree->{varattr}} ) {
         $contents.='$varattr '.$_."\n";
     }
 
     # create the line(s) with the $restricted directives from the master list
-    foreach ( @{$cfgtree->{restricted}} ) { 
+    foreach ( @{$cfgtree->{restricted}} ) {
         $contents .= '$restricted ' . $_ . "\n";
     }
 
@@ -180,7 +180,7 @@ sub Configure {
     # example elements are : "cpu count","model name","cpu MHz","cpu family","model","stepping"...
     if(exists($cfgtree->{cpuinfo})) {
         $self->info("Additional CPUINFO elements exist, adding them as resources to mom config");
-        
+
         my %tmphash=cpuinfo_hash();
         my %tmphash2;
         for my $elem (@{$cfgtree->{cpuinfo}}) {
@@ -194,13 +194,13 @@ sub Configure {
                 #$tmphash2{$elem}=$tmphash{$elem}
                 $tmphash2{$prop}=$tmphash{$elem};
             }
-        }      
+        }
         # add cpuinfo to resources
         %resources = (%resources, %tmphash2);
     };
 
     # Define other resources
-    foreach ( keys %resources ) { 
+    foreach ( keys %resources ) {
         $self->info("Additional resource '" . $_ . "' defined");
         my $resource_string = $_;
         if ( defined($resources{$_}) && length($resources{$_}) ) {
@@ -218,7 +218,7 @@ sub Configure {
         $self->debug(1,"Adding direct path \$usecp $locations $path");
         $contents .= '$usecp ' . $locations . " " . $path . "\n";
     }
-    
+
     ## bulk of all options
     ## regular style
     sub makestring {
@@ -240,7 +240,7 @@ sub Configure {
         ## regular style is preferred in case of mixing (but silently)
         $contents .= '$'.$cfgentry . ' ' . makestring($schemaname) . "\n" if ($cfgtree->{$schemaname} && (! $cfgtree->{$cfgentry}));
     }
-    
+
     ## options don't start with $
     foreach ( PBSCLIENTOPTIONS ) {
         $contents .= $_ . ' ' . makestring($_) . "\n" if ($cfgtree->{$_});
@@ -249,7 +249,7 @@ sub Configure {
 
     ## behaviour OpenPBS default pushed to schema
     ## This Torque behaviour is from very early Torque version. OpenPBS is best left as default.
-    if ( $cfgtree->{behaviour} eq "Torque" ) { 
+    if ( $cfgtree->{behaviour} eq "Torque" ) {
         # add a $pbsservername line
         # assume first master is the real one
         $contents .= '$pbsmastername ' . @{$cfgtree->{masters}}[0] . "\n";
@@ -259,7 +259,7 @@ sub Configure {
     # Update Torque client configuration file if needed
     #
     LC::Check::directory("$pbsmomdir");
-    
+
     ## Is this still needed? LC::Check::file probably already does this?
     -e "$pbsmomconf" or ( open PBSMOMCONFFH,">$pbsmomconf" and close PBSMOMCONFFH );
     -f "$pbsmomconf" or $self->Error("$pbsmomconf exists but is not a file");
@@ -280,7 +280,7 @@ sub Configure {
     #
     # Update server_name file
     #
-  
+
     my $srvfile="$pbsdir/server_name";
 
     ## Is this still needed? LC::Check::file probably already does this?
@@ -304,7 +304,7 @@ sub Configure {
     # Ensure that the tmpdir exists if it is specified.
     # For torque 2+, this directory must have group write privilege.
     #
-    # Bug 28585: 
+    # Bug 28585:
     # Do NOT set the absolute permissions because that may affect other permissions
     # Just ensure that the group can write to $tmpdir
     if ( $cfgtree->{tmpdir} ) {
@@ -353,7 +353,7 @@ sub Configure {
                 $self->info("Restart failed (output from $pbsinitscript restart: $output)");
             } else {
                 $self->info("Restarted (from $pbsinitscript restart)");
-            }            
+            }
         }
     };
 
@@ -367,7 +367,7 @@ sub Unconfigure {
   my ($self,$config)=@_;
 
   $self->info("Unconfiguring PBS. Nothing implemented.");
-  
+
   return;
 }
 
@@ -381,7 +381,7 @@ sub cpuinfo_hash {
     #assume processor number is the first information in cpuinfo
     #if a newline is found, increase the processor number
     #(processors are separated with newlines)
-  
+
     # Opening the file /proc/cpuinfo for input...
     my $processor=0;
     open (CPUINFO, "</proc/cpuinfo") || die "Can't open file \/proc\/cpuinfo!! : $!\n";
@@ -405,10 +405,10 @@ sub cpuinfo_hash {
         #print "$_\n";
         my $processor = 0;
         $processor = $cpuinfo{$_}{"processor"} if exists $cpuinfo{$_}{"processor"};
-        if(exists($cpuinfo{$_}{"physical id"})) { 
-            $cpus{$cpuinfo{$_}{"physical id"}}=$processor ; 
+        if(exists($cpuinfo{$_}{"physical id"})) {
+            $cpus{$cpuinfo{$_}{"physical id"}}=$processor ;
         } else  {
-            $cpus{$processor}=$processor ; 
+            $cpus{$processor}=$processor ;
         }
     }
     my @cpulist=sort keys %cpus;
@@ -427,7 +427,7 @@ sub cpuinfo_hash {
     # define several localres related to the 1st CPU
     # We're assuming all CPUs are the SAME (does anybody mix CPUs in a cluster node ?) !
     # If the pbs client has different cpus, then... too bad.
-    # 
+    #
     for my $property (keys %{$cpuinfo{0}}) {
         $localres{$property}=$cpuinfo{0}{$property}
     }
