@@ -6,7 +6,7 @@
   <artifactId>lcgbdii</artifactId>
 
   <packaging>pom</packaging>
-  <version>13.1.2-SNAPSHOT</version>
+  <version>13.9.0</version>
   <name>lcgbdii NCM component.</name>
 
   <repositories>
