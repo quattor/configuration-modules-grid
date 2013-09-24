@@ -65,6 +65,8 @@ use constant MAINOPTS => qw (
     rescap
     procweight
     usedatabase
+    statdir 
+    spooldir 
 );
 
 use constant PRIORITYOPTS => qw (
