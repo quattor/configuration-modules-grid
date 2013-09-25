@@ -144,12 +144,12 @@ sub Configure
     $self->info("Retrieving current configuration...");
     my $remaining = 10;
     sleep 5;
-    my @current_config = $self->runCommand($qmgr, "print server");
+    my $current_config = $self->runCommand($qmgr, "print server");
     while ( $? && ($remaining > 0) ) {
         $self->log("waiting 30s for qmgr to respond; $remaining tries remaining");
         $remaining--;
         sleep 30;
-        @current_config = $self->runCommand($qmgr, "print server");
+        $current_config = $self->runCommand($qmgr, "print server");
     }
     if ( $? ) {
         $self->error("qmgr is not responding; aborting configuration");
@@ -159,7 +159,7 @@ sub Configure
     # Slurp the existing server and queue information into a set of hashes.
     my %existingsatt;
     my %existingqueues;
-    for (@current_config) {
+    for (split('\n', $current_config)) {
         chomp;
         if (m/set server ([\w\.]+)/) {
             # Mark the server attribute as set.
