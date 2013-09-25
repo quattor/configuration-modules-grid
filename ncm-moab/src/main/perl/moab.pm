@@ -48,6 +48,7 @@ use constant MAINOPTS => qw (
     logfilemaxsize
     logfilerolldepth
     enablemultireqjobs
+    allowmultireqnodeuse
     enforceresourcelimits
     nodepollfrequency
     rmpollinterval  
@@ -65,6 +66,8 @@ use constant MAINOPTS => qw (
     rescap
     procweight
     usedatabase
+    statdir
+    spooldir
 );
 
 use constant PRIORITYOPTS => qw (
