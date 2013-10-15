@@ -48,6 +48,7 @@ use constant MAINOPTS => qw (
     logfilemaxsize
     logfilerolldepth
     enablemultireqjobs
+    allowmultireqnodeuse
     enforceresourcelimits
     nodepollfrequency
     rmpollinterval  
@@ -65,6 +66,8 @@ use constant MAINOPTS => qw (
     rescap
     procweight
     usedatabase
+    statdir
+    spooldir
 );
 
 use constant PRIORITYOPTS => qw (
@@ -138,7 +141,7 @@ sub Configure($$@) {
     $re = $config->getElement($base."/main")->getTree;
     $contents .= "\n";
     foreach my $opt (MAINOPTS) {
-        $contents .= uc($opt)."\t".%$re->{$opt}."\n" if exists(%$re->{$opt});
+        $contents .= uc($opt)."\t".$re->{$opt}."\n" if exists($re->{$opt});
     }
     foreach my $opt (keys(%$re)) {
         $self->warn("Unknown opt $opt in MAIN") if (! (grep {$_ eq $opt} MAINOPTS));
@@ -149,7 +152,7 @@ sub Configure($$@) {
     $contents .= "\n";
     $re = $config->getElement($base."/priority")->getTree;
     foreach my $opt (PRIORITYOPTS) {
-        $contents .= uc($opt)."\t".%$re->{$opt}."\n" if exists(%$re->{$opt});
+        $contents .= uc($opt)."\t".$re->{$opt}."\n" if exists($re->{$opt});
     }
     foreach my $opt (keys(%$re)) {
         $self->warn("Unknown opt $opt in PRIORITY") if (! (grep {$_ eq $opt} PRIORITYOPTS));
@@ -163,7 +166,7 @@ sub Configure($$@) {
             $contents .= "\n";
             $re = $config->getElement($base."/".$cfg)->getTree;
             foreach my $name (keys(%$re)) {
-                foreach my $val (@{%$re->{$name}}) {
+                foreach my $val (@{$re->{$name}}) {
                     $contents .= uc($cfg)."CFG[$name]\t$val\n";
                 }
             }
@@ -176,11 +179,11 @@ sub Configure($$@) {
         $contents .= "\n";
         my $re = $config->getElement($base."/include")->getTree;
         foreach my $name (keys(%$re)) {
-            if (exists(%$re->{contents})) {
+            if (exists($re->{contents})) {
                 ## create the inlcude file with contents
                 my $result = LC::Check::file( "$mpath/$name.dat",
                                       backup => ".old",
-                                      contents => encode_utf8(%$re->{contents}),
+                                      contents => encode_utf8($re->{contents}),
                                       );
                 if ($result) {
                     $self->log("INCLUDE file $mpath/$name.dat updated");
