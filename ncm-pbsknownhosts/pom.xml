@@ -6,7 +6,7 @@
   <artifactId>pbsknownhosts</artifactId>
 
   <packaging>pom</packaging>
-  <version>13.1.3-SNAPSHOT</version>
+  <version>13.12</version>
   <name>pbsknownhosts NCM component.</name>
 
   <parent>
