@@ -6,7 +6,7 @@
   <artifactId>moab</artifactId>
 
   <packaging>pom</packaging>
-  <version>13.12.0</version>
+  <version>13.12.1-SNAPSHOT</version>
   <name>Moab/Maui NCM component.</name>
 
   <parent>
