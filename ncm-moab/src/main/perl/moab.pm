@@ -68,6 +68,7 @@ use constant MAINOPTS => qw (
     usedatabase
     statdir
     spooldir
+    checkpointdir
 );
 
 use constant PRIORITYOPTS => qw (
