@@ -6,7 +6,7 @@
   <artifactId>gold</artifactId>
 
   <packaging>pom</packaging>
-  <version>14.2.1</version>
+  <version>14.2.2-SNAPSHOT</version>
   <name>GOLD NCM component.</name>
 
   <parent>
