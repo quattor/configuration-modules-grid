@@ -174,6 +174,7 @@ my %fedredir_config_rules = (
       "dpm.namecheck" => "namePrefix:fedparams;".LINE_FORMAT_XRDCFG,
       "dpm.replacementprefix" => "!namePrefix:fedparams->replacementPrefix:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_STRING_HASH,
       "pss.origin" => "localRedirector:fedparams;".LINE_FORMAT_XRDCFG,
+      "rucioprefix" => "n2nPrefixes:fedparams;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
       "xrd.port" => "localPort:fedparams;".LINE_FORMAT_XRDCFG,
       "xrd.report" => "reportingOptions:fedparams;".LINE_FORMAT_XRDCFG,
       "xrootfedxrdmanager" => "federationXrdManager:fedparams;".LINE_FORMAT_XRDCFG_SET,

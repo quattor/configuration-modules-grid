@@ -25,6 +25,8 @@ prefix '/software/components/xrootd';
 'options/federations/atlas/monitoringOptions' = 'all rbuff 32k auth flush 30s  window 5s dest files info user io redir atl-prod05.slac.stanford.edu:9930';
 'options/federations/atlas/n2nLibrary' = 'XrdOucName2NameLFC.so root=/dpm/lal.in2p3.fr/home/atlas match=grid05.lal.in2p3.fr';
 'options/federations/atlas/namePrefix' = '/dpm/lal.in2p3.fr/home/atlas';
+'options/federations/atlas/n2nPrefixes/0' = '/dpm/lal.in2p3.fr/home/atlas/atlasdatadisk/';
+'options/federations/atlas/n2nPrefixes/1' = '/dpm/lal.in2p3.fr/home/atlas/atlaslocalgroupdisk/';
 'options/federations/atlas/redirectParams' = 'atlas-xrd-fr.cern.ch:1094 ? /atlas/';
 'options/federations/atlas/reportingOptions' = 'atl-prod05.slac.stanford.edu:9931 every 60s all -buff -poll sync';
 'options/federations/atlas/validPathPrefix' = '/atlas/';

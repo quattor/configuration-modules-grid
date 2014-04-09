@@ -162,6 +162,7 @@ type ${project.artifactId}_component_fed_options = {
   'federationCmsdManager' : string
   'federationXrdManager' : string
   'n2nLibrary' ? string
+  'n2nPrefixes' ? string[]
   'namePrefix' ? string
   'localPort' : long
   'localRedirector' : string
