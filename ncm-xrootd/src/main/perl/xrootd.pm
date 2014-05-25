@@ -222,7 +222,7 @@ use constant PANPATH => "/software/components/${project.artifactId}";
 # This is a helper function returning the appropriate rule based on the
 # xrootd node type.
 # This function is mainly to help with unit testing (get rules).
-sub getRules($$@) {
+sub getRules {
 ##########################################################################
 
   my ( $self, $node_type) = @_;
@@ -241,13 +241,13 @@ sub getRules($$@) {
 # This is a helper function merging into global options all localRedirect 
 # paramaters defined in the options for each federation.
 # This function is mainly to help with unit testing.
-sub mergeLocalRedirects($$@) {
+sub mergeLocalRedirects {
 ##########################################################################
 
   my ( $self, $options) = @_;
 
   if ( $options->{federations} ) {
-    $options->{localRedirectParams} = ();
+    $options->{localRedirectParams} = [];
     while ( my ($federation,$params) = each(%{$options->{federations}}) ) {
       if ( defined($params->{localRedirectParams}) ) {
         push @{$options->{localRedirectParams}}, $params->{localRedirectParams};
@@ -258,7 +258,7 @@ sub mergeLocalRedirects($$@) {
 
 
 ##########################################################################
-sub Configure($$@) {
+sub Configure {
 ##########################################################################
     
   my ( $self, $config) = @_;
