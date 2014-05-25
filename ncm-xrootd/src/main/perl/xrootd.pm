@@ -288,7 +288,7 @@ sub Configure($$@) {
   } else {
     $xrootd_install_root = XROOTD_INSTALL_ROOT_DEFAULT;    
   }
-  if ( $xrootd_install_root == '/' ) {
+  if ( $xrootd_install_root eq '/' ) {
     $xrootd_install_root = "";
   }
   my $xrootd_bin_dir = $xrootd_install_root . '/usr/bin';
