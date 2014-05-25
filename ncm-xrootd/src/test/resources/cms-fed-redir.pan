@@ -27,6 +27,7 @@ prefix '/software/components/xrootd';
 'options/federations/cms/validPathPrefix' = '/store/';
 'options/reportingOptions' = ' atl-prod05.slac.stanford.edu:9931 every 60s all -buff -poll sync';
 'options/restartServices' = true;
+'options/siteName' = 'GRIF-LAL';
 'options/xrootdInstances/cmsfed/configFile' = '/etc/xrootd/xrootd-dpmfedredir_cmsfed.cfg';
 'options/xrootdInstances/cmsfed/federation' = 'cms';
 'options/xrootdInstances/cmsfed/logFile' = '/var/log/xrootd/xrootd.log';

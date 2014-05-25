@@ -174,6 +174,7 @@ type ${project.artifactId}_component_fed_options = {
   'localRedirectParams' ? string
   "monitoringOptions" ? string
   "reportingOptions" ? string
+  "siteName" ? string
 };
 
 type ${project.artifactId}_component_instances = {
@@ -191,9 +192,11 @@ type ${project.artifactId}_component_global_options = {
   "daemonUser" : string
   "daemonGroup" : string
   "restartServices" : boolean = true
+  "mallocArenaMax" ? long
   "MonALISAHost" ? string
   "monitoringOptions" ? string
   "reportingOptions" ? string
+  "siteName" ? string
   "cmsdInstances" ? ${project.artifactId}_component_instances{}
   "xrootdInstances" ? ${project.artifactId}_component_instances{}
   "federations" ? ${project.artifactId}_component_fed_options{}

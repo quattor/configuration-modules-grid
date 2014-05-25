@@ -43,6 +43,7 @@ set xrdlibdir = $XRDLIBDIR
 all.adminpath /var/spool/xrootd
 all.pidpath /var/run/xrootd
 all.export /atlas/
+#all.sitename <to_be_set>
 
 xrd.network nodnr
 
@@ -116,6 +117,7 @@ xrd.port 11001
 all.export /store/
 xrootd.redirect xrootd.ba.infn.it:1094 ? /store/
 setenv DPNS_HOST = grid05.lal.in2p3.fr
+all.sitename GRIF-LAL
 set xrootfedxrdmanager = xrootd.ba.infn.it:1094
 dpm.namelib libXrdCmsTfc.so file:/etc/xrootd/storage.xml?protocol=direct
 set xrootfedcmsdmanager = xrootd.ba.infn.it+:1213
@@ -137,6 +139,7 @@ set xrdlibdir = $XRDLIBDIR
 all.adminpath /var/spool/xrootd
 all.pidpath /var/run/xrootd
 all.export /store/
+all.sitename GRIF-LAL
 
 xrd.network nodnr
 
@@ -213,6 +216,7 @@ set xrdlibdir = $XRDLIBDIR
 all.adminpath /var/spool/xrootd
 all.pidpath /var/run/xrootd
 all.export /atlas/
+#all.sitename <to_be_set>
 
 xrd.network nodnr
 

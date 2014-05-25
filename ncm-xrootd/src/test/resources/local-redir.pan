@@ -17,6 +17,7 @@ prefix '/software/components/xrootd';
 'options/monitoringOptions' = 'all rbuff 32k auth flush 30s  window 5s dest files info user io redir  atl-prod05.slac.stanford.edu:9930';
 'options/reportingOptions' = ' atl-prod05.slac.stanford.edu:9931 every 60s all -buff -poll sync';
 'options/restartServices' = true;
+'options/siteName' = 'GRIF-LAL';
 'options/xrootdInstances/redir/configFile' = '/etc/xrootd/xrootd-dpmredir.cfg';
 'options/xrootdInstances/redir/logFile' = '/var/log/xrootd/xrootd.log';
 'options/xrootdInstances/redir/logKeep' = '90';
