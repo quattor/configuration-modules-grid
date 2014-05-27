@@ -514,7 +514,7 @@ sub Configure($$@) {
       $self->setGlobalOption($role."_service_enabled",0);        
       if ( exists($profile->{$role}) ) {
         my $servers = $profile->{$role};
-        if ( %{$servers} <= ${$comp_max_servers}{$role} ) {
+        if ( keys(%{$servers}) <= ${$comp_max_servers}{$role} ) {
           my $def_host;
           while ( my ($role_host,$host_params) = each(%{$servers}) ) {
             if ( ($role eq "dpm") || ($role eq "lfc") ) {
