@@ -276,7 +276,6 @@ xrootd.monitor all rbuff 32k auth flush 30s window 5s dest files info user io re
 
 setenv DPNS_HOST = grid05.lal.in2p3.fr
 setenv CSEC_MECH = ID
-rucioprefix /dpm/lal.in2p3.fr/home/atlas/atlasdatadisk/ /dpm/lal.in2p3.fr/home/atlas/atlaslocalgroupdisk/
 setenv LFC_CONRETRY = 0
 setenv DPM_HOST = grid05.lal.in2p3.fr
 ';
