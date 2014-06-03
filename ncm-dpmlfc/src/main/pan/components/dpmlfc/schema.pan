@@ -104,6 +104,7 @@ type ${project.artifactId}_component_node_config = {
         "allowCoreDump" ? boolean
         "threads" ? long
         "maxOpenFiles" ? long
+        "globusThreadModel" : string = "pthread"
 } with component_dpmlfc_node_config_valid(SELF);
 
 type ${project.artifactId}_component_dpm_node_config = {

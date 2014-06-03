@@ -158,6 +158,7 @@ my %copyd_config_rules = (
         "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
         "RUN_DPMCOPYDAEMON" => "ALWAYS->copyd_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
         "ULIMIT_N" => "maxOpenFiles:copyd;".LINE_FORMAT_PARAM,
+        "export GLOBUS_THREAD_MODEL" => "globusThreadModel:copyd;".LINE_FORMAT_PARAM,
        );
 
 my $dpm_config_file = "/etc/sysconfig/dpm";
@@ -176,6 +177,7 @@ my %dpm_config_rules = (
       "NB_STHREADS" => "slowThreads:dpm;".LINE_FORMAT_PARAM,
       "RUN_DPMDAEMON" => "ALWAYS->dpm_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
       "ULIMIT_N" => "maxOpenFiles:dpm;".LINE_FORMAT_PARAM,
+      "export GLOBUS_THREAD_MODEL" => "globusThreadModel:dpm;".LINE_FORMAT_PARAM,
            );
 
 my $dpns_config_file = "/etc/sysconfig/dpnsdaemon";
@@ -192,6 +194,7 @@ my %dpns_config_rules = (
        "RUN_DPNSDAEMON" => "ALWAYS->dpns_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
        "RUN_READONLY" => "readonly:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
        "ULIMIT_N" => "maxOpenFiles:dpns;".LINE_FORMAT_PARAM,
+       "export GLOBUS_THREAD_MODEL" => "globusThreadModel:dpns;".LINE_FORMAT_PARAM,
       );
 
 my $gsiftp_config_file = "/etc/sysconfig/dpm-gsiftp";
@@ -230,6 +233,7 @@ my %srmv1_config_rules = (
         "SRMV1DAEMONLOGFILE" => "logfile:srmv1;".LINE_FORMAT_PARAM,
         #"SRMV1_PORT" => "port:srmv1;".LINE_FORMAT_PARAM,
         "ULIMIT_N" => "maxOpenFiles:srmv1;".LINE_FORMAT_PARAM,
+        "export GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv1;".LINE_FORMAT_PARAM,
        );
 
 my $srmv2_config_file = "/etc/sysconfig/srmv2";
@@ -246,6 +250,7 @@ my %srmv2_config_rules = (
         "SRMV2DAEMONLOGFILE" => "logfile:srmv2;".LINE_FORMAT_PARAM,
         #"SRMV2_PORT" => "port:srmv2;".LINE_FORMAT_PARAM,
         "ULIMIT_N" => "maxOpenFiles:srmv2;".LINE_FORMAT_PARAM,
+        "export GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv2;".LINE_FORMAT_PARAM,
        );
 
 my $srmv22_config_file = "/etc/sysconfig/srmv2.2";
@@ -263,6 +268,7 @@ my %srmv22_config_rules = (
         "SRMV22DAEMONLOGFILE" => "logfile:srmv22;".LINE_FORMAT_PARAM,
         #"SRMV2_2_PORT" => "port:srmv22;".LINE_FORMAT_PARAM,
         "ULIMIT_N" => "maxOpenFiles:srmv22;".LINE_FORMAT_PARAM,
+        "export GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv22;".LINE_FORMAT_PARAM,
        );
 
 my $trust_roles = "dpm,dpns,rfio,gsiftp";
