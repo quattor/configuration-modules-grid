@@ -294,7 +294,7 @@ type ${project.artifactId}_component_service_wmproxy_loadmonitor_opts = {
 #};
 
 type ${project.artifactId}_component_service_wmproxy_opts = {
-#  'ApacheLogLevel'               ? string with match(SELF,'emerg|alert|crit|error|warn|notice|info|debug')
+  'ApacheLogLevel'               ? string with match(SELF,'emerg|alert|crit|error|warn|notice|info|debug')
   'ArgusAuthz'                   ? boolean
   'ArgusPepEndpoints'            ? string{}
   'AsyncJobStart'                ? boolean
