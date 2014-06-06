@@ -147,8 +147,8 @@ my %lfc_comp_max_servers = (
 my $copyd_config_file = "/etc/sysconfig/dpmcopyd";
 my %copyd_config_rules = (
         "ALLOW_COREDUMP" =>"allowCoreDump:copyd;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
-        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
         "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
         "DPMCOPYDLOGFILE" => "logfile:copyd;".LINE_FORMAT_PARAM,
         #"DPMCOPYD_PORT" => "port:copyd;".LINE_FORMAT_PARAM,
@@ -158,12 +158,14 @@ my %copyd_config_rules = (
         "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
         "RUN_DPMCOPYDAEMON" => "ALWAYS->copyd_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
         "ULIMIT_N" => "maxOpenFiles:copyd;".LINE_FORMAT_PARAM,
+        "GLOBUS_THREAD_MODEL" => "globusThreadModel:copyd;".LINE_FORMAT_ENVVAR,
        );
 
 my $dpm_config_file = "/etc/sysconfig/dpm";
 my %dpm_config_rules = (
       "ALLOW_COREDUMP" =>"allowCoreDump:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-      "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+      "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+      "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
       "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
       "DPMDAEMONLOGFILE" => "logfile:dpm;".LINE_FORMAT_PARAM,
       #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
@@ -175,11 +177,14 @@ my %dpm_config_rules = (
       "NB_STHREADS" => "slowThreads:dpm;".LINE_FORMAT_PARAM,
       "RUN_DPMDAEMON" => "ALWAYS->dpm_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
       "ULIMIT_N" => "maxOpenFiles:dpm;".LINE_FORMAT_PARAM,
+      "GLOBUS_THREAD_MODEL" => "globusThreadModel:dpm;".LINE_FORMAT_ENVVAR,
            );
 
 my $dpns_config_file = "/etc/sysconfig/dpnsdaemon";
 my %dpns_config_rules = (
        "ALLOW_COREDUMP" =>"allowCoreDump:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+       "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+       "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
        #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
        "DPNSDAEMONLOGFILE" => "logfile:dpns;".LINE_FORMAT_PARAM,
@@ -189,12 +194,13 @@ my %dpns_config_rules = (
        "RUN_DPNSDAEMON" => "ALWAYS->dpns_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
        "RUN_READONLY" => "readonly:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
        "ULIMIT_N" => "maxOpenFiles:dpns;".LINE_FORMAT_PARAM,
+       "GLOBUS_THREAD_MODEL" => "globusThreadModel:dpns;".LINE_FORMAT_ENVVAR,
       );
 
 my $gsiftp_config_file = "/etc/sysconfig/dpm-gsiftp";
 my %gsiftp_config_rules = (
-         "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
-         "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+         "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+         "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
          "FTPLOGFILE" => "logfile:gsiftp;".LINE_FORMAT_PARAM,
          "GLOBUS_TCP_PORT_RANGE" => "portRange:gsiftp;".LINE_FORMAT_PARAM,
          "OPTIONS" => "startupOptions:gsiftp;".LINE_FORMAT_PARAM,
@@ -203,7 +209,8 @@ my %gsiftp_config_rules = (
 
 my $rfio_config_file = "/etc/sysconfig/rfiod";
 my %rfio_config_rules = (
-       "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+       "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+       "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
        "OPTIONS" => "startupOptions:rfio;".LINE_FORMAT_PARAM,
        "RFIOLOGFILE" => "logfile:rfio;".LINE_FORMAT_PARAM,
@@ -218,14 +225,15 @@ my %srmv1_config_rules = (
         "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
-        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
         "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
         "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
         "RUN_SRMV1DAEMON" => "ALWAYS->srmv1_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
         "SRMV1DAEMONLOGFILE" => "logfile:srmv1;".LINE_FORMAT_PARAM,
         #"SRMV1_PORT" => "port:srmv1;".LINE_FORMAT_PARAM,
         "ULIMIT_N" => "maxOpenFiles:srmv1;".LINE_FORMAT_PARAM,
+        "GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv1;".LINE_FORMAT_ENVVAR,
        );
 
 my $srmv2_config_file = "/etc/sysconfig/srmv2";
@@ -234,14 +242,15 @@ my %srmv2_config_rules = (
         "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
-        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
         "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
         "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
         "RUN_SRMV2DAEMON" => "ALWAYS->srmv2_service_enabled:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
         "SRMV2DAEMONLOGFILE" => "logfile:srmv2;".LINE_FORMAT_PARAM,
         #"SRMV2_PORT" => "port:srmv2;".LINE_FORMAT_PARAM,
         "ULIMIT_N" => "maxOpenFiles:srmv2;".LINE_FORMAT_PARAM,
+        "GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv2;".LINE_FORMAT_ENVVAR,
        );
 
 my $srmv22_config_file = "/etc/sysconfig/srmv2.2";
@@ -250,8 +259,8 @@ my %srmv22_config_rules = (
         "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
-        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
         "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
         "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
         "NB_THREADS" => "threads:srmv22;".LINE_FORMAT_PARAM,
@@ -259,6 +268,7 @@ my %srmv22_config_rules = (
         "SRMV22DAEMONLOGFILE" => "logfile:srmv22;".LINE_FORMAT_PARAM,
         #"SRMV2_2_PORT" => "port:srmv22;".LINE_FORMAT_PARAM,
         "ULIMIT_N" => "maxOpenFiles:srmv22;".LINE_FORMAT_PARAM,
+        "GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv22;".LINE_FORMAT_ENVVAR,
        );
 
 my $trust_roles = "dpm,dpns,rfio,gsiftp";
