@@ -137,6 +137,7 @@ my %xrootd_sysconfig_rules = (
         "DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_PARAM,
         "DPMXRD_ALTERNATE_HOSTNAMES" => "alternateNames:dpm;".LINE_FORMAT_PARAM,
         "DPNS_HOST" => "dpnsHost:dpm;".LINE_FORMAT_PARAM,
+        "MALLOC_ARENA_MAX" => "mallocArenaMax:GLOBAL;".LINE_FORMAT_PARAM,
         "XROOTD_GROUP" => "daemonGroup:GLOBAL;".LINE_FORMAT_PARAM,
         "XROOTD_INSTANCES" => "xrootdInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_HASH_KEYS,
         "XROOTD_%%INSTANCE%%_OPTIONS" => "xrootdInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_INSTANCE_PARAMS,
@@ -144,11 +145,13 @@ my %xrootd_sysconfig_rules = (
        );
 
 my %disk_config_rules = (
+      "all.sitename" => "siteName:GLOBAL;".LINE_FORMAT_XRDCFG,
       "xrd.report" => "reportingOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
       "xrootd.monitor" => "monitoringOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
       );
 
 my %redir_config_rules = (
+      "all.sitename" => "siteName:GLOBAL;".LINE_FORMAT_XRDCFG,
       "dpmhost" => "dpmHost:dpm;".LINE_FORMAT_XRDCFG_SET,
       "dpm.defaultprefix" => "defaultPrefix:dpm;".LINE_FORMAT_XRDCFG,
       "dpm.fixedidrestrict" => "authorizedPaths:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
@@ -169,6 +172,7 @@ my %redir_config_rules = (
 my %fedredir_config_rules = (
       "all.export" => "validPathPrefix:fedparams;".LINE_FORMAT_XRDCFG,
       "all.manager" => "federationCmsdManager:fedparams;".LINE_FORMAT_XRDCFG,
+      "all.sitename" => "siteName:GLOBAL;".LINE_FORMAT_XRDCFG,
       "dpm.defaultprefix" => "!namePrefix:fedparams->defaultPrefix:dpm;".LINE_FORMAT_XRDCFG,
       "dpm.namelib" => "n2nLibrary:fedparams;".LINE_FORMAT_XRDCFG,
       "dpm.namecheck" => "namePrefix:fedparams;".LINE_FORMAT_XRDCFG,
@@ -195,6 +199,7 @@ my %config_rules = (
         "disk" => \%disk_config_rules,
         "redir" => \%redir_config_rules,
         "fedredir" => \%fedredir_config_rules,
+        "sysconfig" => \%xrootd_sysconfig_rules,
        );
        
 # Global variables to store component configuration
@@ -217,7 +222,46 @@ use constant PANPATH => "/software/components/${project.artifactId}";
 
 
 ##########################################################################
-sub Configure($$@) {
+# This is a helper function returning the appropriate rule based on the
+# xrootd node type.
+# This function is mainly to help with unit testing (get rules).
+sub getRules {
+##########################################################################
+
+  my ( $self, $node_type) = @_;
+
+  unless ( $config_rules{$node_type} ) {
+    $self->error("Internal error: invalid node type '$node_type)");
+    return;
+  }	
+
+  return $config_rules{$node_type};
+
+}
+
+
+##########################################################################
+# This is a helper function merging into global options all localRedirect 
+# paramaters defined in the options for each federation.
+# This function is mainly to help with unit testing.
+sub mergeLocalRedirects {
+##########################################################################
+
+  my ( $self, $options) = @_;
+
+  if ( $options->{federations} ) {
+    $options->{localRedirectParams} = [];
+    while ( my ($federation,$params) = each(%{$options->{federations}}) ) {
+      if ( defined($params->{localRedirectParams}) ) {
+        push @{$options->{localRedirectParams}}, $params->{localRedirectParams};
+      }
+    }
+  }
+}
+
+
+##########################################################################
+sub Configure {
 ##########################################################################
     
   my ( $self, $config) = @_;
@@ -247,7 +291,7 @@ sub Configure($$@) {
   } else {
     $xrootd_install_root = XROOTD_INSTALL_ROOT_DEFAULT;    
   }
-  if ( $xrootd_install_root == '/' ) {
+  if ( $xrootd_install_root eq '/' ) {
     $xrootd_install_root = "";
   }
   my $xrootd_bin_dir = $xrootd_install_root . '/usr/bin';
@@ -298,7 +342,7 @@ sub Configure($$@) {
             # cmsd configuration file is normally the same as the xrootd instance
             if ( $xrootd_options->{cmsdInstances}->{$instance}->{configFile} ne $params->{configFile} ) {
               my $changes = $self->updateConfigFile($xrootd_options->{cmsdInstances}->{$instance}->{configFile},
-                                                    $config_rules{$instance_type},
+                                                    $self->getRules($instance_type),
                                                     $xrootd_options);        
               if ( $changes < 0 ) {
                 $self->error("Error updating cmsd configuration for instance $instance_type (".
@@ -309,16 +353,9 @@ sub Configure($$@) {
             $self->error("No cmsd instance matching the xrootd fedredir instance '$instance'");
           }
         } elsif ( $instance_type eq 'redir' ) {
-          if ( $xrootd_options->{federations} ) {
-            $xrootd_options->{localRedirectParams} = ();
-            while ( my ($federation,$params) = each(%{$xrootd_options->{federations}}) ) {
-              if ( defined($params->{localRedirectParams}) ) {
-                push @{$xrootd_options->{localRedirectParams}}, $params->{localRedirectParams};
-              }
-            }
-          }
+          $self->mergeLocalRedirects($xrootd_options);
         }
-        my $changes = $self->updateConfigFile($params->{configFile},$config_rules{$instance_type},$xrootd_options);
+        my $changes = $self->updateConfigFile($params->{configFile},$self->getRules($instance_type),$xrootd_options);
         if ( $changes > 0 ) {
           $self->serviceRestartNeeded('xrootd',$instance);
           if ( $instance_type eq 'fedredir' ) {
@@ -436,7 +473,7 @@ sub Configure($$@) {
   # DPM/Xrootd sysconfig file if enabled
   if ( defined($xrootd_options->{dpm}) ) {
     $self->info("Checking DPM/Xrootd plugin configuration ($xrootd_sysconfig_file)...");
-    my $changes = $self->updateConfigFile($xrootd_sysconfig_file,\%xrootd_sysconfig_rules,$xrootd_options);
+    my $changes = $self->updateConfigFile($xrootd_sysconfig_file,$self->getRules('sysconfig'),$xrootd_options);
     if ( $changes > 0 ) {
       # Add the services to the restart list only if there is not already some instances of the 
       # service to be restarted. This is done to avoid unnecessary restart of an instance if the
