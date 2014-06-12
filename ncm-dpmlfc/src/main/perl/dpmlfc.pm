@@ -638,7 +638,7 @@ sub Configure($$@) {
       my $pools = $profile->{pools};
       for my $pool (sort(keys(%$pools))) {
         my $pool_args = %{$pools->{$pool}};
-        $self->DPMConfigurePool($pool,%{$pool_args});
+        $self->DPMConfigurePool($pool,$pool_args);
       }
     }
   }
@@ -662,9 +662,9 @@ sub DPMConfigurePool () {
     $self->error("$function_name: pool name argument missing.");
     return (1);
   }
-  my %pool_args;
+  my $pool_args;
   if ( @_ > 0 ) {
-    %pool_args = shift;
+    $pool_args = shift;
   } else {
     $self->error("$function_name: pool properties argument missing.");
     return (1);
