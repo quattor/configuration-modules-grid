@@ -144,10 +144,16 @@ my %lfc_comp_max_servers = (
 # values so that they are encoded as 'yes' or 'no'.
 # If there are several servers for a role the option value from all the servers# is used for 'host' option, and only the server corresponding to current host
 # for other options.
+#
+# NOTE: DPM_HOST/DPNS_HOST are added both exported and unexported to workaround conflicting requirements between
+# DPM version and changing sysconfig template files. Else, the resulting sysconfig file may contain syntax errors
+# preventing the correct daemon operations
 my $copyd_config_file = "/etc/sysconfig/dpmcopyd";
 my %copyd_config_rules = (
         "ALLOW_COREDUMP" =>"allowCoreDump:copyd;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
         "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
         "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
         "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
         "DPMCOPYDLOGFILE" => "logfile:copyd;".LINE_FORMAT_PARAM,
@@ -164,7 +170,9 @@ my %copyd_config_rules = (
 my $dpm_config_file = "/etc/sysconfig/dpm";
 my %dpm_config_rules = (
       "ALLOW_COREDUMP" =>"allowCoreDump:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+      "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
       "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+      "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
       "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
       "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
       "DPMDAEMONLOGFILE" => "logfile:dpm;".LINE_FORMAT_PARAM,
@@ -183,7 +191,9 @@ my %dpm_config_rules = (
 my $dpns_config_file = "/etc/sysconfig/dpnsdaemon";
 my %dpns_config_rules = (
        "ALLOW_COREDUMP" =>"allowCoreDump:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+       "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
        "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+       "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
        #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
@@ -199,7 +209,9 @@ my %dpns_config_rules = (
 
 my $gsiftp_config_file = "/etc/sysconfig/dpm-gsiftp";
 my %gsiftp_config_rules = (
+         "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
          "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+         "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
          "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
          "FTPLOGFILE" => "logfile:gsiftp;".LINE_FORMAT_PARAM,
          "GLOBUS_TCP_PORT_RANGE" => "portRange:gsiftp;".LINE_FORMAT_PARAM,
@@ -209,7 +221,9 @@ my %gsiftp_config_rules = (
 
 my $rfio_config_file = "/etc/sysconfig/rfiod";
 my %rfio_config_rules = (
+       "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
        "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+       "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
        "OPTIONS" => "startupOptions:rfio;".LINE_FORMAT_PARAM,
@@ -225,7 +239,9 @@ my %srmv1_config_rules = (
         "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
         "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
         "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
         "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
         "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
@@ -242,7 +258,9 @@ my %srmv2_config_rules = (
         "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
         "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
         "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
         "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
         "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
@@ -259,7 +277,9 @@ my %srmv22_config_rules = (
         "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
+        "DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
         "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
+        "DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
         "DPNS_HOST" => "host:dpns;".LINE_FORMAT_ENVVAR,
         "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
         "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
