@@ -103,6 +103,10 @@ my %role_max_servers = (
 # hash value is the parsing rule for the keyword value. Parsing rule format is :
 #       [condition->]option_name:option_set[,option_set,...];line_fmt[;value_fmt]
 #
+# If the line keyword (hash key) is starting with a '-', this means that the matching
+# configuration line must be removed/commented out (instead of added/updated) from the
+# configuration file if present.
+#
 # 'condition': an option or an option set that must exist for the rule to be applied.
 #              Both option_set and option_name:option_set are accepted (see below).
 #              Only one option set is allowed and only existence, not value is tested.
@@ -1044,6 +1048,8 @@ sub updateConfigFile () {
   # Loop over all config rule entries.
   # Config rules are stored in a hash whose key is the variable to write
   # and whose value is the rule itself.
+  # If the variable name start with a '-', this means that the matching configuration
+  # line must be commented out unconditionally.
   # Each rule format is '[condition->]attribute:option_set[,option_set,...];line_fmt' where
   #     condition: reserved for future use
   #     option_set and attribute: attribute in option set that must be substituted
@@ -1054,6 +1060,14 @@ sub updateConfigFile () {
   my $rule_id = 0;
   while ( my ($keyword,$rule) = each(%{$config_rules}) ) {
     $rule_id++;
+
+    # Check if the keyword is prefixed by a '-': in this case the corresponding line must
+    # be commented out if it present
+    my $comment_line = 0;
+    if ( $keyword =~ /^-/ ) {
+      $keyword =~ s/^-//;
+      $comment_line = 1;
+    }
 
     # Split different elements of the rule
     ($rule, my $line_fmt, my $value_fmt) = split /;/, $rule;
@@ -1077,7 +1091,12 @@ sub updateConfigFile () {
       $condition = "";
     }
     $self->debug(1,"$function_name: processing rule ".$rule_id."(variable=>>>".$keyword.
-                      "<<<, condition=>>>".$condition."<<<, rule=>>>".$rule."<<<, fmt=".$line_fmt.")");
+                      "<<<, comment_line=".$comment_line.", condition=>>>".$condition."<<<, rule=>>>".$rule."<<<, fmt=".$line_fmt.")");
+
+    # If the variable name was "negated", remove (comment out) configuration line if present and enabled
+    if ( $comment_line ) {
+      $self->removeConfigLine($fh,$keyword,$line_fmt);
+    }
 
     unless ( $condition eq "" ) {
       $self->debug(1,"$function_name: checking condition >>>$condition<<<");
