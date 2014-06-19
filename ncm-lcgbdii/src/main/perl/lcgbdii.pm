@@ -350,6 +350,20 @@ sub createDir {
     return 1;
 }
 
+
+# Untaint file/directory name
+
+sub untaintFileName {
+  my ($self, $filename) = @_;
+  if ($filename =~ /^([-\@\w.\/]+)$/) {
+    return $1;
+  } else {
+    $self->error("Invalid file name ($filename)");
+    return;
+  }
+}
+
+
 # Change ownership of a directory and its contents, recursively
 # This method also checks that the directory/file is not one of the standard directories.
 # Returns 1 in case of success, else 0.
@@ -370,7 +384,11 @@ sub chownDirAndChildren {
     }
 
     $self->debug(1, "Updating $file owner to uid=$uid, gid=$gid");
-    chown($uid, $gid, $file);
+    my $cnt = chown($uid, $gid, $self->untaintFileName($file));
+    if ( $cnt == 0 ) {
+        $self->error("Error setting owner/group on $file");
+        return 1;
+    }
 
     # If $file is a directory, process its contents recursively (files and directories only)
     if ( -d $file ) {
