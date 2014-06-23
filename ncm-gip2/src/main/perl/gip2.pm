@@ -392,6 +392,18 @@ sub Configure($$@) {
 }
 
 
+# Untaint file/directory name
+
+sub untaintFileName {
+  my ($self, $filename) = @_;
+  if ($filename =~ /^([-\@\w.\/]+)$/) {
+    return $1;
+  } else {
+    $self->error("Invalid file name ($filename)");
+    return;
+  }
+}
+
 # Change owner/group and set permissions on a directory and its contents
 # Do it recursively, except if $norecurse is true
 
@@ -415,7 +427,7 @@ sub createAndChownDir {
         $self->error("Error creating directory: $dir");
         return 1;
     }
-    my $cnt = chown($uid, $gid, $dir);
+    my $cnt = chown($uid, $gid, $self->untaintFileName($dir));
     if ( $cnt == 0 ) {
         $self->error("Error setting owner/group on directory: $dir");
         return 1;
@@ -446,7 +458,7 @@ sub createAndChownDir {
             }
         } else {
             $self->debug(1, "Setting owner and group on $f");
-            my $cnt = chown($uid, $gid, glob($f));
+            my $cnt = chown($uid, $gid, $self->untaintFileName($f));
             if ( $cnt == 0 ) {
                 $self->warn("Error setting owner/group on $f");
             }
