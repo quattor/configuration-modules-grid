@@ -143,7 +143,7 @@ my %xrootd_sysconfig_rules = (
         "DPNS_HOST" => "dpnsHost:dpm;".LINE_FORMAT_PARAM,
         "MALLOC_ARENA_MAX" => "mallocArenaMax:GLOBAL;".LINE_FORMAT_PARAM,
         "XROOTD_GROUP" => "daemonGroup:GLOBAL;".LINE_FORMAT_PARAM,
-        "XROOTD_INSTANCES" => "xrootdInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_HASH_KEYS,
+        "XROOTD_INSTANCES" => "xrootdOrderedInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
         "XROOTD_%%INSTANCE%%_OPTIONS" => "xrootdInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_INSTANCE_PARAMS,
         "XROOTD_USER" => "daemonUser:GLOBAL;".LINE_FORMAT_PARAM,
        );
@@ -333,11 +333,16 @@ sub Configure {
   
   my $roles = $xrootd_config->{hosts}->{$this_host_full}->{roles};
   if ( defined($xrootd_options->{xrootdInstances}) ) {    
+    # We need to build a list of the xrootd instances with the local redirector first
+    # that will be used to decide the startup order. A federation redirector cannot
+    # start successfully until he established the contact with the local redirector.
+    $xrootd_options->{xrootdOrderedInstances} = [];
     while ( my ($instance,$params) = each(%{$xrootd_options->{xrootdInstances}}) ) {
       my $instance_type = $params->{type};
       if ( grep(/^$instance_type$/,@$roles) ) {
         $self->info("Checking xrootd instance '$instance' configuration ($params->{configFile})...");
         if ( $instance_type eq 'fedredir' ) {
+          push @{$xrootd_options->{xrootdOrderedInstances}}, $instance;
           my $federation = $params->{federation};
           $self->debug(2,"Copying parameters for federation $federation to 'fedparams' option set");
           $xrootd_options->{fedparams} = $xrootd_options->{federations}->{$federation};
@@ -357,6 +362,7 @@ sub Configure {
             $self->error("No cmsd instance matching the xrootd fedredir instance '$instance'");
           }
         } elsif ( $instance_type eq 'redir' ) {
+          @{$xrootd_options->{xrootdOrderedInstances}} = ($instance, @{$xrootd_options->{xrootdOrderedInstances}});
           $self->mergeLocalRedirects($xrootd_options);
         }
         my $changes = $self->updateConfigFile($params->{configFile},$self->getRules($instance_type),$xrootd_options);
