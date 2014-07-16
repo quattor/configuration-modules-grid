@@ -509,7 +509,11 @@ sub configureNode {
       # probably only affects this instance. If there was no other changes related that put an instance
       # on the restart list, restart every instance both for xrootd and cmsd. This will also stop
       # instances that are no longer part of the configuration.
-      $self->serviceRestartNeeded('xrootd,cmsd','',1);
+      if ( $xrootd_options->{cmsdInstances} ) {
+        $self->serviceRestartNeeded('xrootd,cmsd','',1);
+      } else {
+        $self->serviceRestartNeeded('xrootd','',1);
+      }
     } elsif ( $changes < 0 ) {
       $self->error("Error updating xrootd sysconfig file ($XROOTD_SYSCONFIG_FILE)");
     }
