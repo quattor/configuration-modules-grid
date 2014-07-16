@@ -221,10 +221,6 @@ my %xrootd_services = ('cmsd' => 'cmsd',
                        'xrootd' => 'xrootd',
                       );
 
-# Pan path for the component configuration, variable to host the profile contents and other
-# constants related to profile
-use constant PANPATH => "/software/components/${project.artifactId}";
-
 
 ##########################################################################
 # This is a helper function returning the appropriate rule based on the
@@ -275,7 +271,24 @@ sub Configure {
   my $this_host_domain = hostdomain();
   my $this_host_full = join ".", $this_host_name, $this_host_domain;
 
-  my $xrootd_config = $config->getElement(PANPATH)->getTree();
+  my $xrootd_config = $config->prefix()->getTree();
+  my $xrootd_options = $xrootd_config->{options};
+
+  return $self->configureNode($this_host_full,$xrootd_config);
+}
+
+
+##########################################################################
+# Do the real work here: the only reason for this method is to allow
+# testing by mocking the hostname.
+sub configureNode {
+##########################################################################
+    
+  my ( $self, $this_host_full, $xrootd_config) = @_;
+  unless ( $this_host_full && $xrootd_config ) {
+    $self->error("configureNode: missing argument (internal error)");
+    return (2);
+  }
   my $xrootd_options = $xrootd_config->{options};
 
   # Process separatly DPM and LFC configuration
