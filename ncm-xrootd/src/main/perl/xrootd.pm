@@ -32,9 +32,10 @@ package NCM::Component::${project.artifactId};
 
 use strict;
 use NCM::Component;
-use vars qw(@ISA $EC);
-@ISA = qw(NCM::Component);
-$EC=LC::Exception::Context->new->will_store_all;
+our @ISA = qw(NCM::Component Exporter);
+our $EC=LC::Exception::Context->new->will_store_all;
+our @EXPORT = qw( $XROOTD_SYSCONFIG_FILE );
+use Readonly;
 
 use EDG::WP4::CCM::Element;
 
@@ -133,7 +134,7 @@ my %role_max_servers = (
 # If there are several servers for a role the option value from all the servers# is used for 'host' option, and only the server corresponding to current host
 # for other options.
 
-my $xrootd_sysconfig_file = "/etc/sysconfig/xrootd";
+Readonly our $XROOTD_SYSCONFIG_FILE => "/etc/sysconfig/xrootd";
 my %xrootd_sysconfig_rules = (
         "CMSD_INSTANCES" => "cmsdInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_HASH_KEYS,
         "CMSD_%%INSTANCE%%_OPTIONS" => "cmsdInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_INSTANCE_PARAMS,
@@ -482,8 +483,8 @@ sub Configure {
   
   # DPM/Xrootd sysconfig file if enabled
   if ( defined($xrootd_options->{dpm}) ) {
-    $self->info("Checking DPM/Xrootd plugin configuration ($xrootd_sysconfig_file)...");
-    my $changes = $self->updateConfigFile($xrootd_sysconfig_file,$self->getRules('sysconfig'),$xrootd_options);
+    $self->info("Checking DPM/Xrootd plugin configuration ($XROOTD_SYSCONFIG_FILE)...");
+    my $changes = $self->updateConfigFile($XROOTD_SYSCONFIG_FILE,$self->getRules('sysconfig'),$xrootd_options);
     if ( $changes > 0 ) {
       # Add the services to the restart list only if there is not already some instances of the 
       # service to be restarted. This is done to avoid unnecessary restart of an instance if the
@@ -495,7 +496,7 @@ sub Configure {
       # instances that are no longer part of the configuration.
       $self->serviceRestartNeeded('xrootd,cmsd','',1);
     } elsif ( $changes < 0 ) {
-      $self->error("Error updating xrootd sysconfig file ($xrootd_sysconfig_file)");
+      $self->error("Error updating xrootd sysconfig file ($XROOTD_SYSCONFIG_FILE)");
     }
   } else {
     $self->debug(1,"DPM/Xrootd plugin disabled.");
