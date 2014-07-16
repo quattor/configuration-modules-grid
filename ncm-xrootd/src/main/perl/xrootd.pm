@@ -271,7 +271,7 @@ sub Configure {
   my $this_host_domain = hostdomain();
   my $this_host_full = join ".", $this_host_name, $this_host_domain;
 
-  my $xrootd_config = $config->prefix()->getTree();
+  my $xrootd_config = $config->getElement($self->prefix())->getTree();
   my $xrootd_options = $xrootd_config->{options};
 
   return $self->configureNode($this_host_full,$xrootd_config);
@@ -355,29 +355,31 @@ sub configureNode {
       my $instance_type = $params->{type};
       if ( grep(/^$instance_type$/,@$roles) ) {
         $self->info("Checking xrootd instance '$instance' configuration ($params->{configFile})...");
-        if ( $instance_type eq 'fedredir' ) {
-          push @{$xrootd_options->{xrootdOrderedInstances}}, $instance;
-          my $federation = $params->{federation};
-          $self->debug(2,"Copying parameters for federation $federation to 'fedparams' option set");
-          $xrootd_options->{fedparams} = $xrootd_options->{federations}->{$federation};
-          # Normally enforced by schema validation...
-          if ( exists($xrootd_options->{cmsdInstances}) && exists($xrootd_options->{cmsdInstances}->{$instance}) ) {
-            # cmsd configuration file is normally the same as the xrootd instance
-            if ( $xrootd_options->{cmsdInstances}->{$instance}->{configFile} ne $params->{configFile} ) {
-              my $changes = $self->updateConfigFile($xrootd_options->{cmsdInstances}->{$instance}->{configFile},
-                                                    $self->getRules($instance_type),
-                                                    $xrootd_options);        
-              if ( $changes < 0 ) {
-                $self->error("Error updating cmsd configuration for instance $instance_type (".
-                                      $xrootd_options->{cmsdInstances}->{$instance}->{configFile}.")");
-              }
-            }
-          } else {
-            $self->error("No cmsd instance matching the xrootd fedredir instance '$instance'");
-          }
-        } elsif ( $instance_type eq 'redir' ) {
+        if ( $instance_type eq 'redir' ) {
           @{$xrootd_options->{xrootdOrderedInstances}} = ($instance, @{$xrootd_options->{xrootdOrderedInstances}});
           $self->mergeLocalRedirects($xrootd_options);
+        } else {
+          push @{$xrootd_options->{xrootdOrderedInstances}}, $instance;
+          if ( $instance_type eq 'fedredir' ) {
+            my $federation = $params->{federation};
+            $self->debug(2,"Copying parameters for federation $federation to 'fedparams' option set");
+            $xrootd_options->{fedparams} = $xrootd_options->{federations}->{$federation};
+            # Normally enforced by schema validation...
+            if ( exists($xrootd_options->{cmsdInstances}) && exists($xrootd_options->{cmsdInstances}->{$instance}) ) {
+              # cmsd configuration file is normally the same as the xrootd instance
+              if ( $xrootd_options->{cmsdInstances}->{$instance}->{configFile} ne $params->{configFile} ) {
+                my $changes = $self->updateConfigFile($xrootd_options->{cmsdInstances}->{$instance}->{configFile},
+                                                      $self->getRules($instance_type),
+                                                      $xrootd_options);        
+                if ( $changes < 0 ) {
+                  $self->error("Error updating cmsd configuration for instance $instance_type (".
+                                        $xrootd_options->{cmsdInstances}->{$instance}->{configFile}.")");
+                }
+              }
+            } else {
+              $self->error("No cmsd instance matching the xrootd fedredir instance '$instance'");
+            }
+          }
         }
         my $changes = $self->updateConfigFile($params->{configFile},$self->getRules($instance_type),$xrootd_options);
         if ( $changes > 0 ) {
