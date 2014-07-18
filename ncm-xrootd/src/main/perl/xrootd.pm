@@ -32,9 +32,10 @@ package NCM::Component::${project.artifactId};
 
 use strict;
 use NCM::Component;
-use vars qw(@ISA $EC);
-@ISA = qw(NCM::Component);
-$EC=LC::Exception::Context->new->will_store_all;
+our @ISA = qw(NCM::Component Exporter);
+our $EC=LC::Exception::Context->new->will_store_all;
+our @EXPORT = qw( $XROOTD_SYSCONFIG_FILE );
+use Readonly;
 
 use EDG::WP4::CCM::Element;
 
@@ -133,7 +134,7 @@ my %role_max_servers = (
 # If there are several servers for a role the option value from all the servers# is used for 'host' option, and only the server corresponding to current host
 # for other options.
 
-my $xrootd_sysconfig_file = "/etc/sysconfig/xrootd";
+Readonly our $XROOTD_SYSCONFIG_FILE => "/etc/sysconfig/xrootd";
 my %xrootd_sysconfig_rules = (
         "CMSD_INSTANCES" => "cmsdInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_HASH_KEYS,
         "CMSD_%%INSTANCE%%_OPTIONS" => "cmsdInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_INSTANCE_PARAMS,
@@ -220,10 +221,6 @@ my %xrootd_services = ('cmsd' => 'cmsd',
                        'xrootd' => 'xrootd',
                       );
 
-# Pan path for the component configuration, variable to host the profile contents and other
-# constants related to profile
-use constant PANPATH => "/software/components/${project.artifactId}";
-
 
 ##########################################################################
 # This is a helper function returning the appropriate rule based on the
@@ -274,7 +271,24 @@ sub Configure {
   my $this_host_domain = hostdomain();
   my $this_host_full = join ".", $this_host_name, $this_host_domain;
 
-  my $xrootd_config = $config->getElement(PANPATH)->getTree();
+  my $xrootd_config = $config->getElement($self->prefix())->getTree();
+  my $xrootd_options = $xrootd_config->{options};
+
+  return $self->configureNode($this_host_full,$xrootd_config);
+}
+
+
+##########################################################################
+# Do the real work here: the only reason for this method is to allow
+# testing by mocking the hostname.
+sub configureNode {
+##########################################################################
+    
+  my ( $self, $this_host_full, $xrootd_config) = @_;
+  unless ( $this_host_full && $xrootd_config ) {
+    $self->error("configureNode: missing argument (internal error)");
+    return (2);
+  }
   my $xrootd_options = $xrootd_config->{options};
 
   # Process separatly DPM and LFC configuration
@@ -341,29 +355,31 @@ sub Configure {
       my $instance_type = $params->{type};
       if ( grep(/^$instance_type$/,@$roles) ) {
         $self->info("Checking xrootd instance '$instance' configuration ($params->{configFile})...");
-        if ( $instance_type eq 'fedredir' ) {
-          push @{$xrootd_options->{xrootdOrderedInstances}}, $instance;
-          my $federation = $params->{federation};
-          $self->debug(2,"Copying parameters for federation $federation to 'fedparams' option set");
-          $xrootd_options->{fedparams} = $xrootd_options->{federations}->{$federation};
-          # Normally enforced by schema validation...
-          if ( exists($xrootd_options->{cmsdInstances}) && exists($xrootd_options->{cmsdInstances}->{$instance}) ) {
-            # cmsd configuration file is normally the same as the xrootd instance
-            if ( $xrootd_options->{cmsdInstances}->{$instance}->{configFile} ne $params->{configFile} ) {
-              my $changes = $self->updateConfigFile($xrootd_options->{cmsdInstances}->{$instance}->{configFile},
-                                                    $self->getRules($instance_type),
-                                                    $xrootd_options);        
-              if ( $changes < 0 ) {
-                $self->error("Error updating cmsd configuration for instance $instance_type (".
-                                      $xrootd_options->{cmsdInstances}->{$instance}->{configFile}.")");
-              }
-            }
-          } else {
-            $self->error("No cmsd instance matching the xrootd fedredir instance '$instance'");
-          }
-        } elsif ( $instance_type eq 'redir' ) {
+        if ( $instance_type eq 'redir' ) {
           @{$xrootd_options->{xrootdOrderedInstances}} = ($instance, @{$xrootd_options->{xrootdOrderedInstances}});
           $self->mergeLocalRedirects($xrootd_options);
+        } else {
+          push @{$xrootd_options->{xrootdOrderedInstances}}, $instance;
+          if ( $instance_type eq 'fedredir' ) {
+            my $federation = $params->{federation};
+            $self->debug(2,"Copying parameters for federation $federation to 'fedparams' option set");
+            $xrootd_options->{fedparams} = $xrootd_options->{federations}->{$federation};
+            # Normally enforced by schema validation...
+            if ( exists($xrootd_options->{cmsdInstances}) && exists($xrootd_options->{cmsdInstances}->{$instance}) ) {
+              # cmsd configuration file is normally the same as the xrootd instance
+              if ( $xrootd_options->{cmsdInstances}->{$instance}->{configFile} ne $params->{configFile} ) {
+                my $changes = $self->updateConfigFile($xrootd_options->{cmsdInstances}->{$instance}->{configFile},
+                                                      $self->getRules($instance_type),
+                                                      $xrootd_options);        
+                if ( $changes < 0 ) {
+                  $self->error("Error updating cmsd configuration for instance $instance_type (".
+                                        $xrootd_options->{cmsdInstances}->{$instance}->{configFile}.")");
+                }
+              }
+            } else {
+              $self->error("No cmsd instance matching the xrootd fedredir instance '$instance'");
+            }
+          }
         }
         my $changes = $self->updateConfigFile($params->{configFile},$self->getRules($instance_type),$xrootd_options);
         if ( $changes > 0 ) {
@@ -482,8 +498,8 @@ sub Configure {
   
   # DPM/Xrootd sysconfig file if enabled
   if ( defined($xrootd_options->{dpm}) ) {
-    $self->info("Checking DPM/Xrootd plugin configuration ($xrootd_sysconfig_file)...");
-    my $changes = $self->updateConfigFile($xrootd_sysconfig_file,$self->getRules('sysconfig'),$xrootd_options);
+    $self->info("Checking DPM/Xrootd plugin configuration ($XROOTD_SYSCONFIG_FILE)...");
+    my $changes = $self->updateConfigFile($XROOTD_SYSCONFIG_FILE,$self->getRules('sysconfig'),$xrootd_options);
     if ( $changes > 0 ) {
       # Add the services to the restart list only if there is not already some instances of the 
       # service to be restarted. This is done to avoid unnecessary restart of an instance if the
@@ -493,9 +509,13 @@ sub Configure {
       # probably only affects this instance. If there was no other changes related that put an instance
       # on the restart list, restart every instance both for xrootd and cmsd. This will also stop
       # instances that are no longer part of the configuration.
-      $self->serviceRestartNeeded('xrootd,cmsd','',1);
+      if ( $xrootd_options->{cmsdInstances} ) {
+        $self->serviceRestartNeeded('xrootd,cmsd','',1);
+      } else {
+        $self->serviceRestartNeeded('xrootd','',1);
+      }
     } elsif ( $changes < 0 ) {
-      $self->error("Error updating xrootd sysconfig file ($xrootd_sysconfig_file)");
+      $self->error("Error updating xrootd sysconfig file ($XROOTD_SYSCONFIG_FILE)");
     }
   } else {
     $self->debug(1,"DPM/Xrootd plugin disabled.");
