@@ -36,7 +36,6 @@
 
 
   <modules>
-    <module>ncm-apel</module>
     <module>ncm-condorconfig</module>
     <module>ncm-dcache</module>
     <module>ncm-dpmlfc</module>
