@@ -87,14 +87,14 @@ sub Configure($$@) {
     # Build a list of all files managed by this component that will be
     # used to determine if a file must be removed from GIP directories.
     my %managedFiles;
-    for my $fileType ('ldif', 'plugin', 'provider', 'scripts', 'stubs', 'external') {
+    for my $fileType ('ldif', 'plugin', 'provider', 'scripts', 'stubs', 'standardOutput', 'external') {
         $self->debug(1, "Adding $fileType files to list of managed files");
         my $filePath;
         my @fileList;
         next if ! $gip_config->{$fileType};
 
-        # Scripts have no implicit file path, the script path is the key (escaped)
-        if ( $fileType eq 'scripts' ) {
+        # Scripts and redirects have no implicit file path, the script path is the key (escaped)
+        if ( $fileType eq 'scripts' || $fileType eq 'standardOutput' ) {
             for my $efile (keys(%{$gip_config->{$fileType}})) {
                 push @fileList, unescape($efile);
             }
@@ -334,6 +334,32 @@ sub Configure($$@) {
             my $changes = LC::Check::file("$file", contents => encode_utf8($contents), mode => 0644);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
+            }
+        }
+    }
+
+    # Process standardOutput entries
+    if ( $gip_config->{standardOutput} ) {
+        my $files = $gip_config->{standardOutput};
+        foreach my $efile (sort keys %$files) {
+            # Extract the file name from the configuration
+            my $targetFile = unescape($efile);
+            $self->debug(1, 'Processing entry for standardOutput file ' . $targetFile);
+            # Extract the command and arguments name from the configuration
+            my $entry = $files->{$efile};
+            my $cmd = "$entry->{command} $entry->{arguments}";
+            $self->debug(2, ' ... with command: ' . $cmd);
+            # Execute the command and keep the standard output
+            my $contents = '';
+            CAF::Process->new([$cmd], log => $self, stdout => \$contents)->execute();
+            if ($?) {
+                $self->error("Error while generating standardOutput file (command=$cmd)");
+            } else {
+                # Create/update the target file
+                my $changes = LC::Check::file($targetFile, contents => encode_utf8($contents), mode => 0644);
+                if ( $changes < 0 ) {
+                    $self->error("Error updadating $targetFile");
+                }
             }
         }
     }
