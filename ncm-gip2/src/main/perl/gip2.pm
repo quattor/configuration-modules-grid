@@ -22,6 +22,12 @@ use File::Basename;
 
 local(*DTA);
 
+sub write_encoded {
+    my ($self, $file, $perm, $contents);
+    my $fh = CAF::FileWriter->new($file, mode => $perm, log => $self);
+    print $fh encode_utf8($contents);
+    return $fh->close();
+}
 
 ##########################################################################
 sub Configure($$@) {
@@ -234,9 +240,7 @@ sub Configure($$@) {
             }
 
             # Write out the configuration file.
-            my $fh = CAF::FileWriter->new("$etcDir/$file", mode => 0644, log=> $self);
-            print $fh encode_utf8($contents);
-            my $changes = $fh->close();
+            my $changes = $self->write_encoded("$etcDir/$file", 0644, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating LDIF configuration file $etcDir/$file");
             }
@@ -251,9 +255,7 @@ sub Configure($$@) {
             if ($?) {
                 $self->error("Error generating LDIF file (command=$cmd)");
             } else {
-                $fh = CAF::FileWriter->new($ldifFile, mode => 0644, log=> $self);
-                print $fh encode_utf8($contents);
-                $changes = $fh->close();
+                $changes = $self->write_encoded($ldifFile, 0644, $contents);
                 if ( $changes < 0 ) {
                     $self->error("Error updadating $ldifFile");
                 }
@@ -273,9 +275,7 @@ sub Configure($$@) {
             my $contents = $files->{$file};
 
             # Write out the file.
-            my $fh = CAF::FileWriter->new($pluginFile, mode => 0755, log=> $self);
-            print $fh encode_utf8($contents);
-            my $changes = $fh->close();
+            my $changes = $self->write_encoded($pluginFile, 0755, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $pluginFile");
             }
@@ -294,9 +294,7 @@ sub Configure($$@) {
             my $contents = $files->{$file};
 
             # Write out the file.
-            my $fh = CAF::FileWriter->new($providerFile, mode => 0755, log=> $self);
-            print $fh encode_utf8($contents);
-            my $changes = $fh->close();
+            my $changes = $self->write_encoded($providerFile, 0755, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $providerFile");
             }
@@ -317,9 +315,7 @@ sub Configure($$@) {
             my $contents = $files->{$efile};
 
             # Write out the file.
-            my $fh = CAF::FileWriter->new($file, mode => 0755, log=> $self);
-            print $fh encode_utf8($contents);
-            my $changes = $fh->close();
+            my $changes = $self->write_encoded($file, 0755, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             }
@@ -339,9 +335,7 @@ sub Configure($$@) {
             my $contents = $files->{$efile};
 
             # Write out the file.
-            my $fh = CAF::FileWriter->new($file, mode => 0644, log=> $self);
-            print $fh encode_utf8($contents);
-            my $changes = $fh->close();
+            my $changes = $self->write_encoded($file, 0644, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             }
@@ -366,9 +360,7 @@ sub Configure($$@) {
                 $self->error("Error while generating standardOutput file (command=$cmd)");
             } else {
                 # Create/update the target file
-                my $fh = CAF::FileWriter->new($targetFile, mode => 0644, log=> $self);
-                print $fh encode_utf8($contents);
-                my $changes = $fh->close();
+                my $changes = $self->write_encoded($targetFile, 0644, $contents);
                 if ( $changes < 0 ) {
                     $self->error("Error updadating $targetFile");
                 }
@@ -404,9 +396,7 @@ sub Configure($$@) {
             }
 
             # Write out the file.
-            my $fh = CAF::FileWriter->new($file, mode => 0644, log=> $self);
-            print $fh encode_utf8($contents);
-            my $changes = $fh->close();
+            my $changes = $self->write_encoded($file, 0644, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             } elsif ( $changes > 0 ) {
