@@ -7,18 +7,16 @@
 package NCM::Component::gip2;
 
 use strict;
+use warnings;
 use NCM::Component;
-use vars qw(@ISA $EC);
-@ISA = qw(NCM::Component);
-$EC=LC::Exception::Context->new->will_store_all;
-use NCM::Check;
-use CAF::Process;
-use LC::Check;
-
-use Encode qw(encode_utf8);
-
+our @ISA = qw(NCM::Component);
+our $EC=LC::Exception::Context->new->will_store_all;
 use EDG::WP4::CCM::Element qw(unescape);
 
+use CAF::Process;
+use CAF::FileWriter;
+
+use Encode qw(encode_utf8);
 use File::Path;
 use File::Basename;
 
@@ -236,7 +234,9 @@ sub Configure($$@) {
             }
 
             # Write out the configuration file.
-            my $changes = LC::Check::file("$etcDir/$file", contents => encode_utf8($contents), mode => 0644);
+            my $fh = CAF::FileWriter->new("$etcDir/$file", mode => 0644, log=> $self);
+            print $fh encode_utf8($contents);
+            my $changes = $fh->close();
             if ( $changes < 0 ) {
                 $self->error("Error updadating LDIF configuration file $etcDir/$file");
             }
@@ -251,7 +251,9 @@ sub Configure($$@) {
             if ($?) {
                 $self->error("Error generating LDIF file (command=$cmd)");
             } else {
-                $changes = LC::Check::file($ldifFile, contents => encode_utf8($contents), mode => 0644);
+                $fh = CAF::FileWriter->new($ldifFile, mode => 0644, log=> $self);
+                print $fh encode_utf8($contents);
+                $changes = $fh->close();
                 if ( $changes < 0 ) {
                     $self->error("Error updadating $ldifFile");
                 }
@@ -271,7 +273,9 @@ sub Configure($$@) {
             my $contents = $files->{$file};
 
             # Write out the file.
-            my $changes = LC::Check::file($pluginFile, contents => encode_utf8($contents), mode => 0755);
+            my $fh = CAF::FileWriter->new($pluginFile, mode => 0755, log=> $self);
+            print $fh encode_utf8($contents);
+            my $changes = $fh->close();
             if ( $changes < 0 ) {
                 $self->error("Error updadating $pluginFile");
             }
@@ -290,7 +294,9 @@ sub Configure($$@) {
             my $contents = $files->{$file};
 
             # Write out the file.
-            my $changes = LC::Check::file($providerFile, contents => encode_utf8($contents), mode => 0755);
+            my $fh = CAF::FileWriter->new($providerFile, mode => 0755, log=> $self);
+            print $fh encode_utf8($contents);
+            my $changes = $fh->close();
             if ( $changes < 0 ) {
                 $self->error("Error updadating $providerFile");
             }
@@ -311,7 +317,9 @@ sub Configure($$@) {
             my $contents = $files->{$efile};
 
             # Write out the file.
-            my $changes = LC::Check::file("$file", contents => encode_utf8($contents), mode => 0755);
+            my $fh = CAF::FileWriter->new($file, mode => 0755, log=> $self);
+            print $fh encode_utf8($contents);
+            my $changes = $fh->close();
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             }
@@ -331,7 +339,9 @@ sub Configure($$@) {
             my $contents = $files->{$efile};
 
             # Write out the file.
-            my $changes = LC::Check::file("$file", contents => encode_utf8($contents), mode => 0644);
+            my $fh = CAF::FileWriter->new($file, mode => 0644, log=> $self);
+            print $fh encode_utf8($contents);
+            my $changes = $fh->close();
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             }
@@ -356,7 +366,9 @@ sub Configure($$@) {
                 $self->error("Error while generating standardOutput file (command=$cmd)");
             } else {
                 # Create/update the target file
-                my $changes = LC::Check::file($targetFile, contents => encode_utf8($contents), mode => 0644);
+                my $fh = CAF::FileWriter->new($targetFile, mode => 0644, log=> $self);
+                print $fh encode_utf8($contents);
+                my $changes = $fh->close();
                 if ( $changes < 0 ) {
                     $self->error("Error updadating $targetFile");
                 }
@@ -392,7 +404,9 @@ sub Configure($$@) {
             }
 
             # Write out the file.
-            my $changes = LC::Check::file("$file", contents => encode_utf8($contents), mode => 0644);
+            my $fh = CAF::FileWriter->new($file, mode => 0644, log=> $self);
+            print $fh encode_utf8($contents);
+            my $changes = $fh->close();
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             } elsif ( $changes > 0 ) {
