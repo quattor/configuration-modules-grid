@@ -134,7 +134,7 @@ sub lscfile_configuration($$@) {
         my $fname;
         my $contents;
         $fname = "$vodir/$host.lsc";
-        $fileinfo{$fname} = $dn . "\n" . $issuer;
+        $fileinfo{$fname} = $dn . "\n" . $issuer . "\n";
 
         $contents =
             '"' . $name . '" ' . '"' . $host . '" ' . '"' . $port . '" ' . '"'
