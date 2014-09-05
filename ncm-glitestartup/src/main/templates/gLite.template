@@ -10,8 +10,11 @@
 #   processname: gLite
 #
 #   Based on script once provided by EGEE.
-#   Author(s): Marian ZUREK \<Marian.ZUREK@cern.ch\> 
-#        Nuno SILVA \<Nuno.Orestes.Vaz.da.Silva@cern.ch\>
+#       Copyright (c) Members of the EGEE Collaboration. 2004
+#       See http://eu-egee.org/partners/ for details on the copyright holders
+#       For license conditions see the license file or http://eu-egee.org/license.html
+#       Original author(s): Marian ZUREK \<Marian.ZUREK@cern.ch\> 
+#                           Nuno SILVA \<Nuno.Orestes.Vaz.da.Silva@cern.ch\>
 #
 ###############################################################################
 
