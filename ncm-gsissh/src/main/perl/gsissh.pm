@@ -92,7 +92,7 @@ sub Configure($$@) {
 		$self->error("error running $script");
 		return 1;
 	    }
-	} else {
+	} elsif (-f $script) {
 	    $self->error("$script isn't executable");
 	    return 1;
 	}
@@ -118,7 +118,7 @@ sub Configure($$@) {
 	    }
 	    close INITD;
 	} else {
-	    $self->error("$globus_location/sbin/SXXsshd doesn't exist");
+	    $self->warn("$globus_location/sbin/SXXsshd doesn't exist");
 	    return 1;
 	}
 
