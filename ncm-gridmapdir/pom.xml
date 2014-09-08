@@ -6,7 +6,7 @@
   <artifactId>gridmapdir</artifactId>
 
   <packaging>pom</packaging>
-  <version>14.8.0-rc6</version>
+  <version>14.8.0-rc7-SNAPSHOT</version>
   <name>gridmapdir NCM component.</name>
 
   <parent>
