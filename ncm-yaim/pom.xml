@@ -6,7 +6,7 @@
   <artifactId>yaim</artifactId>
 
   <packaging>pom</packaging>
-  <version>14.8.0-rc7-SNAPSHOT</version>
+  <version>14.8.0</version>
   <name>yaim NCM component.</name>
 
   <parent>
