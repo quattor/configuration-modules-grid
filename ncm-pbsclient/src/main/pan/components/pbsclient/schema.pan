@@ -152,6 +152,8 @@ type ${project.artifactId}_component_type = {
     include ${project.artifactId}_component_structure_initialisation
 
     include ${project.artifactId}_component_structure_options
+    
+    "submitonly" ? boolean 
 };
 
 

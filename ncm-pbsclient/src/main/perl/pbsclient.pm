@@ -343,18 +343,22 @@ sub Configure {
 
     # restart PBS if it is already running AND the config changed
     if ($changes) {
-        my $output = CAF::Process->new([$pbsinitscript, "status"], log => $self)->output();
-        if ($?) {
-            $self->info("Not running (from $pbsinitscript status)");
+        if ($cfgtree->{submitonly}) {
+            $self->info("Submit only configuration; no checking for any MOM state.");
         } else {
-            $self->info("Running, will attempt restart (from $pbsinitscript status)");
-            $output = CAF::Process->new([$pbsinitscript, "restart"], log => $self)->output();
+            my $output = CAF::Process->new([$pbsinitscript, "status"], log => $self)->output();
             if ($?) {
-                $self->info("Restart failed (output from $pbsinitscript restart: $output)");
+                $self->info("Not running (from $pbsinitscript status)");
             } else {
-                $self->info("Restarted (from $pbsinitscript restart)");
+                $self->info("Running, will attempt restart (from $pbsinitscript status)");
+                $output = CAF::Process->new([$pbsinitscript, "restart"], log => $self)->output();
+                if ($?) {
+                    $self->info("Restart failed (output from $pbsinitscript restart: $output)");
+                } else {
+                    $self->info("Restarted (from $pbsinitscript restart)");
+                }
             }
-        }
+        }    
     };
 
     return;
