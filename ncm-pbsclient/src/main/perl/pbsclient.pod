@@ -140,6 +140,11 @@ These scripts may be defined to augment the behavior of pbs when
 starting and ending jobs.  See the pbs documentation for a complete
 description of when each script runs and as what user.
 
+=item /software/components/pbsclient/submitonly ? boolean
+
+If true, it assumes this host is only used for job submission, and has no pbs MOM running
+ that requires restarting.
+
 =back
 
 =head1 DEPENDENCIES
