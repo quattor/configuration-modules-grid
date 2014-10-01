@@ -358,7 +358,7 @@ sub Configure {
                     $self->info("Restarted (from $pbsinitscript restart)");
                 }
             }
-        }    
+        }
     };
 
     return;
