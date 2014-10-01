@@ -123,6 +123,8 @@ type pbs_server_attlist = {
     'checkpoint_dir'    ? string
 
     'moab_array_compatible' ? boolean
+    
+    'authorized_users'	  ? string
 };
 
 type pbs_server = {
