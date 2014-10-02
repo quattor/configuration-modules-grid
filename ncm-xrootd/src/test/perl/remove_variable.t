@@ -11,6 +11,8 @@ use Test::Quattor;
 use NCM::Component::xrootd;
 use Readonly;
 use CAF::Object;
+Test::NoWarnings::clear_warnings();
+
 
 =pod
 
