@@ -18,6 +18,7 @@ use EDG::WP4::CCM::Element;
 
 use File::Copy;
 use LC::Check;
+use CAF::Process;
 
 local(*DTA);
 
@@ -314,9 +315,15 @@ EOF
     # Try regenerating the gridmap file. 
     if ( $entry->{command} ) {
       $self->info("Regenerating $entry_name gridmapfile");
-      `$entry->{command}`;
+      my @command = $self->tokenize_cmd($entry->{command});
+      unless ( @command ) {
+        $self->error("Error tokenizing command to generate gridmapfile (".$entry->{command}.")");
+        next;
+      }
+      my $proc = CAF::Process->new(@command);
+      my $output = $proc->output();
       if ( $? ) {
-        $self->error("Regeneration of $entry_name gridmapfile failed");
+        $self->error("Regeneration of $entry_name gridmapfile failed ($output)");
       }
     }
   }
@@ -347,5 +354,21 @@ sub write_conf_file ($$$) {
   }
   return $result;
 }
+
+
+# Function to tokenize a command string.
+# Returns an array that can be passed to CAF::Process
+
+sub tokenize_cmd {
+  my ($self, $command) = @_;
+  unless ( defined($command) ) {
+    $self->error("Internal error: 'command' argument undefined in tokenize_cmd()");
+    return;
+  }
+
+  my @cmd = split /\s+/, $command;
+  return @cmd
+}
+
 
 1;      # Required for PERL modules
