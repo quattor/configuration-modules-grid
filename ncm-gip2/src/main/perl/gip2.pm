@@ -7,23 +7,27 @@
 package NCM::Component::gip2;
 
 use strict;
+use warnings;
 use NCM::Component;
-use vars qw(@ISA $EC);
-@ISA = qw(NCM::Component);
-$EC=LC::Exception::Context->new->will_store_all;
-use NCM::Check;
-use CAF::Process;
-use LC::Check;
-
-use Encode qw(encode_utf8);
-
+our @ISA = qw(NCM::Component);
+our $EC=LC::Exception::Context->new->will_store_all;
 use EDG::WP4::CCM::Element qw(unescape);
 
+use CAF::Process;
+use CAF::FileWriter;
+
+use Encode qw(encode_utf8);
 use File::Path;
 use File::Basename;
 
 local(*DTA);
 
+sub write_encoded {
+    my ($self, $file, $perm, $contents);
+    my $fh = CAF::FileWriter->new($file, mode => $perm, log => $self);
+    print $fh encode_utf8($contents);
+    return $fh->close();
+}
 
 ##########################################################################
 sub Configure($$@) {
@@ -236,7 +240,7 @@ sub Configure($$@) {
             }
 
             # Write out the configuration file.
-            my $changes = LC::Check::file("$etcDir/$file", contents => encode_utf8($contents), mode => 0644);
+            my $changes = $self->write_encoded("$etcDir/$file", 0644, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating LDIF configuration file $etcDir/$file");
             }
@@ -251,7 +255,7 @@ sub Configure($$@) {
             if ($?) {
                 $self->error("Error generating LDIF file (command=$cmd)");
             } else {
-                $changes = LC::Check::file($ldifFile, contents => encode_utf8($contents), mode => 0644);
+                $changes = $self->write_encoded($ldifFile, 0644, $contents);
                 if ( $changes < 0 ) {
                     $self->error("Error updadating $ldifFile");
                 }
@@ -271,7 +275,7 @@ sub Configure($$@) {
             my $contents = $files->{$file};
 
             # Write out the file.
-            my $changes = LC::Check::file($pluginFile, contents => encode_utf8($contents), mode => 0755);
+            my $changes = $self->write_encoded($pluginFile, 0755, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $pluginFile");
             }
@@ -290,7 +294,7 @@ sub Configure($$@) {
             my $contents = $files->{$file};
 
             # Write out the file.
-            my $changes = LC::Check::file($providerFile, contents => encode_utf8($contents), mode => 0755);
+            my $changes = $self->write_encoded($providerFile, 0755, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $providerFile");
             }
@@ -311,7 +315,7 @@ sub Configure($$@) {
             my $contents = $files->{$efile};
 
             # Write out the file.
-            my $changes = LC::Check::file("$file", contents => encode_utf8($contents), mode => 0755);
+            my $changes = $self->write_encoded($file, 0755, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             }
@@ -331,7 +335,7 @@ sub Configure($$@) {
             my $contents = $files->{$efile};
 
             # Write out the file.
-            my $changes = LC::Check::file("$file", contents => encode_utf8($contents), mode => 0644);
+            my $changes = $self->write_encoded($file, 0644, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             }
@@ -356,7 +360,7 @@ sub Configure($$@) {
                 $self->error("Error while generating standardOutput file (command=$cmd)");
             } else {
                 # Create/update the target file
-                my $changes = LC::Check::file($targetFile, contents => encode_utf8($contents), mode => 0644);
+                my $changes = $self->write_encoded($targetFile, 0644, $contents);
                 if ( $changes < 0 ) {
                     $self->error("Error updadating $targetFile");
                 }
@@ -392,7 +396,7 @@ sub Configure($$@) {
             }
 
             # Write out the file.
-            my $changes = LC::Check::file("$file", contents => encode_utf8($contents), mode => 0644);
+            my $changes = $self->write_encoded($file, 0644, $contents);
             if ( $changes < 0 ) {
                 $self->error("Error updadating $file");
             } elsif ( $changes > 0 ) {
