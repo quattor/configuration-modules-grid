@@ -252,7 +252,8 @@ sub mergeLocalRedirects {
 
   if ( $options->{federations} ) {
     $options->{localRedirectParams} = [];
-    while ( my ($federation,$params) = each(%{$options->{federations}}) ) {
+    foreach my $federation (sort keys %{$options->{federations}}) {
+      my $params = $options->{federations}->{$federation};
       if ( defined($params->{localRedirectParams}) ) {
         push @{$options->{localRedirectParams}}, $params->{localRedirectParams};
       }
@@ -351,7 +352,8 @@ sub configureNode {
     # that will be used to decide the startup order. A federation redirector cannot
     # start successfully until he established the contact with the local redirector.
     $xrootd_options->{xrootdOrderedInstances} = [];
-    while ( my ($instance,$params) = each(%{$xrootd_options->{xrootdInstances}}) ) {
+    foreach my $instance (sort keys %{$xrootd_options->{xrootdInstances}}) {
+      my $params = $xrootd_options->{xrootdInstances}->{$instance};
       my $instance_type = $params->{type};
       if ( grep(/^$instance_type$/,@$roles) ) {
         $self->info("Checking xrootd instance '$instance' configuration ($params->{configFile})...");
@@ -433,7 +435,8 @@ sub configureNode {
               "KEY VO:*       PRIVKEY:".$xrootd_token_priv_key." PUBKEY:".$xrootd_token_pub_key."\n\n" .
               "# Restrict the name space exported\n";
     if ( $token_auth_conf->{exportedVOs} ) {
-      while ( my ($vo, $params) = each(%{$token_auth_conf->{exportedVOs}}) ) {
+      foreach my $vo (sort keys %{$token_auth_conf->{exportedVOs}}) {
+        my $params = $token_auth_conf->{exportedVOs}->{$vo};
         my $exported_full_path;      
         if ( exists($params->{'path'}) ) {
           my $exported_path = $params->{'path'};
@@ -732,7 +735,7 @@ sub formatAttributeValue () {
     my $formatted_value="";
     for my $host (sort keys %hosts) {
       $formatted_value .= "$host ";
-    }  
+    }
     # Some config files are sensitive to extra spaces : suppress trailing spaces
     $formatted_value =~ s/\s+$//;
     $self->debug(1,"Formatted hosts list : >>$formatted_value<<");
@@ -1084,7 +1087,8 @@ sub updateConfigFile () {
   # written as is, using the line_fmt specified.
   
   my $rule_id = 0;
-  while ( my ($keyword,$rule) = each(%{$config_rules}) ) {
+  foreach my $keyword (sort keys %{$config_rules}) {
+    my $rule = $config_rules->{$keyword};
     $rule_id++;
 
     # Check if the keyword is prefixed by a '-': in this case the corresponding line must
@@ -1212,7 +1216,8 @@ sub updateConfigFile () {
         # Also the variable name must be updated to contain the instance name.
         # One configuration line must be written/updated for each instance.
         if ( $value_fmt == LINE_VALUE_INSTANCE_PARAMS ) {
-          while ( my ($instance, $params) = each(%$attr_value) ) {
+          foreach my $instance (sort keys %{$attr_value}) {
+            my $params = $attr_value->{$instance};
             $self->debug(1,"$function_name: formatting instance '$instance' parameters ($params)");
             $config_value = $self->formatAttributeValue($params,
                                                         $line_fmt,
@@ -1228,7 +1233,8 @@ sub updateConfigFile () {
         } elsif ( $value_fmt == LINE_VALUE_STRING_HASH ) {
           # With this value format, several lines with the same keyword are generated,
           # one for each key/value pair.
-          while ( my ($k,$v) = each(%$attr_value) ) {
+          foreach my $k (sort keys %$attr_value) {
+            my $v = $attr_value->{$k};
             # Value is made by joining key and value as a string
             # Keys may be escaped if they contain characters like '/': unescaping a non-escaped
             # string is generally harmless.

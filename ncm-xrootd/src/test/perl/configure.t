@@ -7,6 +7,7 @@ use Test::Quattor qw(disk atlas-fed-redir);
 use NCM::Component::xrootd;
 use Readonly;
 use CAF::Object;
+Test::NoWarnings::clear_warnings();
 
 Readonly my $XROOTD_CONFIG_PATH => '/software/components/xrootd';
 Readonly my $XROOTD_DISKSRV_HOST => 'grid41.lal.in2p3.fr';
@@ -235,14 +236,14 @@ set_file_contents($XROOTD_SYSCONFIG_FILE, $XROOTD_SYSCONFIG_CONTENTS_1);
 $cmp->configureNode($XROOTD_DISKSRV_HOST,$config);
 my $fh = get_file($XROOTD_SYSCONFIG_FILE);
 ok(defined($fh), "$XROOTD_SYSCONFIG_FILE was opened (1)");
-is($fh,$XROOTD_SYSCONFIG_CONTENTS_1,"$XROOTD_SYSCONFIG_FILE has expected contents (1)");
+is("$fh",$XROOTD_SYSCONFIG_CONTENTS_1,"$XROOTD_SYSCONFIG_FILE has expected contents (1)");
 $fh->close();
 
 set_file_contents($XROOTD_SYSCONFIG_FILE, $XROOTD_SYSCONFIG_CONTENTS_2);
 $cmp->configureNode($XROOTD_DISKSRV_HOST,$config);
 $fh = get_file($XROOTD_SYSCONFIG_FILE);
 ok(defined($fh), "$XROOTD_SYSCONFIG_FILE was opened (2)");
-is($fh,$XROOTD_SYSCONFIG_CONTENTS_1,"$XROOTD_SYSCONFIG_FILE has expected contents (2)");
+is("$fh",$XROOTD_SYSCONFIG_CONTENTS_1,"$XROOTD_SYSCONFIG_FILE has expected contents (2)");
 $fh->close();
 
 $config = get_config_for_profile("atlas-fed-redir")->getElement($XROOTD_CONFIG_PATH)->getTree();
@@ -250,7 +251,7 @@ set_file_contents($XROOTD_SYSCONFIG_FILE, $XROOTD_SYSCONFIG_CONTENTS_3);
 $cmp->configureNode($XROOTD_REDIR_HOST,$config);
 $fh = get_file($XROOTD_SYSCONFIG_FILE);
 ok(defined($fh), "$XROOTD_SYSCONFIG_FILE was opened (3)");
-is($fh,$XROOTD_SYSCONFIG_CONTENTS_3,"$XROOTD_SYSCONFIG_FILE has expected contents (3)");
+is("$fh",$XROOTD_SYSCONFIG_CONTENTS_3,"$XROOTD_SYSCONFIG_FILE has expected contents (3)");
 $fh->close();
 
 
