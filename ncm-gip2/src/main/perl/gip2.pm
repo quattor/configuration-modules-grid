@@ -23,7 +23,7 @@ use File::Basename;
 local(*DTA);
 
 sub write_encoded {
-    my ($self, $file, $perm, $contents);
+    my ($self, $file, $perm, $contents) = @_;
     my $fh = CAF::FileWriter->new($file, mode => $perm, log => $self);
     print $fh encode_utf8($contents);
     return $fh->close();
