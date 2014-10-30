@@ -12,13 +12,18 @@ use vars qw(@ISA $EC);
 @ISA = qw(NCM::Component);
 $EC=LC::Exception::Context->new->will_store_all;
 use NCM::Check;
+use Readonly;
 
 use EDG::WP4::CCM::Element;
 
 use File::Copy;
 use LC::Check;
+use CAF::Process;
 
 local(*DTA);
+
+Readonly my $BASE => "/software/components/mkgridmap";
+Readonly my $VOBASE => "/system/vo";
 
 
 ##########################################################################
@@ -27,24 +32,20 @@ sub Configure($$@) {
     
   my ($self, $config) = @_;
 
-  # Define paths for convenience. 
-  my $base = "/software/components/mkgridmap";
-  my $vobase = "/system/vo";
-
   # Load component config and VO config into hashes
-  my $mkgridmap_config = $config->getElement($base)->getTree();
-  my $vos_config = $config->getElement($vobase)->getTree();
+  my $mkgridmap_config = $config->getElement($BASE)->getTree();
+  my $vos_config = $config->getElement($VOBASE)->getTree();
   my $lcmaps_config = $mkgridmap_config->{lcmaps};
   
   # List of VOs to process: voList property if defined, else all VOs defined
-  # under $vobase
+  # under $VOBASE
   my @vo_list;
   if ( $mkgridmap_config->{voList} ) {
     for my $vo ( @{$mkgridmap_config->{voList}}) {
       if ( $vos_config->{$vo} ) {
         push @vo_list, $vo;
       } else {
-        $self->error("VO $vo is not part of configuration ($vobase)");
+        $self->error("VO $vo is not part of configuration ($VOBASE)");
       }
     }
   } else {
@@ -314,9 +315,15 @@ EOF
     # Try regenerating the gridmap file. 
     if ( $entry->{command} ) {
       $self->info("Regenerating $entry_name gridmapfile");
-      `$entry->{command}`;
+      my @command = $self->tokenize_cmd($entry->{command});
+      unless ( @command ) {
+        $self->error("Error tokenizing command to generate gridmapfile (".$entry->{command}.")");
+        next;
+      }
+      my $proc = CAF::Process->new(@command);
+      my $output = $proc->output();
       if ( $? ) {
-        $self->error("Regeneration of $entry_name gridmapfile failed");
+        $self->error("Regeneration of $entry_name gridmapfile failed ($output)");
       }
     }
   }
@@ -347,5 +354,21 @@ sub write_conf_file ($$$) {
   }
   return $result;
 }
+
+
+# Function to tokenize a command string.
+# Returns an array that can be passed to CAF::Process
+
+sub tokenize_cmd {
+  my ($self, $command) = @_;
+  unless ( defined($command) ) {
+    $self->error("Internal error: 'command' argument undefined in tokenize_cmd()");
+    return;
+  }
+
+  my @cmd = split /\s+/, $command;
+  return @cmd
+}
+
 
 1;      # Required for PERL modules
