@@ -11,13 +11,11 @@ use NCM::Component;
 use vars qw(@ISA $EC);
 @ISA = qw(NCM::Component);
 $EC=LC::Exception::Context->new->will_store_all;
-use NCM::Check;
 use Readonly;
 
 use EDG::WP4::CCM::Element;
 
-use File::Copy;
-use LC::Check;
+use CAF::FileWriter;
 use CAF::Process;
 
 local(*DTA);
@@ -314,13 +312,7 @@ EOF
     
     # Try regenerating the gridmap file. 
     if ( $entry->{command} ) {
-      $self->info("Regenerating $entry_name gridmapfile");
-      my @command = $self->tokenize_cmd($entry->{command});
-      unless ( @command ) {
-        $self->error("Error tokenizing command to generate gridmapfile (".$entry->{command}.")");
-        next;
-      }
-      my $proc = CAF::Process->new(@command);
+      my $proc = CAF::Process->new([$entry->{command}], log => $self);
       my $output = $proc->output();
       if ( $? ) {
         $self->error("Regeneration of $entry_name gridmapfile failed ($output)");
@@ -345,29 +337,15 @@ sub write_conf_file ($$$) {
   }
   # Now just create the new configuration file.  Be careful to save
   # a backup of the previous file if necessary. 
-  my $result = LC::Check::file($fname,
-                               backup => ".old",
-                               contents => $contents,
-                              );
+  my $fh = CAF::FileWriter->new($fname,
+				backup => '.old',
+				log => $self);
+  print $fh $contents;
+  my $result = $fh->close();
   if ( $result >= 0 ) {
     $result = 0;
   }
   return $result;
-}
-
-
-# Function to tokenize a command string.
-# Returns an array that can be passed to CAF::Process
-
-sub tokenize_cmd {
-  my ($self, $command) = @_;
-  unless ( defined($command) ) {
-    $self->error("Internal error: 'command' argument undefined in tokenize_cmd()");
-    return;
-  }
-
-  my @cmd = split /\s+/, $command;
-  return @cmd
 }
 
 
