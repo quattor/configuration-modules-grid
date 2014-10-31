@@ -11,12 +11,10 @@ use NCM::Component;
 use vars qw(@ISA $EC);
 @ISA = qw(NCM::Component);
 $EC=LC::Exception::Context->new->will_store_all;
-use NCM::Check;
 use Readonly;
 
 use EDG::WP4::CCM::Element;
 
-use File::Copy;
 use LC::Check;
 use CAF::Process;
 
