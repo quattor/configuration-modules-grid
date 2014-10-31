@@ -16,6 +16,8 @@ use NCM::Template;
 use EDG::WP4::CCM::Element;
 
 use LC::Check;
+use CAF::FileEditor;
+use CAF::FileWriter;
 use CAF::Process;
 
 use Encode qw(encode_utf8);
@@ -116,12 +118,14 @@ sub Configure {
   }
   
   # Ensure startup driver is executable
-  my $perm_changes = LC::Check::status($glite_startup_driver,
-       mode => 0755,
-       owner => 'root',
-       group => 'root'
-      );
-  unless (defined($changes)) {
+  my $fh = CAF::FileEditor->new($glite_startup_driver,
+                                log => $self,
+                                mode => 0755,
+                                owner => 'root',
+                                group => 'root',
+                               );
+  my $perm_changes = $fh->close();
+  unless (defined($perm_changes)) {
     $self->error("Error setting owner/permissions on $glite_startup_driver");
     return 1;
   }
@@ -187,12 +191,22 @@ sub Configure {
     for my $certfile ($glite_cert_name,$glite_key_name) {
       my $certfile_src = $grid_security_dir . '/' . $certfile;
       my $certfile_glite = $glite_cert_dir . '/' . $certfile;
-      $cert_status = LC::Check::file($certfile_glite,
-                                     source => $certfile_src,
-                                     mode => 0400,
-                                     owner => $glite_config->{GLITE_USER},
-                                     group => $glite_config->{GLITE_GROUP},
-                                    );
+      my $cert_src_fh = CAF::FileEditor->new($certfile_src, log => $self);
+      unless ( $cert_src_fh ) {
+        $self->error("Error reading $certfile_src: cannot define gLite service certificate");
+        next;
+      };
+      $cert_src_fh->cancel();
+      $cert_src_fh->seek_begin();
+      my $cert_fh = CAF::FileWriter->new($certfile_glite,
+                                         log => $self,
+                                         mode => 0400,
+                                         owner => $glite_config->{GLITE_USER},
+                                         group => $glite_config->{GLITE_GROUP},
+                                        );
+      print $cert_fh "$cert_src_fh";
+      $cert_src_fh->close();
+      $cert_status = $cert_fh->close();
       if ( $cert_status < 0 ) {
         $self->error("Error updating  $certfile_glite from $certfile_src");
         return(4);
@@ -219,11 +233,12 @@ sub Configure {
   #   - restartServices is true
   #   - restartServices is undefined and some changes were applied to the driver configuration file
   
-  my $config_changes = LC::Check::file(
-                             $confighash->{'configFile'},
+  $fh = CAF::FileWriter->new($confighash->{'configFile'},
+                             log => $self,
                              backup   => ".old",
-                             contents => encode_utf8($startup_config),
                             );
+  print $fh encode_utf8($startup_config);
+  my $config_changes = $fh->close();
   if ( $config_changes < 0 ) {
     $self->error("Error updating startup driver configuration file (".$confighash->{'configFile'}.")");
     return(3);
