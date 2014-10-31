@@ -10,15 +10,12 @@ use strict;
 use NCM::Component;
 use vars qw(@ISA $EC);
 $EC=LC::Exception::Context->new->will_store_all;
-use NCM::Check;
 use NCM::Template;
 @ISA= qw(NCM::Component NCM::Template);
 
 use EDG::WP4::CCM::Element;
 
-use LC::File qw(copy);
 use LC::Check;
-use LC::Process qw(run);
 
 use Encode qw(encode_utf8);
 
