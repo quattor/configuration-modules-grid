@@ -10,15 +10,13 @@ use strict;
 use NCM::Component;
 use vars qw(@ISA $EC);
 $EC=LC::Exception::Context->new->will_store_all;
-use NCM::Check;
 use NCM::Template;
 @ISA= qw(NCM::Component NCM::Template);
 
 use EDG::WP4::CCM::Element;
 
-use LC::File qw(copy);
 use LC::Check;
-use LC::Process qw(run);
+use CAF::Process;
 
 use Encode qw(encode_utf8);
 
@@ -131,10 +129,12 @@ sub Configure {
   $changes += $driver_changes + $perm_changes;
   
   # Configure startup file for gLite
-  qx%/sbin/chkconfig $glite_startup_service%;
+  my $proc = CAF::Process->new(["/sbin/chkconfig", "$glite_startup_service"], log => $self);
+  $proc->run();
   if ( $? ) {
     $self->info("Enabling gLite services startup...");
-    qx%/sbin/chkconfig --add $glite_startup_service%;
+    $proc = CAF::Process->new(["/sbin/chkconfig", "--add", "$glite_startup_service"], log => $self);
+    $proc->run();
     if ( $? ) {
       $self->warn("Error enabling gLite services startup");
     }
@@ -200,7 +200,14 @@ sub Configure {
     }
     
     $self->info("Initializing proxy for user ".$glite_config->{GLITE_USER}." ($glite_x509_proxy)");
-    $cert_status = qx%su - $glite_config->{GLITE_USER} -c "$grid_proxy_init -cert $glite_cert_dir/$glite_cert_name -key $glite_cert_dir/$glite_key_name -valid $proxy_validity -out $glite_x509_proxy"%;
+    my @proxy_init_cmd = ('/bin/su',
+                          '-',
+                          $glite_config->{GLITE_USER},
+                         '-c',
+                         "$grid_proxy_init -cert $glite_cert_dir/$glite_cert_name -key $glite_cert_dir/$glite_key_name -valid $proxy_validity -out $glite_x509_proxy"
+                         );
+    $proc = CAF::Process->new(\@proxy_init_cmd, log => $self);
+    $proc->run();
     if ( $? ) {
         $self->error("Error creating grid proxy for user ".$glite_config->{GLITE_USER}." ($glite_x509_proxy)");
         return(4);
@@ -240,16 +247,23 @@ sub Configure {
       $initCmd .= ' 2> /dev/null';
     }
     $self->debug(1,"Executing '$initCmd'...");
-    my $status = qx%$initCmd%;
-    unless ( $? == 0 ) {
+    # We need a subshell to honour restartEnv...
+    my $output;
+    $proc = CAF::Process->new([ $initCmd ], 
+                              log => $self,
+                              shell => 1,
+                              stdout => \$output,
+                              stderr => 'stdout',
+                             );
+    $proc->execute();
+    if ( $? == 0 ) {
+      $self->verbose(1,$output) if defined($output) && length($output);
+    } else {
       $self->error("Error restarting gLite services\n");
-      if ( defined($status) && length($status) ) {
-        $self->info($status);
+      if ( defined($output) && length($output) ) {
+        $self->info($output);
       }
       return(3);          
-    }
-    if ( defined($status) && length($status) ) {
-      $self->debug(1,$status);
     }
     
     # Execute postRestart commands if any (postRestart is a list of command to execute)
@@ -259,16 +273,15 @@ sub Configure {
         my $command = $commandConfig->{cmd};
         next if length($command) == 0;
         $self->info("Executing command: '$command'...");
-        my $status = qx/$command/;
+        $proc = CAF::Process->new([ $command ], log => $self);
+        my $output = $proc->output();
         if ( defined($commandConfig->{expectedStatus}) && ($? != $commandConfig->{expectedStatus}) ) {
-          $self->warning("Error execution command '$command' (status=$?)\n");
-          if ( defined($status) && length($status) ) {
-            $self->info($status);
+          $self->warning("Error executing command '$command' (status=$?)\n");
+          if ( defined($output) && length($output) ) {
+            $self->info($output);
           }          
         } else {
-          if ( defined($status) && length($status) ) {
-            $self->debug(1,$status);
-          }          
+          $self->verbose(1,$output) if defined($output) && length($output);
         }
       }  
     }
