@@ -15,7 +15,7 @@ use Readonly;
 
 use EDG::WP4::CCM::Element;
 
-use LC::Check;
+use CAF::FileWriter;
 use CAF::Process;
 
 local(*DTA);
@@ -337,10 +337,11 @@ sub write_conf_file ($$$) {
   }
   # Now just create the new configuration file.  Be careful to save
   # a backup of the previous file if necessary. 
-  my $result = LC::Check::file($fname,
-                               backup => ".old",
-                               contents => $contents,
-                              );
+  my $fh = CAF::FileWriter->new($fname,
+				backup => '.old',
+				log => $self);
+  print $fh $contents;
+  my $result = $fh->close();
   if ( $result >= 0 ) {
     $result = 0;
   }
