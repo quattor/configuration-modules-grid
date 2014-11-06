@@ -17,6 +17,7 @@ use EDG::WP4::CCM::Element;
 
 use LC::Check;
 use CAF::FileEditor;
+use CAF::FileReader;
 use CAF::FileWriter;
 use CAF::Process;
 
@@ -191,13 +192,11 @@ sub Configure {
     for my $certfile ($glite_cert_name,$glite_key_name) {
       my $certfile_src = $grid_security_dir . '/' . $certfile;
       my $certfile_glite = $glite_cert_dir . '/' . $certfile;
-      my $cert_src_fh = CAF::FileEditor->new($certfile_src, log => $self);
+      my $cert_src_fh = CAF::FileReader->new($certfile_src, log => $self);
       unless ( $cert_src_fh ) {
         $self->error("Error reading $certfile_src: cannot define gLite service certificate");
         next;
       };
-      $cert_src_fh->cancel();
-      $cert_src_fh->seek_begin();
       my $cert_fh = CAF::FileWriter->new($certfile_glite,
                                          log => $self,
                                          mode => 0400,
