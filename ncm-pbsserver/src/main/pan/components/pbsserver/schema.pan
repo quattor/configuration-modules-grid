@@ -86,6 +86,8 @@ type pbs_server_attlist = {
     
     'next_job_number'     ? long(0..)
 
+    'no_mail_force'       ? boolean
+
     'node_check_rate'     ? long(10..) = 600
     'node_pack'           ? boolean
     'node_ping_rate'      ? long(10..) = 300
@@ -195,6 +197,7 @@ type pbs_queue_attlist = {
     'resources_min.pmem'     ? string
     'resources_min.pvmem'    ? string
     'resources_min.vmem'     ? string
+    'resources_min.walltime' ? string
     
     'started'                ? boolean
 
