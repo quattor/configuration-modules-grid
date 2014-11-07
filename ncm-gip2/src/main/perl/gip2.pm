@@ -190,75 +190,125 @@ sub Configure($$@) {
 
     if ( $gip_config->{ldif} ) {
 
-        # Retrieve the command to use for generating the static
-        # LDIF information.
-        my $staticInfoCmd = $gip_config->{staticInfoCmd};
-
-        # Ensure that the command exists and is executable.
-        if (! -f $staticInfoCmd) {
-            $self->error("$staticInfoCmd does not exist");
-            return 1;
-        }
-        if (! -x $staticInfoCmd) {
-            $self->error("$staticInfoCmd is not executable");
-            return 1;
-        }
-
-        my $files = $gip_config->{ldif};
-        foreach my $file (sort keys %$files) {
-            my $entry = $files->{$file};
+        foreach my $ldifSet (sort keys %{$gip_config->{ldif}}) {
 
             # Get the output LDIF file name.
             # It can be an absolute or relative path. If relative, prefix with $ldifDir.
-            my $ldifFile = $entry->{ldifFile};
+            my $ldifFile = $gip_config->{ldif}->{$ldifSet}->{ldifFile};
             if ( $ldifFile !~ /^\// ) {
                 $ldifFile = $ldifDir . '/' . $ldifFile;
             }
             $self->debug(1, 'Processing entry for LDIF file ' . $ldifFile);
+            my $ldifConfFile;
 
-            # Ensure that the template file exists.
-            my $template = $entry->{template};
-            if (! -f $template) {
-                $self->warn("$template does not exist; skipping LDIF file " . $ldifFile . "...");
-                next;
+            # Get the command to generate the LDIF file if one was specified.
+            my $staticInfoCmd;
+            if ( $gip_config->{ldif}->{$ldifSet}->{staticInfoCmd} ) {
+                $staticInfoCmd = $gip_config->{ldif}->{$ldifSet}->{staticInfoCmd};
+            } elsif ( $gip_config->{staticInfoCmd} ){
+                $staticInfoCmd = $gip_config->{staticInfoCmd};
+            }
+            if ( $staticInfoCmd ) {
+                # If the command is matching /usr/sbin/glite-info-static*, treat it as a special case
+                # and ignore the command for backward compatibility. These commands were just a hack
+                # to do a cat of the conf file with strange arguments...
+                if ( $staticInfoCmd =~ qr(^/usr/sbin/glite-info-static) ) {
+                    $self->verbose("LDIF set $ldifSet: legacy command $staticInfoCmd ignored, using configured LDIF entries directly");
+                    $staticInfoCmd = undef;
+                }
+                if ( $gip_config->{ldif}->{$ldifSet}->{confFile} ) {
+                   $ldifConfFile = "$etcDir/$gip_config->{ldif}->{$ldifSet}->{confFile}";
+                } else {
+                   $ldifConfFile = "$etcDir/$ldifSet";
+                }
             }
 
-            # Create the configuration file with LDIF info.
+            # Create the configuration file contents with 'entries'.
+            # If 'confFile' is defined and 'entries' is undefined, that means that
+            # 'confFile' is potentially shared by several LDIF sets/files and that its
+            # contents is defined in global configuration 'ldifConfEntries' rather
+            # than in the current LDIF set. If also undefined in ldifConfEntries, this is
+            # an error.
+            # 'entries' is assumed to be LDIF DNs if $staticInfoCmd is not defined,
+            # else it is interpreted/written as sets of key/value pairs (set name 
+            # is ignored but a blank line is inserted before the set of key/value pairs).
+            # With LDIF DNs, multiple value for an attribute results in several lines
+            # for this attribute.
+            # With key/value pairs, a list of value for the same key is written between '()'.
             my $contents = '';
-
-            my $ldifEntries = $entry->{entries};
+            my $ldifFormat = !defined($staticInfoCmd);
+            if ( $ldifFormat ) { 
+                $self->debug(1,"LDIF set $ldifSet: entries interpreted as LDIF DNs");
+            } else {
+                $self->debug(1,"LDIF set $ldifSet: entries interpreted as key/value pairs");
+            }
+            my $ldifEntries = $gip_config->{ldif}->{$ldifSet}->{entries};
+            if ( $ldifConfFile && !defined $ldifEntries && defined($gip_config->{ldifConfEntries}) ) {
+                $self->debug(1,"LDIF set $ldifSet: configuration entries undefined, trying to use $base/ldifConfEntries/".$gip_config->{ldif}->{$ldifSet}->{confFile});
+                $ldifEntries = $gip_config->{ldifConfEntries}->{$gip_config->{ldif}->{$ldifSet}->{confFile}};
+            }
+            unless ( defined ($ldifEntries) ) {
+                $self->error("LDIF set $ldifSet: configuration entries undefined");
+                return 1;
+            }
             for my $dn (sort keys %$ldifEntries) {
-                $contents .= unescape($dn) . "\n";
+                if ( $ldifFormat ) { 
+                    $contents .= unescape($dn) . "\n";
+                } else {
+                    $contents .= "\n";
+                }
                 my $attrs = $ldifEntries->{$dn};
                 foreach my $key (sort keys %$attrs) {
-                    foreach my $v (@{$attrs->{$key}}) {
-                        my $value = $v;
-                        $contents .= "$key: $value\n";
+                    if ( $ldifFormat ) {
+                        foreach my $value (@{$attrs->{$key}}) {
+                            $contents .= "$key: $value\n";
+                        }
+                    } else {
+                        $contents .= "$key = ";
+                        $contents .= '(' if @{$attrs->{$key}} > 1;
+                        foreach my $value (@{$attrs->{$key}}) {
+                            $contents .= "$value ";
+                        }
+                        $contents =~ s/\s+$//;
+                        $contents .= ')' if @{$attrs->{$key}} > 1;
+                        $contents .= "\n";
                     }
                 }
                 $contents .= "\n";
             }
 
-            # Write out the configuration file.
-            my $changes = $self->write_encoded("$etcDir/$file", 0644, $contents);
-            if ( $changes < 0 ) {
-                $self->error("Error updadating LDIF configuration file $etcDir/$file");
+            # Run the command to generate the LDIF file if one was specified.
+
+            if ( $staticInfoCmd ) {
+                # Write out the configuration file.
+                my $ldifConfFile;
+                if ( $gip_config->{ldif}->{$ldifSet}->{confFile} ) {
+                   $ldifConfFile = "$etcDir/$gip_config->{ldif}->{$ldifSet}->{confFile}";
+                } else {
+                   $ldifConfFile = "$etcDir/$ldifSet";
+                }
+                my $changes = $self->write_encoded($ldifConfFile, 0644, $contents);
+                if ( $changes < 0 ) {
+                   $self->error("Error updating LDIF configuration file $ldifConfFile");
+                   return 1;
+                }
+
+                my $proc = CAF::Process->new([$staticInfoCmd, $ldifConfFile], log => $self);
+                unless ( $proc->is_executable() ) { 
+                    $self->error("$staticInfoCmd doesn't exist or is not executable");
+                    return 1;
+                }
+                $contents = $proc->output();
+                if ( $? ) {
+                    $self->error("Error generating LDIF file (command=$staticInfoCmd $ldifConfFile)");
+                    return 1;
+                }
             }
 
-            # Run the command to generate the LDIF file.
-            # A temporary LDIF file is produced and then the LDIF file is updated
-            # with the temporary file if the content was changed.
-            my $staticInfoArgs = "-c $etcDir/$file -t $template";
-            $staticInfoArgs = $entry->{staticInfoArgs} if ( exists($entry->{staticInfoArgs}) );
-            my $cmd = "$staticInfoCmd $staticInfoArgs";
-            CAF::Process->new([$cmd], log => $self, stdout => \$contents)->execute();
-            if ($?) {
-                $self->error("Error generating LDIF file (command=$cmd)");
-            } else {
-                $changes = $self->write_encoded($ldifFile, 0644, $contents);
-                if ( $changes < 0 ) {
-                    $self->error("Error updadating $ldifFile");
-                }
+            # Update LDIF files with $contents
+            my $changes = $self->write_encoded($ldifFile, 0644, $contents);
+            if ( $changes < 0 ) {
+                $self->error("Error updadating $ldifFile");
             }
         }
     }

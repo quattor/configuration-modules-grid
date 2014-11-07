@@ -12,10 +12,11 @@ include { 'pan/types' };
 type structure_gip2_attribute = string[];
 
 type structure_gip2_ldif = {
-    'template'              : string
+    'confFile'              ? string
+    'template'              ? string
     'ldifFile'              : string
-    'entries'               : structure_gip2_attribute{}{}
-    'staticInfoArgs'        ? string
+    'entries'               ? structure_gip2_attribute{}{}
+    'staticInfoCmd'         ? string
 };
 
 type structure_gip2_standardOutput = {
@@ -34,11 +35,13 @@ type ${project.artifactId}_component = {
     'pluginDir'             ? string
     'providerDir'           ? string
     'workDirs'              ? string[]
-    'staticInfoCmd'         : string
+    'staticInfoCmd'         ? string
     'bdiiRestartAllowed'    : boolean = true
 
     'confFiles'             ? string{}
     'ldif'                  ? structure_gip2_ldif{}
+    #ldifConfEntries must be a nlist of structure_gip2_ldif entries
+    'ldifConfEntries'       ? structure_gip2_attribute{}{}{}
     'plugin'                ? string{}
     'provider'              ? string{}
     'scripts'               ? string{}
