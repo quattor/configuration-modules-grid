@@ -308,7 +308,7 @@ sub Configure($$@) {
             # Update LDIF files with $contents
             my $changes = $self->write_encoded($ldifFile, 0644, $contents);
             if ( $changes < 0 ) {
-                $self->error("Error updadating $ldifFile");
+                $self->error("Error updaing LDIF file $ldifFile");
             }
         }
     }
@@ -327,7 +327,7 @@ sub Configure($$@) {
             # Write out the file.
             my $changes = $self->write_encoded($pluginFile, 0755, $contents);
             if ( $changes < 0 ) {
-                $self->error("Error updadating $pluginFile");
+                $self->error("Error updating GIP plugin script $pluginFile");
             }
         }
     }
@@ -346,7 +346,7 @@ sub Configure($$@) {
             # Write out the file.
             my $changes = $self->write_encoded($providerFile, 0755, $contents);
             if ( $changes < 0 ) {
-                $self->error("Error updadating $providerFile");
+                $self->error("Error updating GIP provider script $providerFile");
             }
         }
     }
@@ -367,7 +367,7 @@ sub Configure($$@) {
             # Write out the file.
             my $changes = $self->write_encoded($file, 0755, $contents);
             if ( $changes < 0 ) {
-                $self->error("Error updadating $file");
+                $self->error("Error updating script $file");
             }
         }
     }
@@ -387,7 +387,7 @@ sub Configure($$@) {
             # Write out the file.
             my $changes = $self->write_encoded($file, 0644, $contents);
             if ( $changes < 0 ) {
-                $self->error("Error updadating $file");
+                $self->error("Error updating configuration file $file");
             }
         }
     }
@@ -412,7 +412,7 @@ sub Configure($$@) {
                 # Create/update the target file
                 my $changes = $self->write_encoded($targetFile, 0644, $contents);
                 if ( $changes < 0 ) {
-                    $self->error("Error updadating $targetFile");
+                    $self->error("Error updating file $targetFile");
                 }
             }
         }
@@ -448,7 +448,7 @@ sub Configure($$@) {
             # Write out the file.
             my $changes = $self->write_encoded($file, 0644, $contents);
             if ( $changes < 0 ) {
-                $self->error("Error updadating $file");
+                $self->error("Error updating LDIF stub $file");
             } elsif ( $changes > 0 ) {
                 $restartBDII = 1;
             }
