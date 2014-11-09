@@ -19,11 +19,6 @@ type structure_gip2_ldif = {
     'staticInfoCmd'         ? string
 };
 
-type structure_gip2_standardOutput = {
-    'command'               : string = '/bin/echo'
-    'arguments'             : string = '-n'
-};
-
 type ${project.artifactId}_component = {
     include structure_component
     'user'                  : string
@@ -46,7 +41,6 @@ type ${project.artifactId}_component = {
     'provider'              ? string{}
     'scripts'               ? string{}
     'stubs'                 ? structure_gip2_attribute{}{}{}
-    'standardOutput'        ? structure_gip2_standardOutput{}
     'external'              ? string[]
 };
 

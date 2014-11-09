@@ -130,12 +130,6 @@ If stubs are defined, BDII will be restarted if running on the current node.
 
 Default : none.
 
-=head2 /software/components/gip2/standardOutput : nlist (optional)
-
-Named list of files to be produced from the standard output of an executable. The key is the target file name, each value is a structure with command and arguments attributes.
-
-Default : none.
-
 =head2 /software/components/gip2/external : list of strings (optional)
 
 List of files/scripts that will be trusted as if managed by the component.
