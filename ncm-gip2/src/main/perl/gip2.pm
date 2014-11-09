@@ -265,14 +265,9 @@ sub Configure($$@) {
                             $contents .= "$key: $value\n";
                         }
                     } else {
-                        $contents .= "$key = ";
-                        $contents .= '(' if @{$attrs->{$key}} > 1;
-                        foreach my $value (@{$attrs->{$key}}) {
-                            $contents .= "$value, ";
-                        }
-                        $contents =~ s/,\s+$//;
-                        $contents .= ')' if @{$attrs->{$key}} > 1;
-                        $contents .= "\n";
+                        my $attrstxt = join(", ", @{$attrs->{$key}});
+                        $attrstxt = "($attrstxt)" if @{$attrs->{$key}} > 1;
+                        $contents .= "$key = $attrstxt\n";
                     }
                 }
                 $contents .= "\n";

@@ -35,7 +35,8 @@ type ${project.artifactId}_component = {
 
     'confFiles'             ? string{}
     'ldif'                  ? structure_gip2_ldif{}
-    #ldifConfEntries must be a nlist of structure_gip2_ldif entries
+    # ldifConfEntries must be a nlist of structure_gip2_ldif 'entries' property.
+    # See pod documentation.
     'ldifConfEntries'       ? structure_gip2_attribute{}{}{}
     'plugin'                ? string{}
     'provider'              ? string{}
