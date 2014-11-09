@@ -234,7 +234,8 @@ sub Configure($$@) {
             # is ignored but a blank line is inserted before the set of key/value pairs).
             # With LDIF DNs, multiple value for an attribute results in several lines
             # for this attribute.
-            # With key/value pairs, a list of value for the same key is written between '()'.
+            # With key/value pairs, a list of value for the same key is written as
+            # a comma-separated list between '()'.
             my $contents = '';
             my $ldifFormat = !defined($staticInfoCmd);
             if ( $ldifFormat ) { 
@@ -267,9 +268,9 @@ sub Configure($$@) {
                         $contents .= "$key = ";
                         $contents .= '(' if @{$attrs->{$key}} > 1;
                         foreach my $value (@{$attrs->{$key}}) {
-                            $contents .= "$value ";
+                            $contents .= "$value, ";
                         }
-                        $contents =~ s/\s+$//;
+                        $contents =~ s/,\s+$//;
                         $contents .= ')' if @{$attrs->{$key}} > 1;
                         $contents .= "\n";
                     }
