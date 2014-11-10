@@ -250,7 +250,7 @@ sub Configure($$@) {
             }
             unless ( defined ($ldifEntries) ) {
                 $self->error("LDIF set $ldifSet: configuration entries undefined");
-                return 1;
+                next;
             }
             for my $dn (sort keys %$ldifEntries) {
                 if ( $ldifFormat ) { 
@@ -286,18 +286,18 @@ sub Configure($$@) {
                 my $changes = $self->write_encoded($ldifConfFile, 0644, $contents);
                 if ( $changes < 0 ) {
                    $self->error("Error updating LDIF configuration file $ldifConfFile");
-                   return 1;
+                   next;
                 }
 
                 my $proc = CAF::Process->new([$staticInfoCmd, $ldifConfFile], log => $self);
                 unless ( $proc->is_executable() ) { 
                     $self->error("$staticInfoCmd doesn't exist or is not executable");
-                    return 1;
+                    next;
                 }
                 $contents = $proc->output();
                 if ( $? ) {
                     $self->error("Error generating LDIF file (command=$staticInfoCmd $ldifConfFile)");
-                    return 1;
+                    next;
                 }
             }
 
@@ -438,7 +438,7 @@ sub Configure($$@) {
     }
 
     # Done.
-    return 1;
+    return;
 }
 
 
