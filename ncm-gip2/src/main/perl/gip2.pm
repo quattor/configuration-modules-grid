@@ -189,6 +189,7 @@ sub Configure($$@) {
     # Process all of the defined LDIF files.
 
     if ( $gip_config->{ldif} ) {
+        $self->info("Checking LDIF files...");
 
         foreach my $ldifSet (sort keys %{$gip_config->{ldif}}) {
 
@@ -303,7 +304,9 @@ sub Configure($$@) {
 
             # Update LDIF files with $contents
             my $changes = $self->write_encoded($ldifFile, 0644, $contents);
-            if ( $changes < 0 ) {
+            if ( $changes > 0 ) {
+                $self->info("LDIF file $ldifFile updated");
+            } elsif ( $changes < 0 ) {
                 $self->error("Error updaing LDIF file $ldifFile");
             }
         }
@@ -313,16 +316,18 @@ sub Configure($$@) {
     # Process all of the plugins.
 
     if ( $gip_config->{plugin} ) {
-        my $files = $gip_config->{plugin};
+        $self->info("Checking GIP plugins...");
 
-        foreach my $file (sort keys %$files) {
+        foreach my $file (sort keys %{$gip_config->{plugin}}) {
             my $pluginFile = $pluginDir . "/" . $file;
             $self->debug(1, 'Processing entry for plugin ' . $pluginFile);
-            my $contents = $files->{$file};
+            my $contents = $gip_config->{plugin}->{$file};
 
             # Write out the file.
             my $changes = $self->write_encoded($pluginFile, 0755, $contents);
-            if ( $changes < 0 ) {
+            if ( $changes > 0 ) {
+                $self->info("Plugin script $pluginFile updated");
+            } elsif ( $changes < 0 ) {
                 $self->error("Error updating GIP plugin script $pluginFile");
             }
         }
@@ -332,16 +337,18 @@ sub Configure($$@) {
     # Process all of the providers.
 
     if ( $gip_config->{provider} ) {
-        my $files = $gip_config->{provider};
+        $self->info("Checking GIP providers...");
 
-        foreach my $file (sort keys %$files) {
+        foreach my $file (sort keys %{$gip_config->{provider}}) {
             my $providerFile = $providerDir . "/" . $file;
             $self->debug(1, 'Processing entry for provider ' . $providerFile);
-            my $contents = $files->{$file};
+            my $contents = $gip_config->{provider}->{$file};
 
             # Write out the file.
             my $changes = $self->write_encoded($providerFile, 0755, $contents);
-            if ( $changes < 0 ) {
+            if ( $changes > 0 ) {
+                $self->info("Provider script $providerFile updated");
+            } elsif ( $changes < 0 ) {
                 $self->error("Error updating GIP provider script $providerFile");
             }
         }
@@ -351,19 +358,21 @@ sub Configure($$@) {
     # Process all of the scripts. Can be anywhere in filesystem.
 
     if ( $gip_config->{scripts} ) {
-        my $files = $gip_config->{scripts};
+        $self->info("Checking GIP scripts...");
 
-        foreach my $efile (sort keys %$files) {
+        foreach my $efile (sort keys %{$gip_config->{scripts}}) {
 
             # Extract the file name and contents from the configuration.
             my $file = unescape($efile);
             $self->debug(1, 'Processing entry for script ' . $file);
-            my $contents = $files->{$efile};
+            my $contents = $gip_config->{scripts}->{$efile};
 
             # Write out the file.
             my $changes = $self->write_encoded($file, 0755, $contents);
-            if ( $changes < 0 ) {
-                $self->error("Error updating script $file");
+            if ( $changes > 0 ) {
+                $self->info("GIP script $file updated");
+            } elsif ( $changes < 0 ) {
+                $self->error("Error updating GIP script $file");
             }
         }
     }
@@ -371,18 +380,20 @@ sub Configure($$@) {
     # Process all of configuration files used by GIP components. Can be anywhere in filesystem.
 
     if ( $gip_config->{confFiles} ) {
-        my $files = $gip_config->{confFiles};
+        $self->info("Checking GIP configuration files...");
 
-        foreach my $efile (sort keys %$files) {
+        foreach my $efile (sort keys %{$gip_config->{confFiles}}) {
 
             # Extract the file name and contents from the configuration.
             my $file = unescape($efile);
             $self->debug(1, 'Processing entry for configuration file ' . $file);
-            my $contents = $files->{$efile};
+            my $contents = $gip_config->{confFiles}->{$efile};
 
             # Write out the file.
             my $changes = $self->write_encoded($file, 0644, $contents);
-            if ( $changes < 0 ) {
+            if ( $changes > 0 ) {
+                $self->info("Configuration file $file updated");
+            } elsif ( $changes < 0 ) {
                 $self->error("Error updating configuration file $file");
             }
         }
@@ -395,10 +406,10 @@ sub Configure($$@) {
     # for the modification to take effect.
 
     if ( $gip_config->{stubs} ) {
-        my $files = $gip_config->{stubs};
+        $self->info("Checking LDIF stub files...");
 
-        foreach my $stubFile (sort keys %$files) {
-            my $ldifEntries = $files->{$stubFile};
+        foreach my $stubFile (sort keys %{$gip_config->{stubs}}) {
+            my $ldifEntries = $gip_config->{stubs}->{$stubFile};
             my $file = $ldifDir . "/" . $stubFile;
             $self->debug(1, 'Processing entry for stub ' . $file);
 
@@ -417,10 +428,11 @@ sub Configure($$@) {
 
             # Write out the file.
             my $changes = $self->write_encoded($file, 0644, $contents);
-            if ( $changes < 0 ) {
-                $self->error("Error updating LDIF stub $file");
-            } elsif ( $changes > 0 ) {
+            if ( $changes > 0 ) {
+                $self->info("LDIF stub $file updated");
                 $restartBDII = 1;
+            } elsif ( $changes < 0 ) {
+                $self->error("Error updating LDIF stub $file");
             }
         }
     }
