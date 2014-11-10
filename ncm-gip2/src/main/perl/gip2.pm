@@ -91,14 +91,14 @@ sub Configure($$@) {
     # Build a list of all files managed by this component that will be
     # used to determine if a file must be removed from GIP directories.
     my %managedFiles;
-    for my $fileType ('ldif', 'plugin', 'provider', 'scripts', 'stubs', 'standardOutput', 'external') {
+    for my $fileType ('ldif', 'plugin', 'provider', 'scripts', 'stubs', 'external') {
         $self->debug(1, "Adding $fileType files to list of managed files");
         my $filePath;
         my @fileList;
         next if ! $gip_config->{$fileType};
 
-        # Scripts and redirects have no implicit file path, the script path is the key (escaped)
-        if ( $fileType eq 'scripts' || $fileType eq 'standardOutput' ) {
+        # Scripts have no implicit file path, the script path is the key (escaped)
+        if ( $fileType eq 'scripts' ) {
             for my $efile (keys(%{$gip_config->{$fileType}})) {
                 push @fileList, unescape($efile);
             }
@@ -189,76 +189,125 @@ sub Configure($$@) {
     # Process all of the defined LDIF files.
 
     if ( $gip_config->{ldif} ) {
+        $self->info("Checking LDIF files...");
 
-        # Retrieve the command to use for generating the static
-        # LDIF information.
-        my $staticInfoCmd = $gip_config->{staticInfoCmd};
-
-        # Ensure that the command exists and is executable.
-        if (! -f $staticInfoCmd) {
-            $self->error("$staticInfoCmd does not exist");
-            return 1;
-        }
-        if (! -x $staticInfoCmd) {
-            $self->error("$staticInfoCmd is not executable");
-            return 1;
-        }
-
-        my $files = $gip_config->{ldif};
-        foreach my $file (sort keys %$files) {
-            my $entry = $files->{$file};
+        foreach my $ldifSet (sort keys %{$gip_config->{ldif}}) {
 
             # Get the output LDIF file name.
             # It can be an absolute or relative path. If relative, prefix with $ldifDir.
-            my $ldifFile = $entry->{ldifFile};
+            my $ldifFile = $gip_config->{ldif}->{$ldifSet}->{ldifFile};
             if ( $ldifFile !~ /^\// ) {
                 $ldifFile = $ldifDir . '/' . $ldifFile;
             }
             $self->debug(1, 'Processing entry for LDIF file ' . $ldifFile);
+            my $ldifConfFile;
 
-            # Ensure that the template file exists.
-            my $template = $entry->{template};
-            if (! -f $template) {
-                $self->warn("$template does not exist; skipping LDIF file " . $ldifFile . "...");
-                next;
+            # Get the command to generate the LDIF file if one was specified.
+            my $staticInfoCmd;
+            if ( $gip_config->{ldif}->{$ldifSet}->{staticInfoCmd} ) {
+                $staticInfoCmd = $gip_config->{ldif}->{$ldifSet}->{staticInfoCmd};
+            } elsif ( $gip_config->{staticInfoCmd} ){
+                $staticInfoCmd = $gip_config->{staticInfoCmd};
+            }
+            if ( $staticInfoCmd ) {
+                # If the command is matching /usr/sbin/glite-info-static*, treat it as a special case
+                # and ignore the command for backward compatibility. These commands were just a hack
+                # to do a cat of the conf file with strange arguments...
+                if ( $staticInfoCmd =~ qr(^/usr/sbin/glite-info-static) ) {
+                    $self->verbose("LDIF set $ldifSet: legacy command $staticInfoCmd ignored, using configured LDIF entries directly");
+                    $staticInfoCmd = undef;
+                }
+                if ( $gip_config->{ldif}->{$ldifSet}->{confFile} ) {
+                   $ldifConfFile = "$etcDir/$gip_config->{ldif}->{$ldifSet}->{confFile}";
+                } else {
+                   $ldifConfFile = "$etcDir/$ldifSet";
+                }
             }
 
-            # Create the configuration file with LDIF info.
+            # Create the configuration file contents with 'entries'.
+            # If 'confFile' is defined and 'entries' is undefined, that means that
+            # 'confFile' is potentially shared by several LDIF sets/files and that its
+            # contents is defined in global configuration 'ldifConfEntries' rather
+            # than in the current LDIF set. If also undefined in ldifConfEntries, this is
+            # an error.
+            # 'entries' is assumed to be LDIF DNs if $staticInfoCmd is not defined,
+            # else it is interpreted/written as sets of key/value pairs (set name 
+            # is ignored but a blank line is inserted before the set of key/value pairs).
+            # With LDIF DNs, multiple value for an attribute results in several lines
+            # for this attribute.
+            # With key/value pairs, a list of value for the same key is written as
+            # a comma-separated list between '()'.
             my $contents = '';
-
-            my $ldifEntries = $entry->{entries};
+            my $ldifFormat = !defined($staticInfoCmd);
+            if ( $ldifFormat ) { 
+                $self->debug(1,"LDIF set $ldifSet: entries interpreted as LDIF DNs");
+            } else {
+                $self->debug(1,"LDIF set $ldifSet: entries interpreted as key/value pairs");
+            }
+            my $ldifEntries = $gip_config->{ldif}->{$ldifSet}->{entries};
+            if ( $ldifConfFile && !defined $ldifEntries && defined($gip_config->{ldifConfEntries}) ) {
+                $self->debug(1,"LDIF set $ldifSet: configuration entries undefined, trying to use $base/ldifConfEntries/".$gip_config->{ldif}->{$ldifSet}->{confFile});
+                $ldifEntries = $gip_config->{ldifConfEntries}->{$gip_config->{ldif}->{$ldifSet}->{confFile}};
+            }
+            unless ( defined ($ldifEntries) ) {
+                $self->error("LDIF set $ldifSet: configuration entries undefined");
+                next;
+            }
             for my $dn (sort keys %$ldifEntries) {
-                $contents .= unescape($dn) . "\n";
+                if ( $ldifFormat ) { 
+                    $contents .= unescape($dn) . "\n";
+                } else {
+                    $contents .= "\n";
+                }
                 my $attrs = $ldifEntries->{$dn};
                 foreach my $key (sort keys %$attrs) {
-                    foreach my $v (@{$attrs->{$key}}) {
-                        my $value = $v;
-                        $contents .= "$key: $value\n";
+                    if ( $ldifFormat ) {
+                        foreach my $value (@{$attrs->{$key}}) {
+                            $contents .= "$key: $value\n";
+                        }
+                    } else {
+                        my $attrstxt = join(", ", @{$attrs->{$key}});
+                        $attrstxt = "($attrstxt)" if @{$attrs->{$key}} > 1;
+                        $contents .= "$key = $attrstxt\n";
                     }
                 }
                 $contents .= "\n";
             }
 
-            # Write out the configuration file.
-            my $changes = $self->write_encoded("$etcDir/$file", 0644, $contents);
-            if ( $changes < 0 ) {
-                $self->error("Error updadating LDIF configuration file $etcDir/$file");
+            # Run the command to generate the LDIF file if one was specified.
+
+            if ( $staticInfoCmd ) {
+                # Write out the configuration file.
+                my $ldifConfFile;
+                if ( $gip_config->{ldif}->{$ldifSet}->{confFile} ) {
+                   $ldifConfFile = "$etcDir/$gip_config->{ldif}->{$ldifSet}->{confFile}";
+                } else {
+                   $ldifConfFile = "$etcDir/$ldifSet";
+                }
+                my $changes = $self->write_encoded($ldifConfFile, 0644, $contents);
+                if ( $changes < 0 ) {
+                   $self->error("Error updating LDIF configuration file $ldifConfFile");
+                   next;
+                }
+
+                my $proc = CAF::Process->new([$staticInfoCmd, $ldifConfFile], log => $self);
+                unless ( $proc->is_executable() ) { 
+                    $self->error("$staticInfoCmd doesn't exist or is not executable");
+                    next;
+                }
+                $contents = $proc->output();
+                if ( $? ) {
+                    $self->error("Error generating LDIF file (command=$staticInfoCmd $ldifConfFile)");
+                    next;
+                }
             }
 
-            # Run the command to generate the LDIF file.
-            # A temporary LDIF file is produced and then the LDIF file is updated
-            # with the temporary file if the content was changed.
-            my $staticInfoArgs = "-c $etcDir/$file -t $template";
-            $staticInfoArgs = $entry->{staticInfoArgs} if ( exists($entry->{staticInfoArgs}) );
-            my $cmd = "$staticInfoCmd $staticInfoArgs";
-            CAF::Process->new([$cmd], log => $self, stdout => \$contents)->execute();
-            if ($?) {
-                $self->error("Error generating LDIF file (command=$cmd)");
-            } else {
-                $changes = $self->write_encoded($ldifFile, 0644, $contents);
-                if ( $changes < 0 ) {
-                    $self->error("Error updadating $ldifFile");
-                }
+            # Update LDIF files with $contents
+            my $changes = $self->write_encoded($ldifFile, 0644, $contents);
+            if ( $changes > 0 ) {
+                $self->info("LDIF file $ldifFile updated");
+            } elsif ( $changes < 0 ) {
+                $self->error("Error updaing LDIF file $ldifFile");
             }
         }
     }
@@ -267,17 +316,19 @@ sub Configure($$@) {
     # Process all of the plugins.
 
     if ( $gip_config->{plugin} ) {
-        my $files = $gip_config->{plugin};
+        $self->info("Checking GIP plugins...");
 
-        foreach my $file (sort keys %$files) {
+        foreach my $file (sort keys %{$gip_config->{plugin}}) {
             my $pluginFile = $pluginDir . "/" . $file;
             $self->debug(1, 'Processing entry for plugin ' . $pluginFile);
-            my $contents = $files->{$file};
+            my $contents = $gip_config->{plugin}->{$file};
 
             # Write out the file.
             my $changes = $self->write_encoded($pluginFile, 0755, $contents);
-            if ( $changes < 0 ) {
-                $self->error("Error updadating $pluginFile");
+            if ( $changes > 0 ) {
+                $self->info("Plugin script $pluginFile updated");
+            } elsif ( $changes < 0 ) {
+                $self->error("Error updating GIP plugin script $pluginFile");
             }
         }
     }
@@ -286,17 +337,19 @@ sub Configure($$@) {
     # Process all of the providers.
 
     if ( $gip_config->{provider} ) {
-        my $files = $gip_config->{provider};
+        $self->info("Checking GIP providers...");
 
-        foreach my $file (sort keys %$files) {
+        foreach my $file (sort keys %{$gip_config->{provider}}) {
             my $providerFile = $providerDir . "/" . $file;
             $self->debug(1, 'Processing entry for provider ' . $providerFile);
-            my $contents = $files->{$file};
+            my $contents = $gip_config->{provider}->{$file};
 
             # Write out the file.
             my $changes = $self->write_encoded($providerFile, 0755, $contents);
-            if ( $changes < 0 ) {
-                $self->error("Error updadating $providerFile");
+            if ( $changes > 0 ) {
+                $self->info("Provider script $providerFile updated");
+            } elsif ( $changes < 0 ) {
+                $self->error("Error updating GIP provider script $providerFile");
             }
         }
     }
@@ -305,19 +358,21 @@ sub Configure($$@) {
     # Process all of the scripts. Can be anywhere in filesystem.
 
     if ( $gip_config->{scripts} ) {
-        my $files = $gip_config->{scripts};
+        $self->info("Checking GIP scripts...");
 
-        foreach my $efile (sort keys %$files) {
+        foreach my $efile (sort keys %{$gip_config->{scripts}}) {
 
             # Extract the file name and contents from the configuration.
             my $file = unescape($efile);
             $self->debug(1, 'Processing entry for script ' . $file);
-            my $contents = $files->{$efile};
+            my $contents = $gip_config->{scripts}->{$efile};
 
             # Write out the file.
             my $changes = $self->write_encoded($file, 0755, $contents);
-            if ( $changes < 0 ) {
-                $self->error("Error updadating $file");
+            if ( $changes > 0 ) {
+                $self->info("GIP script $file updated");
+            } elsif ( $changes < 0 ) {
+                $self->error("Error updating GIP script $file");
             }
         }
     }
@@ -325,45 +380,21 @@ sub Configure($$@) {
     # Process all of configuration files used by GIP components. Can be anywhere in filesystem.
 
     if ( $gip_config->{confFiles} ) {
-        my $files = $gip_config->{confFiles};
+        $self->info("Checking GIP configuration files...");
 
-        foreach my $efile (sort keys %$files) {
+        foreach my $efile (sort keys %{$gip_config->{confFiles}}) {
 
             # Extract the file name and contents from the configuration.
             my $file = unescape($efile);
             $self->debug(1, 'Processing entry for configuration file ' . $file);
-            my $contents = $files->{$efile};
+            my $contents = $gip_config->{confFiles}->{$efile};
 
             # Write out the file.
             my $changes = $self->write_encoded($file, 0644, $contents);
-            if ( $changes < 0 ) {
-                $self->error("Error updadating $file");
-            }
-        }
-    }
-
-    # Process standardOutput entries
-    if ( $gip_config->{standardOutput} ) {
-        my $files = $gip_config->{standardOutput};
-        foreach my $efile (sort keys %$files) {
-            # Extract the file name from the configuration
-            my $targetFile = unescape($efile);
-            $self->debug(1, 'Processing entry for standardOutput file ' . $targetFile);
-            # Extract the command and arguments name from the configuration
-            my $entry = $files->{$efile};
-            my $cmd = "$entry->{command} $entry->{arguments}";
-            $self->debug(2, ' ... with command: ' . $cmd);
-            # Execute the command and keep the standard output
-            my $contents = '';
-            CAF::Process->new([$cmd], log => $self, stdout => \$contents)->execute();
-            if ($?) {
-                $self->error("Error while generating standardOutput file (command=$cmd)");
-            } else {
-                # Create/update the target file
-                my $changes = $self->write_encoded($targetFile, 0644, $contents);
-                if ( $changes < 0 ) {
-                    $self->error("Error updadating $targetFile");
-                }
+            if ( $changes > 0 ) {
+                $self->info("Configuration file $file updated");
+            } elsif ( $changes < 0 ) {
+                $self->error("Error updating configuration file $file");
             }
         }
     }
@@ -375,10 +406,10 @@ sub Configure($$@) {
     # for the modification to take effect.
 
     if ( $gip_config->{stubs} ) {
-        my $files = $gip_config->{stubs};
+        $self->info("Checking LDIF stub files...");
 
-        foreach my $stubFile (sort keys %$files) {
-            my $ldifEntries = $files->{$stubFile};
+        foreach my $stubFile (sort keys %{$gip_config->{stubs}}) {
+            my $ldifEntries = $gip_config->{stubs}->{$stubFile};
             my $file = $ldifDir . "/" . $stubFile;
             $self->debug(1, 'Processing entry for stub ' . $file);
 
@@ -397,10 +428,11 @@ sub Configure($$@) {
 
             # Write out the file.
             my $changes = $self->write_encoded($file, 0644, $contents);
-            if ( $changes < 0 ) {
-                $self->error("Error updadating $file");
-            } elsif ( $changes > 0 ) {
+            if ( $changes > 0 ) {
+                $self->info("LDIF stub $file updated");
                 $restartBDII = 1;
+            } elsif ( $changes < 0 ) {
+                $self->error("Error updating LDIF stub $file");
             }
         }
     }
@@ -418,7 +450,7 @@ sub Configure($$@) {
     }
 
     # Done.
-    return 1;
+    return;
 }
 
 

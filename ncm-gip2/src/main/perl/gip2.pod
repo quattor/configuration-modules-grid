@@ -32,17 +32,26 @@ Default : root.
 
 Define GIP flavor used. Can be 'lcg' org 'glite'.
 
-Default : lcg.
+Default : glite.
 
 =head2 /software/components/gip2/ldif : nlist (optional)
 
-Named list of LDIF files used by GIP plugins. Key the file name, value is a structure with the attributes defined below.
+Named list of LDIF files used by GIP plugins. Key is an arbitrary name, value is a nlist defiining a set of LDIF
+entries to be added to a specific LDIF file. The LDIF entries can be either defined directly (no staticInfoCmd defined)
+or as a configuration file processed by staticInfoCmd. This nlist properties are defined below.
 
 Default : none.
 
-=head3 LDIF template : string (required)
+=head3 LDIF confFile : string (optional)
 
-LDIF template used by 'staticInfoCmd' in conjunction with 'entries' to produce the actual LDIF file.
+Name of the file to create with 'entries', used as the input file for staticInfoCmd. Ignored when
+staticInfoCmd is ommitted.
+
+Default : key of the /software/components/gip2/ldif nlist.
+
+=head3 LDIF template : string (deprecated)
+
+Kept for backward compatibility. Ignored if specified.
 
 Default : none.
 
@@ -53,17 +62,35 @@ the file will be created in the LDIF directory (basedir/ldif).
 
 Default : none.
 
-=head3 LDIF entries : list (required)
+=head3 LDIF entries : nlist (optional)
 
-List of LDIF entries to put in the resulting file.
+nlist of LDIF entries (key is the DN, value is a nlist of attribute/value pairs) to put in the resulting file 
+if staticInfoCmd is not specified or sets of key value/pairs (key is the set name and and value is a nlist of key/value pairs).
+
+Key is interpreted as an escaped value.
+
+If ommitted and confFile is defined, must be defined in /software/components/gip2/ldifConfEntries 
+key matching confFile.
 
 Default : none.
 
-=head3 LDIF staticInfoArgs : string (optional)
+=head3 LDIF staticInfoCmd : string (optional)
 
-Arguments used to process the LDIF template.
+Path of the command to execute to transform entries into a LDIF file. If absent, the global
+staticInfoCmd is used.
 
 Default : none.
+
+=head2 /software/components/gip2/ldifConfEntries : nlist (optional)
+
+It is a nlist of 'entries' (as defined under /software/components/gip2/ldif). The key must match a file name as
+specified with confFile under /software/components/gip2/ldif. This property allows to have a global definition
+of a configuration file, used to generate LDIF files, that is common to several LDIF sets/files (this is for example the
+case for GLUE2 with the CREAM CE). When such a shared configuration file is used to generate several LDIF files,
+'entries' under /software/components/gip2/ldif must be left undefined and the configuration file contents must
+be defined here.
+
+Default: none.
 
 =head2 /software/components/gip2/plugin : nlist (optional)
 
@@ -77,9 +104,12 @@ Named list of GIP providers. Key the provider name, value is the provider script
 
 Default : none.
 
-=head2 /software/components/gip2/staticInfoCmd : string (required)
+=head2 /software/components/gip2/staticInfoCmd : string (optional)
 
-Command used to process LDIF templates.
+Path of the command to execute to transform entries into a LDIF file if none is defined in the 
+/software/components/gip2/ldif entry. It is here for backward compatibility but it is recommended
+to define it as part of the ldif entries. If undefined in both locations, the configuration file
+is read directly without any processing.
 
 Default : none.
 
@@ -97,12 +127,6 @@ required for subtree search to work. Key is LDIF the file name (without director
 to put in the LDIF file.
 
 If stubs are defined, BDII will be restarted if running on the current node.
-
-Default : none.
-
-=head2 /software/components/gip2/standardOutput : nlist (optional)
-
-Named list of files to be produced from the standard output of an executable. The key is the target file name, each value is a structure with command and arguments attributes.
 
 Default : none.
 

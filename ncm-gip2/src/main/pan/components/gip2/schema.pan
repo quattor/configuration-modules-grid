@@ -12,15 +12,11 @@ include { 'pan/types' };
 type structure_gip2_attribute = string[];
 
 type structure_gip2_ldif = {
-    'template'              : string
+    'confFile'              ? string
+    'template'              ? string
     'ldifFile'              : string
-    'entries'               : structure_gip2_attribute{}{}
-    'staticInfoArgs'        ? string
-};
-
-type structure_gip2_standardOutput = {
-    'command'               : string = '/bin/echo'
-    'arguments'             : string = '-n'
+    'entries'               ? structure_gip2_attribute{}{}
+    'staticInfoCmd'         ? string
 };
 
 type ${project.artifactId}_component = {
@@ -34,16 +30,18 @@ type ${project.artifactId}_component = {
     'pluginDir'             ? string
     'providerDir'           ? string
     'workDirs'              ? string[]
-    'staticInfoCmd'         : string
+    'staticInfoCmd'         ? string
     'bdiiRestartAllowed'    : boolean = true
 
     'confFiles'             ? string{}
     'ldif'                  ? structure_gip2_ldif{}
+    # ldifConfEntries must be a nlist of structure_gip2_ldif 'entries' property.
+    # See pod documentation.
+    'ldifConfEntries'       ? structure_gip2_attribute{}{}{}
     'plugin'                ? string{}
     'provider'              ? string{}
     'scripts'               ? string{}
     'stubs'                 ? structure_gip2_attribute{}{}{}
-    'standardOutput'        ? structure_gip2_standardOutput{}
     'external'              ? string[]
 };
 
