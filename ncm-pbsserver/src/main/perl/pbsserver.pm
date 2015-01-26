@@ -365,6 +365,7 @@ sub Configure
                         if (!defined($definednatt{$_}) &&
                                 ($_ ne "ntype") &&
                                 ($_ ne "state") &&
+                                ($_ ne "power_state") &&
                                 ($_ ne "properties") &&
                                 ($_ ne "status")) {
                             $self->runCommand($qmgr, "unset node $node $_");
