@@ -183,15 +183,15 @@ sub Configure($$@) {
         foreach my $name (keys(%$re)) {
             if (exists($re->{$name}->{contents})) {
                 ## create the inlcude file with contents
-                my $fh = CAF::FileWriter->new(  "$mpath/$name.dat", 
+                my $fh = CAF::FileWriter->new( "$mpath/$name.dat", 
                                                 backup => ".old",
                                                 log => $self);
                 print $fh encode_utf8($re->{$name}->{contents});
                 my $result = $fh->close();
                 if ($result) {
-                    $self->log("INCLUDE file $mpath/$name.dat updated");
+                    $self->info("INCLUDE file $mpath/$name.dat updated");
                 } else {
-                    $self->log("INCLUDE file $mpath/$name.dat not updated");
+                    $self->info("INCLUDE file $mpath/$name.dat not updated");
                 };
             };
             $contents .= "#INCLUDE\t$mpath/$name\n";
