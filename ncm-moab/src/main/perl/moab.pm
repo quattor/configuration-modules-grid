@@ -19,6 +19,7 @@ sub my_handler {
     $e->has_been_reported(1);
 }
 
+use CAF::FileWriter;
 use EDG::WP4::CCM::Element;
 
 use File::Copy;
@@ -180,16 +181,17 @@ sub Configure($$@) {
         $contents .= "\n";
         my $re = $config->getElement($base."/include")->getTree;
         foreach my $name (keys(%$re)) {
-            if (exists($re->{contents})) {
+            if (exists($re->{$name}->{contents})) {
                 ## create the inlcude file with contents
-                my $result = LC::Check::file( "$mpath/$name.dat",
-                                      backup => ".old",
-                                      contents => encode_utf8($re->{contents}),
-                                      );
+                my $fh = CAF::FileWriter->new(  "$mpath/$name.dat", 
+                                                backup => ".old",
+                                                log => $self);
+                print $fh encode_utf8($re->{$name}->{contents});
+                my $result = $fh->close();
                 if ($result) {
                     $self->log("INCLUDE file $mpath/$name.dat updated");
                 } else {
-                    $self->error("INCLUDE file $mpath/$name.dat not updated");
+                    $self->log("INCLUDE file $mpath/$name.dat not updated");
                 };
             };
             $contents .= "#INCLUDE\t$mpath/$name\n";
