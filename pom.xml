@@ -59,7 +59,6 @@
     <module>ncm-pbsclient</module>
     <module>ncm-pbsknownhosts</module>
     <module>ncm-pbsserver</module>
-    <module>ncm-vomrs</module>
     <module>ncm-vomsclient</module>
     <module>ncm-wlconfig</module>
     <module>ncm-wmsclient</module>
