@@ -37,10 +37,10 @@ my %forbiddenDirs = (
 ##########################################################################
 sub Configure($$@) {
 ##########################################################################
-    
+
     my ($self, $config) = @_;
 
-    # Define paths for convenience. 
+    # Define paths for convenience.
     my $base = "/software/components/lcgbdii";
     my $tfile = "/usr/lib/ncm/config/lcgbdii/lcgbdii.template";
 
@@ -61,16 +61,16 @@ sub Configure($$@) {
     unless ( $self->createAndChownDir($user, $varDir) ) {
         return 1;
     }
-    
+
     # Retrieve BDII logging directory and create/update owner
     # Create the directory if necessary.
     my $logFile = $lcgbdii_config->{logFile};
     if ( $logFile ) {
         unless ( $self->createAndChownDir($user, dirname($logFile)) ) {
             return 1;
-        }      
+        }
     }
-    
+
 
     #################################
     # Build BDII configuration file #
@@ -87,21 +87,21 @@ sub Configure($$@) {
     unless ( $self->createAndChownDir($user, $dir) ) {
         return 1;
     }
-    
+
     # Fill template and get results.  Template substitution is simple
     # value replacement.  If a value doesn't exist, the line is not
-    # output to the file.  
+    # output to the file.
     my $contents = $self->fill_template($config, $base, $tfile);
 
-    # Will return undefined value on an error. 
+    # Will return undefined value on an error.
     if (!defined($contents)) {
         $self->error("error filling template $tfile");
         return 1;
     }
 
     # Now just create the new configuration file.  Be careful to save
-    # a backup of the previous file if necessary. 
-    # Already exists. Make backup and create new file. 
+    # a backup of the previous file if necessary.
+    # Already exists. Make backup and create new file.
     $result = LC::Check::file(
         $lcgbdii_config->{configFile},
         backup => ".old",
@@ -125,7 +125,7 @@ sub Configure($$@) {
     ############################################
     # Build the BDII update configuration file #
     ############################################
-    
+
     if ( defined($lcgbdii_config->{urls}) && (length(%{$lcgbdii_config->{urls}}) > 0) ) {
         # The update configuration file location.
         my $bdiiConfDir = dirname($lcgbdii_config->{configFile});
@@ -136,9 +136,9 @@ sub Configure($$@) {
         foreach (sort keys %{$lcgbdii_config->{urls}}) {
             $contents .= $_ . " " . $lcgbdii_config->{urls}->{$_} . "\n";
         }
-    
+
         # Now just create the new configuration file.  Be careful to save
-        # a backup of the previous file if necessary. 
+        # a backup of the previous file if necessary.
         $result = LC::Check::file($fname,
             backup => ".old",
             contents => $contents,
@@ -162,26 +162,26 @@ sub Configure($$@) {
     ######################################
     # Build the schema file if requested #
     ######################################
-    
+
     if ( defined($lcgbdii_config->{schemas}) && (length(@{$lcgbdii_config->{schemas}}) > 0) ) {
         # The schema file location.
         unless ( defined($lcgbdii_config->{schemaFile}) ) {
             $self->error("BDII schema file name not specified");
             return 1;
         }
-  
+
         # Create the directory if necessary.
         $dir = dirname($lcgbdii_config->{schemaFile});
         $self->createDir($dir);
-  
+
         # Create the contents.  Just a list of the schema files.
         $contents = '';
         foreach (@{$lcgbdii_config->{schemas}}) {
             $contents .= $_ . "\n";
         }
-  
+
         # Now just create the new configuration file.  Be careful to save
-        # a backup of the previous file if necessary. 
+        # a backup of the previous file if necessary.
         $result = LC::Check::file(
             $lcgbdii_config->{schemaFile},
             backup => ".old",
@@ -196,9 +196,9 @@ sub Configure($$@) {
     }
 
 
-    ################################    
+    ################################
     # Restart the server if needed #
-    ################################    
+    ################################
 
     if ( $changes ) {
         CAF::Process->new(["/sbin/service bdii stop"], log => $self)->run();
@@ -222,7 +222,7 @@ sub Configure($$@) {
 # if the path doesn't exist and the default is not specified, then the
 # line is not printed at all.  The only difference between the first and
 # second forms is that the second will create a double-quoted string with
-# any embedded double quotes properly escaped. 
+# any embedded double quotes properly escaped.
 #
 sub fill_template {
 
@@ -242,14 +242,14 @@ sub fill_template {
             s!<%"\s*(/[\w/]+)\s*(?:\|\s*(.+?))?\s*"%>!quote($self->fill($config, $1, $2, \$err))!eg;
             s!<%"\s*([\w]+[\w/]*)(?:\|\s*(.+?))?\s*"%>!quote($self->fill($config, "$base/$1", $2, \$err))!eg;
 
-            # Normal result OK. 
+            # Normal result OK.
             s!<%\s*(/[\w/]+)\s*(?:\|\s*(.+?))?%>!$self->fill($config, $1, $2, \$err)!eg;
             s!<%\s*([\w]+[\w/]*)\s*(?:\|\s*(.+?))?%>!$self->fill($config, "$base/$1", $2, \$err)!eg;
 
             # Add the output line unless an error was signaled.  An
             # error occurs when an element doesn't exist.  In this
             # case it is assumed that the value is optional and the
-            # line is omitted.  
+            # line is omitted.
             $translation .= $_ unless $err;
         }
         close TMP;
@@ -288,7 +288,7 @@ sub fill {
 }
 
 
-# Escape quotes and double quote the value. 
+# Escape quotes and double quote the value.
 sub quote {
     my ($value) = @_;
 
@@ -304,16 +304,16 @@ sub quote {
 # Returns 1 in case of success, else 0
 sub createAndChownDir {
     my ($self, $user, $dir) = @_;
-    
+
     if ( defined($forbiddenDirs{$dir}) ) {
-        $self->error("$dir is a system directory and cannot be used as a BDII-specific directory."); 
-        return 0;      
+        $self->error("$dir is a system directory and cannot be used as a BDII-specific directory.");
+        return 0;
     }
 
     unless ( $self->createDir($dir) ) {
         return 0;
     }
-  
+
     my ($uid, $gid) = (getpwnam($user))[2, 3];
     unless ( defined($uid) ) {
         $self->error("Failed to retrieved uid for user $user");
@@ -323,11 +323,11 @@ sub createAndChownDir {
         $self->error("Failed to retrieved gid for user $user");
         return 0;
     }
-    
+
     unless ( $self->chownDirAndChildren($uid, $gid, $dir) ) {
         return 0;
     }
-    
+
     return 1;
 }
 
@@ -346,7 +346,7 @@ sub createDir {
         }
         return 0;
     }
-    
+
     return 1;
 }
 
@@ -377,10 +377,10 @@ sub chownDirAndChildren {
         $self->error('directory/file name not specified');
         return 0;
     }
- 
+
     if ( defined($forbiddenDirs{$file}) ) {
-        $self->error("$file is a system directory: its permission cannot be changed to a BDII-specific one."); 
-        return 0;      
+        $self->error("$file is a system directory: its permission cannot be changed to a BDII-specific one.");
+        return 0;
     }
 
     if ( ! -e $file ) {
@@ -408,7 +408,7 @@ sub chownDirAndChildren {
             }
         }
     }
-  
+
     return 1;
 }
 
