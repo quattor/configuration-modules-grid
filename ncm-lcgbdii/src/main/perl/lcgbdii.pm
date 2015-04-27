@@ -383,6 +383,11 @@ sub chownDirAndChildren {
         return 0;      
     }
 
+    if ( ! -e $file ) {
+        $self->debug(2, "$file does not exist, ignoring.");
+        return 0;
+    }
+
     $self->debug(1, "Updating $file owner to uid=$uid, gid=$gid");
     my $cnt = chown($uid, $gid, $self->untaintFileName($file));
     if ( $cnt == 0 ) {
