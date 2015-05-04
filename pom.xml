@@ -39,7 +39,6 @@
     <module>ncm-condorconfig</module>
     <module>ncm-dcache</module>
     <module>ncm-dpmlfc</module>
-    <module>ncm-frontiersquid</module>
     <module>ncm-gacl</module>
     <module>ncm-gip2</module>
     <module>ncm-glitestartup</module>
