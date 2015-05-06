@@ -160,7 +160,7 @@ sub Configure($$@) {
             if ( defined($managedFiles{$file}) ) {
                 $self->debug(1, "File $file managed by ncm-gip2. Not removed.");
             } else {
-                $self->info(1, "File $file removed (not part ncm-gip2 configuration).");
+                $self->info("File $file removed (not part ncm-gip2 configuration).");
                 unlink $file; 
             }
         }
