@@ -176,11 +176,18 @@ type ${project.artifactId}_component_fed_options = {
   "siteName" ? string
 };
 
+function is_${project.artifactId}_logKeep = {
+  if (is_long(ARGV[0])) return(true);
+  return(match(ARGV[0], '^([0-9]+[k|m|g]|fifo|hup|rtmin(\+[12])?|ttou|winch|xfsz)$'));
+};
+
+type ${project.artifactId}_logKeep = property with is_${project.artifactId}_logKeep(SELF);
+
 type ${project.artifactId}_component_instances = {
   "configFile" : string
   "federation" ? string
   "logFile" : string
-  "logKeep" : long = 90
+  "logKeep" : ${project.artifactId}_logKeep = 90
   "type" : string with match(SELF,'(disk|redir|fedredir)')
 };
 
