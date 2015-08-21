@@ -36,7 +36,7 @@ type structure_yaim_usersconf_vo = {
 };
 
 type ${project.artifactId}_component = {
-    include component_type
+    include structure_component
     "users_conf_file"  ? string # "location of users.conf file"
     "groups_conf_file" ? string # "location of groups.conf file"
     "vo"               ? structure_yaim_usersconf_vo{}
