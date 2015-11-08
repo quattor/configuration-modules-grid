@@ -15,6 +15,7 @@ use NCM::Check;
 
 use EDG::WP4::CCM::Element;
 use CAF::Process;
+use CAF::Service;
 
 use File::Copy;
 use File::Path;
@@ -71,10 +72,11 @@ sub Configure
         if ( $result < 0 ) {
             $self->error("Error updating $fname");
         } elsif ( $result > 0 ) {
-            $self->log("$fname updated. Restarting pbs_server...");
-            if (system('/sbin/service pbs_server restart')) {
-                $self->error('pbs_server init.d restart failed: '. $?);
-            }
+            $self->verbose("$fname updated. Restarting pbs_server...");
+            my $srv = CAF::Service->new(['pbsserver'], log => $self);
+            if (! $srv->restart()) {
+                $self->error('pbs_server restart failed: '. $?);
+            };
         }
     }
 
@@ -282,12 +284,12 @@ sub Configure
     my %existingnodes;
     my $lastnode = '';
     if (-e "$pbsroot/server_priv/nodes" && -s "$pbsroot/server_priv/nodes") {
-        my @node_list = qx/$pbsnodes -a/;
+        my $output = CAF::Process->new([$pbsnodes, '-a'], log => $self)->output();
         if ($?) {
             $self->error("error running $pbsnodes");
             return 1;
         }
-        for (@node_list) {
+        for (split(/\n/, $output)) {
             chomp;
             if (m/(^[\w\d\.-]+)\s*$/) {
                 # Start of a section with node name.
@@ -398,7 +400,8 @@ sub Configure
 
 
 # Convenience routine to run a command and print out the result.
-sub runCommand {
+sub runCommand
+{
     my ($self, $qmgr, $cmd) = @_;
 
     my $out = CAF::Process->new([$qmgr, "-c", $cmd], log => $self)->output();
