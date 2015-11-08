@@ -51,6 +51,11 @@ sub Configure
         return 1;
     }
 
+    if (! -f "$pbsroot/server_priv/serverdb") {
+        $self->error("serverdb file is missing.");
+        return 1;
+    }
+
     # Retrieve the contents of the envrionment file and update if necessary/
     if ( $pbsserver_config->{env} ) {
         my $fname = "$pbsroot/pbs_environment";
