@@ -1,12 +1,11 @@
 # ${license-info}
 # ${developer-info}
 # ${author-info}
-# ${build-info}
-#
 
 declaration template components/pbsserver/schema;
 
-include { 'quattor/schema' };
+include 'pan/types';
+include 'quattor/types/component';
 
 type pbs_server_extended_att = {
     'attribute' : string
@@ -246,5 +245,3 @@ type ${project.artifactId}_component = {
     'node'         ? pbs_nodelist
     'ignoretorquecfg'    ? boolean = false
 };
-
-bind '/software/components/pbsserver' = ${project.artifactId}_component;
