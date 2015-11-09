@@ -22,7 +22,6 @@ use File::Path;
 
 local(*DTA);
 
-
 use constant FILTERED_KEYS => {
     status => 1,
     jobs => 1,
@@ -38,8 +37,8 @@ sub Configure
     my $base = "/software/components/pbsserver";
     my $pbsserver_config = $config->getElement($base)->getTree();
 
-    # Save the date.
-    my $date = localtime();
+    # set to true if service was (re)started
+    my $started = 0;
 
     # Retrieve location for pbs working directory and ensure it exists.
     my $pbsroot = "/var/torque";
@@ -52,9 +51,24 @@ sub Configure
         return 1;
     }
 
-    if (! -f "$pbsroot/server_priv/serverdb") {
-        $self->error("serverdb file is missing.");
-        return 1;
+    my $srv = CAF::Service->new(['pbs_server'], log => $self);
+
+    # Determine the location of the pbs commands.
+    my $binpath = "/usr/bin";
+    if ( $pbsserver_config->{binpath} ) {
+        $binpath = $pbsserver_config->{binpath};
+    };
+
+    my $serverdb = "$pbsroot/server_priv/serverdb";
+    if (! -f $serverdb) {
+        $self->info("serverdb $serverdb is missing.");
+        # force is ok, because the serverdb is missing
+        return 1 if (! defined($self->force_create($binpath, $pbsroot)));
+
+        $started = 1;
+        if (! $srv->start()) {
+            $self->warn('pbs_server start failed after create (normal because not configured yet): '. $?);
+        };
     }
 
     # Retrieve the contents of the envrionment file and update if necessary/
@@ -73,7 +87,7 @@ sub Configure
             $self->error("Error updating $fname");
         } elsif ( $result > 0 ) {
             $self->verbose("$fname updated. Restarting pbs_server...");
-            my $srv = CAF::Service->new(['pbsserver'], log => $self);
+            $started = 1;
             if (! $srv->restart()) {
                 $self->error('pbs_server restart failed: '. $?);
             };
@@ -129,11 +143,6 @@ sub Configure
     }
 
 
-    # Determine the location of the pbs commands.
-    my $binpath = "/usr/bin";
-    if ( $pbsserver_config->{binpath} ) {
-        $binpath = $pbsserver_config->{binpath};
-    }
     my $qmgr = "$binpath/qmgr";
     my $pbsnodes = "$binpath/pbsnodes";
     if (! (-x $qmgr)) {
@@ -150,7 +159,7 @@ sub Configure
     # 5 minutes.
     $self->info("Retrieving current configuration...");
     my $remaining = 10;
-    sleep 5;
+    sleep 5 if $started;
     my $current_config = $self->runCommand($qmgr, "print server");
     while ( $? && ($remaining > 0) ) {
         $self->log("waiting 30s for qmgr to respond; $remaining tries remaining");
@@ -266,7 +275,7 @@ sub Configure
             }
         }
 
-        # Delete existing queues not part of the configuration if manualconfig is set to
+        # Delete existing queues not part of the configuration if manualconfig is set to false
         if ( defined($pbsserver_config->{queue}->{manualconfig}) &&
                 !$pbsserver_config->{queue}->{manualconfig}  ) {
             foreach (keys %existingqueues) {
@@ -398,6 +407,40 @@ sub Configure
     return 1;
 }
 
+
+# force (re)create the serverdb
+sub force_create
+{
+    my ($self, $binpath, $pbsroot) = @_;
+
+    my $sleep = 10;
+
+    my $pbs_server_bin = "$binpath";
+    # it's in sbin
+    $pbs_server_bin =~ s/bin/sbin/;
+    $pbs_server_bin .= "/pbs_server";
+    $self->info("Trying with pbs_server $pbs_server_bin");
+    my $output = CAF::Process->new([$pbs_server_bin, '-d', $pbsroot, '-t', 'create', '-f'], log => $self)->output();
+    if ($?) {
+        $self->error("Failed to create the server (ec $?): $output");
+        return;
+    };
+    sleep $sleep;
+
+    my $qterm = "$binpath/qterm";
+    $output = CAF::Process->new([$qterm], log => $self)->output();
+    if ($?) {
+        $self->error("Failed to stop the server (ec $?), trying again: $output");
+        sleep 2*$sleep;
+        $output = CAF::Process->new([$qterm], log => $self)->output();
+        if ($?) {
+            $self->error("Failed to stop the server (ec $?) 2nd time, giving up: $output");
+            return;
+        };
+    };
+
+    return 1;
+}
 
 # Convenience routine to run a command and print out the result.
 sub runCommand
