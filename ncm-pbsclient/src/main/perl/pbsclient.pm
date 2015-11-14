@@ -18,6 +18,7 @@ use LC::Check;
 use File::Path;
 use NCM::Check;
 use NCM::Component;
+use File::Basename qw(basename);
 use Fcntl ':mode';
 use vars qw(@ISA $EC);
 @ISA = qw(NCM::Component);
@@ -126,6 +127,8 @@ sub Configure {
     my $pbsroot    = exists($cfgtree->{pbsroot}) ? $cfgtree->{pbsroot} : DEFAULTPBSDIR;
     my $pbsmomconf = exists($cfgtree->{configPath}) ? $pbsroot . '/' . $cfgtree->{configPath} : $pbsroot . '/' . DEFAULTPBSMOMCONF;
     my $pbsinitscript = exists($cfgtree->{initScriptPath}) ? $cfgtree->{initScriptPath} : DEFAULTPBSINITSCRIPT;
+    my $pbsservice = basename($pbsinitscript);
+    $self->verbose("Service $pbsservice derived from init script $pbsinitscript");
 
     my $pbsdir=$pbsroot;
     my $pbsmomdir=$pbsroot. '/' . DEFAULTPBSMOMDIR;
@@ -346,16 +349,16 @@ sub Configure {
         if ($cfgtree->{submitonly}) {
             $self->info("Submit only configuration; no checking for any MOM state.");
         } else {
-            my $output = CAF::Process->new([$pbsinitscript, "status"], log => $self)->output();
+            my $output = CAF::Process->new(['service', $pbsservice, "status"], log => $self)->output();
             if ($?) {
-                $self->info("Not running (from $pbsinitscript status)");
+                $self->info("Not running (from service $pbsservice status)");
             } else {
-                $self->info("Running, will attempt restart (from $pbsinitscript status)");
-                $output = CAF::Process->new([$pbsinitscript, "restart"], log => $self)->output();
+                $self->info("Running, will attempt restart (from service $pbsservice status)");
+                $output = CAF::Process->new(['service', $pbsservice, "restart"], log => $self)->output();
                 if ($?) {
-                    $self->info("Restart failed (output from $pbsinitscript restart: $output)");
+                    $self->info("Restart failed (output from service $pbsservice restart: $output)");
                 } else {
-                    $self->info("Restarted (from $pbsinitscript restart)");
+                    $self->info("Restarted (from service $pbsservice restart)");
                 }
             }
         }
