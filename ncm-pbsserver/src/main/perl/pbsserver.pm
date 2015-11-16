@@ -22,12 +22,11 @@ use File::Path;
 
 local(*DTA);
 
-use constant FILTERED_KEYS => {
-    status => 1,
-    jobs => 1,
-    mom_manager_port => 1,
-    mom_service_port => 1,
-};
+use constant FILTER_PBSNODES_PATTERNS => qw(
+    status jobs
+    mom_(manager|service)_port
+    (total|dedicated)_(sockets|numa_nodes|cores|threads)
+);
 
 sub Configure
 {
@@ -292,6 +291,9 @@ sub Configure
     # avoids having to rerun the command.
     my %existingnodes;
     my $lastnode = '';
+    my $filterpattern = '^(' . join('|', FILTER_PBSNODES_PATTERNS) . ')$';
+    my $filterregexp = qr{$filterpattern};
+    $self->verbose("pbsnodes attributes filter regexp $filterregexp");
     if (-e "$pbsroot/server_priv/nodes" && -s "$pbsroot/server_priv/nodes") {
         my $output = CAF::Process->new([$pbsnodes, '-a'], log => $self)->output();
         if ($?) {
@@ -308,7 +310,7 @@ sub Configure
                 # This is an attribute.  Attach it to last node.
                 my $name = $1;
                 my $value = $2;
-                if ($lastnode && !exists(FILTERED_KEYS->{$name})) {
+                if ($lastnode && $name !~ $filterregexp) {
                     my $href = $existingnodes{$lastnode};
                     $href->{$name} = $value;
                 }
