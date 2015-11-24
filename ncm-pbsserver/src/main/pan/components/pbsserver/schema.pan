@@ -79,6 +79,7 @@ type pbs_server_attlist = {
     'max_slot_limit'      ? long(0..)
     'max_running'         ? long(0..)
     'max_user_run'        ? long(0..)
+    'max_user_queuable'   ? long(1..)
     'max_group_run'       ? long(0..)
     
     'mom_job_sync'        ? boolean = true
