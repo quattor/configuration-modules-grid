@@ -175,10 +175,13 @@ type pbs_queue_attlist = {
 
     'resources_available.nodect' ? long(1..) = 2048
     'resources_default.mem'  ? string
+    'resources_default.ncpus' ? long(0..)
     'resources_default.neednodes' ? string
     'resources_default.nice' ? long(0..)
     'resources_default.nodect'  ? long(1..)
+    'resources_default.nodes'  ? long(1..)
     'resources_default.pmem' ? string
+    'resources_default.procct' ? long(1..)
     'resources_default.pvmem' ? string
     'resources_default.vmem' ? string
     'resources_default.walltime' ? string
@@ -187,8 +190,10 @@ type pbs_queue_attlist = {
     'resources_max.mem'      ? string
     'resources_max.nice'     ? long(1..)
     'resources_max.nodect'   ? long(1..)
+    'resources_max.nodes'   ? long(1..)
     'resources_max.pcput'    ? string
     'resources_max.pmem'     ? string
+    'resources_max.procct'   ? long(1..)
     'resources_max.pvmem'    ? string
     'resources_max.vmem'     ? string
     'resources_max.walltime' ? string
