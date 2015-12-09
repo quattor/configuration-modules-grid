@@ -87,6 +87,7 @@ my $line_format_def = LINE_FORMAT_PARAM;
 # Role names used here must be the same as key in other hashes.
 my @dpm_roles = (
      "copyd",
+     "dav",
      "dpm",
      "dpns",
      "gsiftp",
@@ -106,6 +107,7 @@ my @lfc_roles = (
 # Can be updated if redundancy is added for certain server types
 my %dpm_comp_max_servers = (
           "copyd" => 1,
+          "dav" => 999,
           "dpm" => 1,
           "dpns" => 1,
           "gsiftp" => 999,
@@ -293,6 +295,11 @@ my %srmv22_config_rules = (
         "GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv22;".LINE_FORMAT_ENVVAR,
        );
 
+my $dav_config_file = "/etc/httpd/conf.d/zlcgdm-dav.conf";
+my %dav_config_rules = (
+        "DiskFlags" =>"DiskFlags:dav;".LINE_FORMAT_TRUST,
+);
+
 my $trust_roles = "dpm,dpns,rfio,gsiftp";
 my $trust_config_file = "/etc/shift.conf";
 my %trust_config_rules = (
@@ -337,6 +344,7 @@ my %lfcdli_config_rules = (
 
 my %config_files = (
         "copyd" => \$copyd_config_file,
+        "dav" => \$dav_config_file,
         "dpm" => \$dpm_config_file,
         "dpns" => \$dpns_config_file,
         "gsiftp" => \$gsiftp_config_file,
@@ -351,6 +359,7 @@ my %config_files = (
 
 my %config_rules = (
         "copyd" => \%copyd_config_rules,
+        "dav" => \%dav_config_rules,
         "dpm" => \%dpm_config_rules,
         "dpns" => \%dpns_config_rules,
         "gsiftp" => \%gsiftp_config_rules,
@@ -373,6 +382,7 @@ my %config_rules = (
 # Service will be restarted if configuration changes.
 my %services = (
     "copyd" => "dpmcopyd",
+    "dav" => "httpd",
     "dpm" => "dpm",
     "dpns" => "dpnsdaemon",
     "gsiftp" => "dpm-gsiftp",

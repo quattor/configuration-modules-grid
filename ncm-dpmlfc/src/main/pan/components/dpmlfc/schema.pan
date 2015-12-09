@@ -75,6 +75,15 @@ function component_dpmlfc_node_config_valid = {
   true;
 };
 
+# Validation of dav parameters
+function component_dpmlfc_dav_config_valid = {
+   if ( is_defined(SELF['DiskFlags']) ) {
+      foreach (i;flag;SELF['DiskFlags']) {
+        if ( !match(flag,'Write|RemoteCopy|NoAuthn') ) return(false);
+      };
+   };
+   true;
+};
 
 type ${project.artifactId}_component_fs_entry = {
         "host"     ? string
@@ -125,6 +134,11 @@ type ${project.artifactId}_component_dpns_node_config = {
         "readonly" ? boolean
 };
 
+# Placeholder to have a config structure similar to other services
+type ${project.artifactId}_component_dav_node_config = {
+	"DiskFlags" ? string[]
+} with component_dpmlfc_dav_config_valid(SELF);
+
 type ${project.artifactId}_component_lfc_node_config = {
         include ${project.artifactId}_component_dpns_node_config
         "disableAutoVirtualIDs" ? boolean
@@ -160,6 +174,7 @@ type ${project.artifactId}_component_global_options_tree = {
 type ${project.artifactId}_component = {
 	include structure_component
 
+        "dav"      ? ${project.artifactId}_component_dav_node_config{}
         "dpm"      ? ${project.artifactId}_component_dpm_node_config{}
         "dpns"     ? ${project.artifactId}_component_dpns_node_config{}
         "gsiftp"   ? ${project.artifactId}_component_rfio_gsiftp_node_config{}
