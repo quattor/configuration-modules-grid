@@ -489,16 +489,32 @@ my $profile;
 
 
 ##########################################################################
-sub Configure($$@) {
+sub Configure {
 ##########################################################################
     
-  (my $self, $config) = @_;
+  my ( $self, $config) = @_;
   
-  $this_host_name = hostname();
-  $this_host_domain = hostdomain();
-  $this_host_full = join ".", $this_host_name, $this_host_domain;
+  my $this_host_name = hostname();
+  my $this_host_domain = hostdomain();
+  my $this_host_full = join ".", $this_host_name, $this_host_domain;
 
+  return $self->configureNode($this_host_full);
+}
+
+
+##########################################################################
+# Do the real work here: the only reason for this method is to allow
+# testing by mocking the hostname.
+sub configureNode {
+##########################################################################
+    
+  my ( $self, $this_host_full) = @_;
+  unless ( $this_host_full ) {
+    $self->error("configureNode: missing argument (internal error)");
+    return (2);
+  }
   $profile = $config->getElement(PANPATH)->getTree();
+
 
   # Process separatly DPM and LFC configuration
   
