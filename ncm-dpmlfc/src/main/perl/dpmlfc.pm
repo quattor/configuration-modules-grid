@@ -78,6 +78,7 @@ my $config_prod_ext = "";    # For testing purpose only
 use constant BACKUP_FILE_EXT => ".old";
 
 # Constants use to format lines in configuration files
+# Keep in sync with ncm-xrootd
 use constant LINE_FORMAT_PARAM => 1;
 use constant LINE_FORMAT_ENVVAR => 2;
 use constant LINE_FORMAT_XRDCFG => 3;
@@ -2221,27 +2222,27 @@ sub removeConfigLine () {
   }
 
   # Build a pattern to look for.
-  # In addition to the pattern, impose the present of the standard comment added by Quattor
-  # to ensure that the line was previously managed by Quattor, except for LINE_FORMAT_XRDCFG line format.
   my $config_param_pattern = $self->buildLinePattern($config_param,$line_fmt);
-    if ( ($line_fmt == LINE_FORMAT_PARAM) || ($line_fmt == LINE_FORMAT_ENVVAR) ) {
-    my $comment = LINE_QUATTOR_COMMENT;
-    $comment =~ s/\s+/\\s+/g;
-    $config_param_pattern .= '.*' . $comment . '\\s*$';
-  }
 
   $self->debug(1,"$function_name: commenting out lines matching pattern >>>".$config_param_pattern."<<<");
   # All matching lines must be commented out, except if they are already commented out.
   # The code used is a customized version of FileEditor::replace() that lacks backreferences.
   my @lns;
+  my $line_count = 0;
   seek($fh, 0, SEEK_SET);
   while (my $l = <$fh>) {
     if ($l =~ qr/^$config_param_pattern/ && $l !~ qr/^\s*#/) {
         $self->debug(2,"$function_name: commenting out matching line >>>".$l."<<<");
+        $line_count++;
         push (@lns, '#'.$l);
     } else {
         push (@lns, $l);
     }
+  }
+  if ( $line_count == 0 ) {
+    $self->debug(1, "$function_name: No line found matching the pattern");
+  } else {
+    $self->debug(1, "$function_name: $line_count lines commented out");
   }
   $fh->set_contents (join("", @lns));
  
@@ -2429,7 +2430,9 @@ sub updateConfigFile () {
 
     # If the variable name was "negated", remove (comment out) configuration line if present and enabled
     if ( $comment_line ) {
+      $self->debug(1,"$function_name: keywork '$keyword' negated, removing configuration line");
       $self->removeConfigLine($fh,$keyword,$line_fmt);
+      next;
     }
 
     # Check if rule condition is met
@@ -2469,6 +2472,7 @@ sub updateConfigFile () {
       }
       # Remove (comment out) configuration line if present and enabled
       unless ( $cond_satisfied ) {
+        $self->debug(1,"$function_name: condition met but negated, removing configuration line");
         $self->removeConfigLine($fh,$keyword,$line_fmt);
         next;
       }
@@ -2513,6 +2517,7 @@ sub updateConfigFile () {
         # no longer part of the configuration in a still existing LINE_VALUE_ARRAY or
         # LINE_VALUE_STRING_HASH.
         unless ( $attribute_present ) {
+          $self->debug(1,"$function_name: attribute '$attribute' undefined, removing configuration line");
           $self->removeConfigLine($fh,$keyword,$line_fmt);
           next;
         }
