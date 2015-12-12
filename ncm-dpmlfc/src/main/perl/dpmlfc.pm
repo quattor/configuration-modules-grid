@@ -179,7 +179,7 @@ my %lfc_comp_max_servers = (
 #       If this is not done, the resulting sysconfig file may contain syntax errors preventing the correct daemon operations.
 my $copyd_config_file = "/etc/sysconfig/dpmcopyd";
 my %copyd_config_rules = (
-        "ALLOW_COREDUMP" =>"allowCoreDump:copyd;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "ALLOW_COREDUMP" => "allowCoreDump:copyd;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
         "-DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
         "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
         "-DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
@@ -203,7 +203,7 @@ my %dav_config_rules = (
 
 my $dpm_config_file = "/etc/sysconfig/dpm";
 my %dpm_config_rules = (
-      "ALLOW_COREDUMP" =>"allowCoreDump:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+      "ALLOW_COREDUMP" => "allowCoreDump:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
       "-DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
       "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
       "-DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
@@ -224,7 +224,7 @@ my %dpm_config_rules = (
 
 my $dpns_config_file = "/etc/sysconfig/dpnsdaemon";
 my %dpns_config_rules = (
-       "ALLOW_COREDUMP" =>"allowCoreDump:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+       "ALLOW_COREDUMP" => "allowCoreDump:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
        "-DPM_HOST" => "host:dpm;".LINE_FORMAT_PARAM,
        "DPM_HOST" => "host:dpm;".LINE_FORMAT_ENVVAR,
        "-DPNS_HOST" => "host:dpns;".LINE_FORMAT_PARAM,
@@ -269,7 +269,7 @@ my %rfio_config_rules = (
 
 my $srmv1_config_file = "/etc/sysconfig/srmv1";
 my %srmv1_config_rules = (
-        "ALLOW_COREDUMP" =>"allowCoreDump:srmv1;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "ALLOW_COREDUMP" => "allowCoreDump:srmv1;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
         "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
@@ -288,7 +288,7 @@ my %srmv1_config_rules = (
 
 my $srmv2_config_file = "/etc/sysconfig/srmv2";
 my %srmv2_config_rules = (
-        "ALLOW_COREDUMP" =>"allowCoreDump:srmv2;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "ALLOW_COREDUMP" => "allowCoreDump:srmv2;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
         "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
@@ -307,7 +307,7 @@ my %srmv2_config_rules = (
 
 my $srmv22_config_file = "/etc/sysconfig/srmv2.2";
 my %srmv22_config_rules = (
-        "ALLOW_COREDUMP" =>"allowCoreDump:srmv22;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+        "ALLOW_COREDUMP" => "allowCoreDump:srmv22;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
         "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
         #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
@@ -2347,9 +2347,9 @@ sub updateConfigFile () {
     return 1;
   }
   my $always_rules_only = shift;
-  unless ( $always_rules_only ) {
+  unless ( defined($always_rules_only) ) {
+    $self->debug(1,"always_rules_only not specified: assuming false");
     $always_rules_only = 0;
-    return 1;
   }
 
   my $fh = CAF::FileEditor->new($file_name,
@@ -2419,9 +2419,12 @@ sub updateConfigFile () {
 
     # Check if only rules with ALWAYS conditions must be applied 
     if ( $always_rules_only ) {
-      $self->debug(1,"$function_name: rule ignored (ALWAYS condition not set)");
-      $condition = "";
-      next unless $condition eq "ALWAYS";
+      if ( $condition eq "ALWAYS" ) {
+        $condition = '';
+      } else {
+        $self->debug(1,"$function_name: rule ignored (ALWAYS condition not set)");
+        next;
+      }
     }
 
     # If the variable name was "negated", remove (comment out) configuration line if present and enabled
