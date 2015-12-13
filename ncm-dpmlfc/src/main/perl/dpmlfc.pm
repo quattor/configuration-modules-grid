@@ -483,9 +483,7 @@ my $config;  # reference to configuration passed to Configure()
 my $dm_install_root;
 my $dm_bin_dir;
 
-# Pan path for the component configuration, variable to host the profile contents and other
-# constants related to profile
-use constant PANPATH => "/software/components/${project.artifactId}";
+# dpmlfc configuration
 my $profile;
 
 
@@ -499,7 +497,9 @@ sub Configure {
   my $this_host_domain = hostdomain();
   my $this_host_full = join ".", $this_host_name, $this_host_domain;
 
-  return $self->configureNode($this_host_full);
+  my $dpmlfc_config = $config->getElement($self->prefix())->getTree();
+
+  return $self->configureNode($this_host_full, $dpmlfc_config);
 }
 
 
@@ -509,13 +509,11 @@ sub Configure {
 sub configureNode {
 ##########################################################################
     
-  my ( $self, $this_host_full) = @_;
-  unless ( $this_host_full ) {
+  my ( $self, $this_host_full, $profile) = @_;
+  unless ( $this_host_full && $profile ) {
     $self->error("configureNode: missing argument (internal error)");
     return (2);
   }
-  $profile = $config->getElement(PANPATH)->getTree();
-
 
   # Process separatly DPM and LFC configuration
   
@@ -524,7 +522,7 @@ sub configureNode {
     # Initialize options hash for the current product.
     # Options hash contains global options and one sub-hash for each role.
     # Sub-hash for each contains the options for the current host and the role host list.
-    $config_options = ();
+    $config_options = {};
 
     # Establish context for other functions
     $self->defineCurrentProduct($product);
@@ -656,19 +654,19 @@ sub configureNode {
       if ( $role ne 'xroot' ) {
         if ( $self->hostHasRoles($role) ) {
           $self->info("Checking configuration for ".$role);
-          $self->updateRoleConfig($role);
+          $self->updateRoleConfig($role,$config_options);
           for my $service ($self->getRoleServices($role)) {
             $self->enableService($service);
           }
         } else {
           $self->info("Checking that role ".$role." is disabled...");        
-          $self->updateRoleConfig($role,1);
+          $self->updateRoleConfig($role,$config_options);
         }
       }
     }
 
     if ( $product eq "DPM" ) {
-      $self->updateRoleConfig("trusts") if $self->hostHasRoles($trust_roles);
+      $self->updateRoleConfig("trusts",$config_options) if $self->hostHasRoles($trust_roles);
     }
 
     # Build init script to control all enabled services
@@ -2624,7 +2622,7 @@ sub updateRoleConfig () {
   }
 
   # Check if the role is enabled on local host: if not, set flag to apply only ALWAYS rules
-  my $always_rules_only = ! $config->{$role}->{role_enabled};
+  my $always_rules_only = ! (exists($config->{$role}) && $config->{$role}->{role_enabled});
 
   $self->debug(1,"$function_name: building configuration file for role ".uc($role)." (".${$config_files{$role}}.")");
 
