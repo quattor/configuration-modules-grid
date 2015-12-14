@@ -5,6 +5,7 @@ object template dpm-config;
 prefix '/software/components/dpmlfc';
 
 "copyd/grid05.lal.in2p3.fr/globusThreadModel" = "pthread";
+"dav/grid05.lal.in2p3.fr/NSFlags/0" = "Write";
 "dav/grid16.lal.in2p3.fr/DiskFlags/0" = "Write";
 "dav/grid17.lal.in2p3.fr/DiskFlags/0" = "Write";
 "dependencies/pre/0" = "spma";
