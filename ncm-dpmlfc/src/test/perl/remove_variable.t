@@ -150,6 +150,8 @@ my %config_rules_3 = (
       "GLOBUS_THREAD_MODEL" => "dpns->globusThreadModel:dpm;".LINE_FORMAT_ENVVAR,
      );
 
+my %parser_options = ("remove_if_undef" => 1);
+
 $CAF::Object::NoAction = 1;
 
 my $comp = NCM::Component::dpmlfc->new('dpmlfc');
@@ -159,7 +161,8 @@ my $dpm_options = {};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
 my $changes = $comp->updateConfigFile($DPM_CONF_FILE,
                                    \%config_rules_1,
-                                   $dpm_options);
+                                   $dpm_options,
+                                   \%parser_options);
 my $fh = get_file($DPM_CONF_FILE);
 ok(defined($fh), $DPM_CONF_FILE." was opened");
 is("$fh", $DPM_EXPECTED_CONF_1, $DPM_CONF_FILE." has expected contents (negated keywords)");
@@ -170,7 +173,8 @@ $dpm_options = {"dpm" => {"globusThreadModel" => "pthread"}};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
 $changes = $comp->updateConfigFile($DPM_CONF_FILE,
                                    \%config_rules_2,
-                                   $dpm_options);
+                                   $dpm_options,
+                                   \%parser_options);
 $fh = get_file($DPM_CONF_FILE);
 ok(defined($fh), $DPM_CONF_FILE." was opened");
 is("$fh", $DPM_EXPECTED_CONF_2, $DPM_CONF_FILE." has expected contents (config option not defined)");
@@ -181,7 +185,8 @@ $dpm_options = {"dpm" => {"globusThreadModel" => "pthread"}};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
 $changes = $comp->updateConfigFile($DPM_CONF_FILE,
                                    \%config_rules_3,
-                                   $dpm_options);
+                                   $dpm_options,
+                                   \%parser_options);
 $fh = get_file($DPM_CONF_FILE);
 ok(defined($fh), $DPM_CONF_FILE." was opened");
 is("$fh", $DPM_EXPECTED_CONF_1, $DPM_CONF_FILE." has expected contents (rule condition not met)");
@@ -192,7 +197,8 @@ $dpm_options = {"dpm" => {"globusThreadModel" => "pthread"}};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_2);
 $changes = $comp->updateConfigFile($DPM_CONF_FILE,
                                    \%config_rules_1,
-                                   $dpm_options);
+                                   $dpm_options,
+                                   \%parser_options);
 $fh = get_file($DPM_CONF_FILE);
 ok(defined($fh), $DPM_CONF_FILE." was opened");
 is("$fh", $DPM_EXPECTED_CONF_3, $DPM_CONF_FILE." has expected contents (repeated config line)");
