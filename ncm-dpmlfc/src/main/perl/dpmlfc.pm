@@ -41,6 +41,8 @@ $EC=LC::Exception::Context->new->will_store_all;
 
 use EDG::WP4::CCM::Element;
 
+use Readonly;
+
 use File::Path;
 use File::Copy;
 use File::Compare;
@@ -202,6 +204,7 @@ my %copyd_config_rules = (
 my $dav_config_file = "/etc/httpd/conf.d/zlcgdm-dav.conf";
 my %dav_config_rules = (
         "DiskFlags" =>"DiskFlags:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
+        "NSFlags" =>"NSFlags:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
 );
 
 my $dpm_config_file = "/etc/sysconfig/dpm";
@@ -466,28 +469,26 @@ my %nonroot_roles = (
 
 
 # GIP user configuration path
-my $gip_user_path = "/software/components/gip2/user";
-
+Readonly my $GIP2_USER_PAN_PATH => "/software/components/gip2/user";
 
 my @products = ("DPM", "LFC");
 
-my $this_host_name;
-my $this_host_domain;
 my $this_host_full;
+my $this_host_domain;
 
 # Global variables to store component configuration
 my $config_options;
 
-my $hosts_roles;
-
-# Global context variables containing used by functions
-my $config;  # reference to configuration passed to Configure()
+# Global context variables used by functions
 my $dm_install_root;
 my $dm_bin_dir;
 
 # dpmlfc configuration
-my $profile;
+my $dpmlfc_config;
 
+
+# GIP user
+my $gip_user;
 
 ##########################################################################
 sub Configure {
@@ -495,26 +496,34 @@ sub Configure {
     
   my ( $self, $config) = @_;
   
-  my $this_host_name = hostname();
-  my $this_host_domain = hostdomain();
-  my $this_host_full = join ".", $this_host_name, $this_host_domain;
+  my $current_node_fqdn = join ".", hostname(), hostdomain();
 
-  my $dpmlfc_config = $config->getElement($self->prefix())->getTree();
-
-  return $self->configureNode($this_host_full, $dpmlfc_config);
+  return $self->configureNode($current_node_fqdn, $config);
 }
 
 
 ##########################################################################
 # Do the real work here: the only reason for this method is to allow
 # testing by mocking the hostname.
+#
+# Arguments
+#     host_fqdn: FQDN of the host to configure
+#     profile: host profile (this component needs more than dpmlfc config)
 sub configureNode {
 ##########################################################################
     
-  my ( $self, $this_host_full, $profile) = @_;
-  unless ( $this_host_full && $profile ) {
+  my ( $self, $host_fqdn, $profile) = @_;
+  unless ( $host_fqdn && $profile ) {
     $self->error("configureNode: missing argument (internal error)");
     return (2);
+  }
+
+  $this_host_full = $host_fqdn;
+  (my $this_host_name, $this_host_domain) = split /\./, $this_host_full, 2;
+
+  $dpmlfc_config = $profile->getElement($self->prefix())->getTree();
+  if ( $profile->elementExists($GIP2_USER_PAN_PATH) ) {
+    $gip_user = $profile->getElement($GIP2_USER_PAN_PATH)->getValue();
   }
 
   # Process separatly DPM and LFC configuration
@@ -541,6 +550,7 @@ sub configureNode {
       $dm_bin_dir = $dm_install_root . "/bin";      
     }
     
+    my $hosts_roles;
     if ( $product eq "DPM" ) {
       $hosts_roles = \@dpm_roles;
       $comp_max_servers = \%dpm_comp_max_servers;
@@ -553,7 +563,7 @@ sub configureNode {
     # what follows, even though this is mainly harmless.
     my $product_configured = 0;
     foreach my $role (@$hosts_roles) {
-      if ( exists($profile->{$role}) ) {
+      if ( exists($dpmlfc_config->{$role}) ) {
         $product_configured = 1; 
         last;  
       }
@@ -603,26 +613,29 @@ sub configureNode {
       $self->debug(1,"Global option 'dbconfigmode' set to default : ".$config_options->{dbconfigmode});
     }
 
-    # At least $profile->{dpm} or $profile->{lfc} must exist
+    # At least $dpmlfc_config->{dpm} or $dpmlfc_config->{lfc} must exist
 
-    for my $role (@{$hosts_roles}) {
+    my @actual_hosts_roles;
+    my $role_host_list = {};
+    for my $role (@$hosts_roles) {
       # By default, assume this role is disabled on local host.
       # Temporarily, define the option in global options.
       $config_options->{$role."_service_enabled"} = 0;
-      if ( exists($profile->{$role}) ) {
-        my $servers = $profile->{$role};
+      if ( exists($dpmlfc_config->{$role}) ) {
+        push @actual_hosts_roles, $role;
+        my $servers = $dpmlfc_config->{$role};
         if ( keys(%{$servers}) <= ${$comp_max_servers}{$role} ) {
           my $def_host;
-          while ( my ($role_host,$host_params) = each(%{$servers}) ) {
+          for my $role_host (keys(%{$servers})) {
             if ( ($role eq "dpm") || ($role eq "lfc") ) {
               if ( $role eq "lfc" ){
-                if ( $self->hostHasRoles("dpns") ) {
+                if ( exists($dpmlfc_config->{"dpns"}) ) {
                   $self->error("LFC server and DPNS server cannot be run on the same node. Skipping LFC configuration.");
                   return 0;
                 }
               }
-            }            
-            $self->addHostInRole($role,$role_host,$host_params);
+            }
+            $role_host_list->{$role}->{$role_host} = '';            
             if ( $role_host eq $this_host_full ) {
               $config_options->{$role."_service_enabled"} = 1;
             }
@@ -638,32 +651,35 @@ sub configureNode {
     # For each role retrieve the role configuration for this host if it is in the role list,
     # else the information from the first host in the list. In addition, add role host list and
     # copy the role enabled info from global options to role options.
-    for my $role (@{$hosts_roles}) {
-      if ( exists($profile->{$role}) ) {
-          my $role_hosts = $self->getHostsList($role);
-          if ( $role_hosts ) {
-            # Use first host with  this role if current host is not enabled for
-            # the role. Not really sensible to refer a host specific configuration
-            # for a role not executed on the local host.
-            my $h;
-            if ( grep(/$this_host_full/,$role_hosts) ) {
-              $h = $this_host_full;
-            } else {              
-              my @role_hosts = split /\s+/, $role_hosts;
-              $h = $role_hosts[0];
-            }
-            $config_options->{$role} = $self->getHostConfig($role,$h);
-            $config_options->{$role}->{hostlist} = $role_hosts;
-            # 'host' contains the name of role host whose config has been used.
-            # For roles with a max of 1 host (e.g. dpm, dpns), this is the host name serving the role.
-            $config_options->{$role}->{host} = $h;
-            $config_options->{$role}->{role_enabled} = $config_options->{$role.'_service_enabled'};
-            delete $config_options->{$role.'_service_enabled'};
-          } else {
-              $self->error("Internal error: no host with role ".uc($role)." found");
+    for my $role (@$hosts_roles) {
+      if ( grep(/^$role$/,@actual_hosts_roles) ) {
+        my @role_hosts = sort(keys(%{$role_host_list->{$role}}));
+        if ( @role_hosts ) {
+          # Use first host with  this role if current host is not enabled for
+          # the role. Not really sensible to refer a host specific configuration
+          # for a role not executed on the local host.
+          my $h;
+          if ( exists($dpmlfc_config->{$role}->{$this_host_full}) ) {
+            $h = $this_host_full;
+            $self->debug(2,"Host $this_host_full supporting role $role: using its configuration");
+          } else {              
+            $h = $role_hosts[0];
+            $self->debug(2,"Host $this_host_full not found in role $role: using configuration from host $h");
           }
+          $config_options->{$role} = $self->getHostConfig($role,$h);
+          $config_options->{$role}->{hostlist} = \@role_hosts;
+          # 'host' contains the name of role host whose config has been used.
+          # For roles with a max of 1 host (e.g. dpm, dpns), this is the host name serving the role.
+          $config_options->{$role}->{host} = $h;
+        } else {
+          $self->error("Internal error: no host with role ".uc($role)." found");
         }
+      }
+      $config_options->{$role}->{role_enabled} = $config_options->{$role.'_service_enabled'};
+      delete $config_options->{$role.'_service_enabled'};
+      $self->debug(3,"Keys in $role options: ".join(",",keys(%{$config_options->{$role}})));
     }
+    $self->debug(3,"Keys in config_options: ".join(",",keys(%{$config_options})));
 
     # Update configuration files for every configured role.
     # xroot is a special case as it is managed by a separate component, ncm-xrootd.
@@ -733,8 +749,8 @@ sub configureNode {
     if ( $self->hostHasRoles($nameserver_role{$product}) ) {
       $self->info("Checking namespace configuration for supported VOs...");
       $self->NSRootConfig();
-      if ( exists($profile->{vos}) ) {
-        my $vos = $profile->{vos};
+      if ( exists($dpmlfc_config->{vos}) ) {
+        my $vos = $dpmlfc_config->{vos};
         for my $vo (sort(keys(%$vos))) {
           # A VO may be present without any specific setting
           my %vo_args;
@@ -752,8 +768,8 @@ sub configureNode {
   # is present in the profile, configure pools.
   $self->defineCurrentProduct("DPM");
   if ( $self->hostHasRoles('dpm') ) {
-    if ( exists($profile->{pools}) ) {
-      my $pools = $profile->{pools};
+    if ( exists($dpmlfc_config->{pools}) ) {
+      my $pools = $dpmlfc_config->{pools};
       for my $pool (sort(keys(%$pools))) {
         my $pool_args = %{$pools->{$pool}};
         $self->DPMConfigurePool($pool,$pool_args);
@@ -1242,8 +1258,8 @@ sub getGlobalOption () {
 
   my $product = $self->getCurrentProduct();
 
-  if ( exists($profile->{options}->{lc($product)}->{$option}) ) {
-    my $value = $profile->{options}->{lc($product)}->{$option};
+  if ( exists($dpmlfc_config->{options}->{lc($product)}->{$option}) ) {
+    my $value = $dpmlfc_config->{options}->{lc($product)}->{$option};
     $self->debug(2,"$function_name: Global option '$option' found : ".$value);
     return $value;
   } else {
@@ -1270,8 +1286,8 @@ sub getDbOption () {
 
   my $product = $self->getCurrentProduct();
 
-  if ( exists($profile->{options}->{lc($product)}->{db}->{$option}) ) {
-    return $profile->{options}->{lc($product)}->{db}->{$option};
+  if ( exists($dpmlfc_config->{options}->{lc($product)}->{db}->{$option}) ) {
+    return $dpmlfc_config->{options}->{lc($product)}->{db}->{$option};
   } else {
     $self->debug(1,"DB option '$option' not found for product $product");
     return undef;
@@ -1352,7 +1368,7 @@ sub createDbConfigFile () {
   my $product = $self->getCurrentProduct();
   $self->debug(1,"$function_name: Creating database configuration file for $product");
 
-  unless ( exists($profile->{options}->{lc($product)}->{db}) ) {
+  unless ( exists($dpmlfc_config->{options}->{lc($product)}->{db}) ) {
     $self->warn("Cannot configure DB connection : configuration missing in profile");
     return 1;
   }
@@ -1396,12 +1412,10 @@ sub createDbConfigFile () {
 
   # info_user is the MySQL user used by GIP to collect DPM statistics.
   # Configure only if GIP is configured on the machine.
-  my $gip_user;
   my $db_info_user;
   my $db_info_pwd;
   my $db_info_file;
-  if ( $config->elementExists($gip_user_path) ) {
-    $gip_user = $config->getElement($gip_user_path)->getValue();
+  if ( $gip_user ) {
     $db_info_user = $self->getDbOption("infoUser");
     if ( $db_info_user ) {
       $config_options->{"dbinfouser"} = $db_info_user;
@@ -1426,26 +1440,31 @@ sub createDbConfigFile () {
 
   # Update DB connection configuration file for main user if content has changed
   my $config_contents = "$db_user/$db_pwd\@$db_server";
-  my $changes = LC::Check::file($config_options->{"dbconfigfile"}.$config_prod_ext,
-                                backup => $config_bck_ext,
-                                contents => $config_contents,
-                                owner => $daemon_user,
-                                group => $daemon_group,
-                                mode => oct($config_options->{"dbconfigmode"})
-                               );
+  my $config_fh = CAF::FileWriter->new($config_options->{"dbconfigfile"}.$config_prod_ext,
+                                       backup => $config_bck_ext,
+                                       contents => $config_contents,
+                                       owner => $daemon_user,
+                                       group => $daemon_group,
+                                       mode => oct($config_options->{"dbconfigmode"}),
+                                       log => $self,
+                                      );
+  print $config_fh "$db_user/$db_pwd\@$db_server\n";
+  my $changes = $config_fh->close();
 
 
   # Update DB connection configuration file for information user if content has changed
   # No service needs to be restarted.
   if ( $db_info_user ) {
-    $config_contents = "$db_info_user/$db_info_pwd\@$db_server";
-    my $info_changes = LC::Check::file($db_info_file.$config_prod_ext,
-                                  backup => $config_bck_ext,
-                                  contents => $config_contents,
-                                  owner => $gip_user,
-                                  group => $daemon_group,
-                                  mode => oct($config_options->{"dbconfigmode"})
-                                 );
+    my $info_fh = CAF::FileWriter->new($db_info_file.$config_prod_ext,
+                                       backup => $config_bck_ext,
+                                       contents => $config_contents,
+                                       owner => $gip_user,
+                                       group => $daemon_group,
+                                       mode => oct($config_options->{"dbconfigmode"}),
+                                       log => $self,
+                                      );
+    print $info_fh "$db_info_user/$db_info_pwd\@$db_server\n";
+    my $info_changes = $info_fh->close();
     if ( $info_changes < 0 ) {
       $self->error("Error configuring connection file for info user. $product publication into BDII may not work.");
     }
@@ -1502,16 +1521,16 @@ sub getRoleServices () {
     my @roles = split /\s*,\s*/, $roles;
     for my $role (@roles) {
       if ( $self->hostHasRoles($role) ) {
-  if ( exists($services{$role}) ) {
-    my @role_services = split /\s*,\s*/, $services{$role};
-    for my $service (@role_services) {
-      $enabled_services{$service}="";
-    }
-  } else {
-    $self->error("$function_name: no services associated with role '$role' (internal error)");
-  }
+        if ( exists($services{$role}) ) {
+          my @role_services = split /\s*,\s*/, $services{$role};
+          for my $service (@role_services) {
+            $enabled_services{$service}="";
+          }
+        } else {
+          $self->error("$function_name: no services associated with role '$role' (internal error)");
+        }
       } else {
-  $self->debug(1,"$function_name: host doesn't have role $role");
+        $self->debug(1,"$function_name: host doesn't have role $role");
       }
     }
     @services = keys %enabled_services;
@@ -1554,7 +1573,7 @@ sub serviceRestartNeeded () {
 
   my @roles = split /\s*,\s*/, $roles;
   for my $role (@roles) {
-    for my $service ($self->getRoleServices($role)) {
+    for my $service ($dpmlfc_config->($role)->{hostlist}) {
       unless ( exists(${$list}{$service}) ) {
         $self->debug(1,"$function_name: adding '$service' to the list of service needed to be restarted");
         ${$list}{$service} = "";
@@ -1658,13 +1677,14 @@ sub buildEnabledServiceInitScript () {
       }
     }
     
-    my $status = LC::Check::file($init_script_name,
-                                 contents => $contents,
-                                 owner => 'root',
-                                 group => 'root',
-                                 mode => 0755,
+    my $fh = CAF::FileWriter->new($init_script_name,
+                                  contents => $contents,
+                                  owner => 'root',
+                                  group => 'root',
+                                  mode => 0755,
+                                  log => $self,
                                  );
-    if ( $status < 0 ) {
+    if ( $fh->close() < 0 ) {
       $self->warn("Error creating init script to control all ".$self->getCurrentProduct()." services ($init_script_name)");
     }
   } else {
@@ -1722,148 +1742,6 @@ sub restartServices () {
 }
 
 
-# Function returning name of hash handling the list of  hosts per role for to the current product
-#
-# Arguments :
-#  none
-sub getRolesHostsListName () {
-  my $function_name = "getRolesHostsListName";
-  my $self = shift;
-
-  my $product = $self->getCurrentProduct();
-
-  return "ROLESHOSTSLIST".$product;
-}
-
-
-# Function to create a role hosts list. Created host list is returned.
-# Take care of creating list of role hosts list if doesn't exist yet
-# Roles hosts list is hash
-#
-# Arguments :
-#  none
-sub createRoleHostsList () {
-  my $function_name = "createRoleHostsList";
-  my $self = shift;
-
-  my $role = shift;
-  unless ( $role ) {
-    $self->error("$function_name: 'role' argument missing");
-    return 0;
-  }
-
-  my $product = $self->getCurrentProduct();
-
-  my $roles_hosts_list;
-  unless ( $roles_hosts_list = $self->getRolesHostsList() ) {
-    my $roles_hosts_list_name = $self->getRolesHostsListName();
-    $self->debug(1,"$function_name: Creating roles hosts list ($roles_hosts_list_name) for product $product");
-    $roles_hosts_list = $self->{$roles_hosts_list_name} = {};
-  }
-  
-  ${$roles_hosts_list}{$role} = {};
-
-  return ${$roles_hosts_list}{$role};
-}
-
-
-# Function to get roleS hosts list (list of role hosts list
-# Returns reference to roleS hosts list hash
-#
-# Arguments :
-#  none
-sub getRolesHostsList () {
-  my $function_name = "getRolesHostsList";
-  my $self = shift;
-
-  # Check absence of other arguments (to avoid confusion with getRoleHostsList())
-  if ( @_ ) {
-    $self->error("$function_name: too many arguments. May be confusion with getRoleHostList()");
-    return 1;
-  }
-
-  my $roles_hosts_list_name = $self->getRolesHostsListName();
-  return $self->{$roles_hosts_list_name};
-}
-
-
-# Function to get role hosts list (host list for one role)
-# Returns reference to role hosts list hash
-#
-# Arguments :
-#  role : role for which the host list must be returned
-sub getRoleHostsList () {
-  my $function_name = "getRoleHostsList";
-  my $self = shift;
-
-  my $role = shift;
-  unless ( $role ) {
-    $self->error("$function_name: 'role' argument missing");
-    return 0;
-  }
-
-  my $roles_hosts_list = $self->getRolesHostsList();
-  if ( $roles_hosts_list ) {
-    return ${$roles_hosts_list}{$role};
-  } else {
-    return undef;
-  }
-}
-
-
-# Function to add a host in a role hosts list.
-# Roles hosts list contains is a hash with one list (hash value) per role (hash
-# key).
-# Each list contains for each role the list of hosts configured
-# with this role. Host list is a hash, with hash key the host name and 
-# hash value a reference to the host configuration hash retrieved from
-# the profile.
-# For each non qualified host name, add local domain name
-#
-# Arguments
-#       role : role for which the hosts list must be normalized
-#       host : host to add (a short name is interpreted a local domain name)
-#       role : host configuration hash
-sub addHostInRole () {
-  my $function_name = "addHostInRole";
-  my $self = shift;
-
-  my $role = shift;
-  unless ( $role ) {
-    $self->error("$function_name: 'role' argument missing");
-    return 0;
-  }
-  my $host = shift;
-  unless ( $host ) {
-    $self->error("$function_name: 'host' argument missing");
-    return 0;
-  }
-  my $host_config = shift;
-  unless ( $host_config ) {
-    $self->error("$function_name: 'host_config' argument missing");
-    return 0;
-  }
-
-  my $product = $self->getCurrentProduct();
-
-  my $role_host = $self->hostFQDN($host);
-
-  # If it doesn't exist yet, create a hosts list for this role
-  my $role_hosts_list = $self->getRoleHostsList($role);
-  unless ( $role_hosts_list ) {
-    $self->debug(1,"$function_name: creating host list for product $product role ".uc($role)." (product=$product)");
-    $role_hosts_list = $self->createRoleHostsList($role);
-  }
-
-  if ( ! exists(${$role_hosts_list}{$role_host}) ) {
-    $self->debug(1,"Adding host $role_host to  role ".uc($role));
-    ${$role_hosts_list}{$role_host} = $host_config;
-  } else {
-    $self->error("$role_host alreday present in list of hosts configured as a ".uc($role)." server. Using previous definition");
-  }
-
-}
-
 # This function returns true if the current machine is listed in the hosts list
 # for one of the roles passed as argument.
 #
@@ -1883,15 +1761,18 @@ sub hostHasRoles () {
   my @roles = split /\s*,\s*/, $roles;
 
   for my $role (@roles) {
-    my $role_hosts_list = $self->getRoleHostsList($role);
-    if ( $role_hosts_list ) {
-      $self->debug(2,"$function_name: checking for role $role (Hosts list=$role_hosts_list)");
+    $self->debug(2,"$function_name: checking for role >>>$role<<< on host >>>$this_host_full<<<");
+    if ( exists($config_options->{$role}) ) {
+      if ( grep(/^$this_host_full$/,@{$config_options->{$role}->{hostlist}}) ) {
+        $self->debug(1,"$function_name: role $role found on host $this_host_full");
+        $role_found = 1;
+        last;        
+      } else {
+        $self->debug(1,"$function_name: role $role NOT found on host $this_host_full");    
+      }
     } else {
-      $self->debug(2,"$function_name: no host for role $role");
+      $self->error("$function_name: role $role not defined in configuration");
     }
-    next if ! exists($role_hosts_list->{$this_host_full});
-    $role_found = 1;
-    last;
   }
   return $role_found;
 }
@@ -1911,62 +1792,15 @@ sub getHostsList () {
     return 1;
   }
 
-  my $role_hosts_list = $self->getRoleHostsList($role);
-
-  my $hostslist="";
-  for my $host (sort keys %{$role_hosts_list}) {
-    (my $host_name, my $domain) = split /\./, $host, 2;
-    $hostslist .= "$host ";
+  my $hostlist="";
+  if ( exists($config_options->{$role}) ) {
+    $hostlist = join(" ",@{$config_options->{$role}->{hostlist}});
+  } else {
+    $self->error("$function_name: role $role not defined in configuration");
   }
 
-  # Some config files are sensitive to extra spaces : suppress trailing spaces
-  $hostslist =~ s/\s+$//;
-  $self->debug(1,"Hosts list for role ".uc($role)." : >>$hostslist<<");
-  return $hostslist;
-}
-
-
-# This function formats hosts list suppressing repeated hosts and replacing
-# multiple spaces by one.
-#
-# Arguments :
-#        list : list of hosts
-#        line_fmt : line format (see $line_format_xxx parameters)
-sub formatHostsList () {
-  my $function_name = "formatHostsList";
-  my $self = shift;
-
-  my $list = shift;
-  unless ( $list ) {
-    $self->error("$function_name: 'list' argument missing");
-    return 1;
-  }
-  my $list_fmt = shift;
-  unless ( defined($list_fmt) ) {
-    $self->error("$function_name: 'list_fmt' argument missing");
-    return 1;
-  }
-
-  $self->debug(2,"$function_name: formatting host list (line fmt=$list_fmt)");
-
-  # Duplicates may exist as result of a join. Checkt it.
-  my @hosts = split /\s+/, $list;
-  my %hosts;
-  for my $host (@hosts) {
-    unless ( exists($hosts{$host}) ) {
-      $hosts{$host} = "";
-    }
-  }
-
-  my $newlist="";
-  for my $host (sort keys %hosts) {
-    $newlist .= "$host ";
-  }
-
-  # Some config files are sensitive to extra spaces : suppress trailing spaces
-  $newlist =~ s/\s+$//;
-  $self->debug(1,"Formatted hosts list : >>$newlist<<");
-  return $newlist;
+  $self->debug(1,"Hosts list for role ".uc($role)." : >>$hostlist<<");
+  return $hostlist;
 }
 
 
@@ -1990,9 +1824,13 @@ sub getHostConfig () {
     return 1;
   }
 
-  my $role_hosts_list = $self->getRoleHostsList($role);
-
-  return ${$role_hosts_list}{$this_host_full};
+  if ( exists($dpmlfc_config->{$role}) && exists($dpmlfc_config->{$role}->{$host}) ) {
+    $self->debug(3,"$function_name: keys in $role options: ".join(",",keys(%{$dpmlfc_config->{$role}->{$host}})));
+    return $dpmlfc_config->{$role}->{$host};
+  } else {
+    $self->verbose("$function_name: host '$host' not found in role '$role' options: returning an empty option set");
+    return {};
+  }
 }
 
 
@@ -2549,9 +2387,11 @@ sub updateConfigFile () {
         # Note that this will never match instance parameters and will not remove entries
         # no longer part of the configuration in a still existing LINE_VALUE_ARRAY or
         # LINE_VALUE_STRING_HASH.
-        unless ( $attribute_present || !$parser_options->{remove_if_undef} ) {
-          $self->debug(1,"$function_name: attribute '$attribute' undefined, removing configuration line");
-          $self->removeConfigLine($fh,$keyword,$line_fmt);
+        unless ( $attribute_present ) {
+          if ( $parser_options->{remove_if_undef} ) {
+            $self->debug(1,"$function_name: attribute '$attribute' undefined, removing configuration line");
+            $self->removeConfigLine($fh,$keyword,$line_fmt);
+          }
           next;
         }
     

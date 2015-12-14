@@ -178,7 +178,7 @@ Readonly my $DMLITE_INITIAL_CONFIG => '
 $CAF::Object::NoAction = 1;
 
 my $cmp = NCM::Component::dpmlfc->new('dpmlfc');
-my $config = get_config_for_profile("dpm-config")->getElement($DPMLFC_CONFIG_PATH)->getTree();
+my $config = get_config_for_profile("dpm-config");
 
 set_file_contents($DPM_SYSCONFIG_FILE, $DPM_INITIAL_CONFIG);
 set_file_contents($DPNS_SYSCONFIG_FILE, $DPNS_INITIAL_CONFIG);
