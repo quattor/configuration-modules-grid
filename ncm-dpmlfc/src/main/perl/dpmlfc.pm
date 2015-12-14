@@ -567,12 +567,24 @@ sub configureNode {
     # Don't define 'user' global option with a default value to keep it
     # undefined during rules processing
 
-    $config_options->{user} = $self->getGlobalOption("user");
-    $config_options->{group} = $self->getGlobalOption("group");
-    $config_options->{gridmapfile} = $self->getGlobalOption("gridmapfile");
-    $config_options->{gridmapdir} = $self->getGlobalOption("gridmapdir");
-    $config_options->{accessProtocols} = $self->getGlobalOption("accessProtocols");
-    $config_options->{controlProtocols} = $self->getGlobalOption("controlProtocols");
+    if ( defined($self->getGlobalOption("user")) ) {
+      $config_options->{user} = $self->getGlobalOption("user");
+    }
+    if ( defined($self->getGlobalOption("group")) ) {
+      $config_options->{user} = $self->getGlobalOption("group");
+    }
+    if ( defined($self->getGlobalOption("gridmapfile")) ) {
+      $config_options->{user} = $self->getGlobalOption("gridmapfile");
+    }
+    if ( defined($self->getGlobalOption("gridmapdir")) ) {
+      $config_options->{user} = $self->getGlobalOption("gridmapdir");
+    }
+    if ( defined($self->getGlobalOption("accessProtocols")) ) {
+      $config_options->{user} = $self->getGlobalOption("accessProtocols");
+    }
+    if ( defined($self->getGlobalOption("controlProtocols")) ) {
+      $config_options->{user} = $self->getGlobalOption("controlProtocols");
+    }
 
 
     # Define with product default value if not specified
@@ -642,6 +654,9 @@ sub configureNode {
             }
             $config_options->{$role} = $self->getHostConfig($role,$h);
             $config_options->{$role}->{hostlist} = $role_hosts;
+            # 'host' contains the name of role host whose config has been used.
+            # For roles with a max of 1 host (e.g. dpm, dpns), this is the host name serving the role.
+            $config_options->{$role}->{host} = $h;
             $config_options->{$role}->{role_enabled} = $config_options->{$role.'_service_enabled'};
             delete $config_options->{$role.'_service_enabled'};
           } else {
