@@ -1594,9 +1594,10 @@ sub serviceRestartNeeded () {
 
   my @roles = split /\s*,\s*/, $roles;
   for my $role (@roles) {
-    for my $service ($dpmlfc_config->($role)->{hostlist}) {
+    $self->debug(2,"$function_name: marking role '$role' services for restart");
+    for my $service ($self->getRoleServices($role)) {
       unless ( exists($service_restart_list->{$service}) ) {
-        $self->debug(1,"$function_name: adding '$service' to the list of service needed to be restarted");
+        $self->debug(1,"$function_name: adding '$service' to the list of services needed to be restarted");
         $service_restart_list->{$service} = 1;      # Value is useless
       }
     }
