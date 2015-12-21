@@ -53,6 +53,7 @@ use LC::Check;
 use CAF::FileWriter;
 use CAF::FileEditor;
 use CAF::Process;
+use CAF::Object;
 
 use Encode qw(encode_utf8);
 use Fcntl qw(SEEK_SET);
@@ -486,6 +487,9 @@ my $dm_bin_dir;
 # dpmlfc configuration
 my $dpmlfc_config;
 
+# List of services enabled/to restart on the current node
+my $enabled_service_list;
+my $service_restart_list;
 
 # GIP user
 my $gip_user;
@@ -534,6 +538,8 @@ sub configureNode {
     # Options hash contains global options and one sub-hash for each role.
     # Sub-hash for each contains the options for the current host and the role host list.
     $config_options = {};
+    $enabled_service_list = {};
+    $service_restart_list = {};
 
     # Establish context for other functions
     $self->defineCurrentProduct($product);
@@ -1442,7 +1448,6 @@ sub createDbConfigFile () {
   my $config_contents = "$db_user/$db_pwd\@$db_server";
   my $config_fh = CAF::FileWriter->new($config_options->{"dbconfigfile"}.$config_prod_ext,
                                        backup => $config_bck_ext,
-                                       contents => $config_contents,
                                        owner => $daemon_user,
                                        group => $daemon_group,
                                        mode => oct($config_options->{"dbconfigmode"}),
@@ -1457,7 +1462,6 @@ sub createDbConfigFile () {
   if ( $db_info_user ) {
     my $info_fh = CAF::FileWriter->new($db_info_file.$config_prod_ext,
                                        backup => $config_bck_ext,
-                                       contents => $config_contents,
                                        owner => $gip_user,
                                        group => $daemon_group,
                                        mode => oct($config_options->{"dbconfigmode"}),
@@ -1564,54 +1568,17 @@ sub serviceRestartNeeded () {
     return 0;
   }
 
-  my $list;
-  unless ( $list = $self->getServiceRestartList() ) {
-    $self->debug(1,"$function_name: Creating list of service needed to be restarted");
-    $self->{SERVICERESTARTLIST} = {};
-    $list = $self->getServiceRestartList();
-  }
-
   my @roles = split /\s*,\s*/, $roles;
   for my $role (@roles) {
     for my $service ($dpmlfc_config->($role)->{hostlist}) {
-      unless ( exists(${$list}{$service}) ) {
+      unless ( exists($service_restart_list->{$service}) ) {
         $self->debug(1,"$function_name: adding '$service' to the list of service needed to be restarted");
-        ${$list}{$service} = "";
+        $service_restart_list->{$service} = 1;      # Value is useless
       }
     }
   }
 
-  $self->debug(2,"$function_name: restart list = '".join(" ",keys(%{$list}))."'");
-}
-
-
-# Return list of services needed to be restarted
-sub getServiceRestartList () {
-  my $function_name = "getServiceRestartList";
-  my $self = shift;
-
-  if ( defined($self->{SERVICERESTARTLIST}) ) {
-    $self->debug(2,"$function_name: restart list = ".join(" ",keys(%{$self->{SERVICERESTARTLIST}})));
-    return $self->{SERVICERESTARTLIST};
-  } else {
-    $self->debug(2,"$function_name: list doesn't exist");
-    return undef
-  }
-
-}
-
-
-# Function returning name of hash handling the list of enabled services for to the current product
-#
-# Arguments :
-#  none
-sub getEnabledServiceListName () {
-  my $function_name = "getEnabledServiceListName";
-  my $self = shift;
-
-  my $product = $self->getCurrentProduct();
-
-  return "SERVICEENABLEDLIST".$product;
+  $self->debug(2,"$function_name: restart list = '".join(" ",keys(%$service_restart_list))."'");
 }
 
 
@@ -1631,7 +1598,7 @@ sub enableService () {
 
   $self->debug(1,"$function_name: checking if service $service is enabled");
 
-  unless ( -f "/etc/rc.d/init.d/$service" ) {
+  unless ( -f "/etc/rc.d/init.d/$service" || $CAF::Object::NoAction ) {
     $self->error("Startup script not found for service $service");
     return 1;
   }
@@ -1644,15 +1611,11 @@ sub enableService () {
     if ( $? ) {
       $self->error("Failed to enable service $service");
     }
-  } else {
+  } elsif ( ! $CAF::Object::NoAction ) {
     $self->debug(2,"$function_name: $service already enabled");
   }
 
-  my $enabled_service_list_name = $self->getEnabledServiceListName();
-  unless ( defined($self->{$enabled_service_list_name}) ) {
-      $self->{$enabled_service_list_name} = {};
-  }
-  $self->{$enabled_service_list_name}->{$service} = 1;     # Value is useless
+  $enabled_service_list->{$service} = 1;     # Value is useless
 
 }
 
@@ -1664,26 +1627,25 @@ sub buildEnabledServiceInitScript () {
   my $self = shift;
 
   my $init_script_name = '/etc/init.d/'.lc($self->getCurrentProduct()).'-all-daemons';
-  my $enabled_service_list_name = $self->getEnabledServiceListName();
   my $contents;
 
-  # The list should not be defined if it is empty...
-  if ( $self->{$enabled_service_list_name} ) {
+  # Don't do anything if the list is empty
+  if ( %$enabled_service_list ) {
     $self->info("Checking init script used to control all ".$self->getCurrentProduct()." enabled services (".$init_script_name.")...");
     $contents = "#!/bin/sh\n\n";
-    for my $service (keys(%{$self->{$enabled_service_list_name}})) {
-      if ( $self->{$enabled_service_list_name}->{$service} ) {
+    for my $service (sort(keys(%$enabled_service_list))) {
+      if ( $enabled_service_list->{$service} ) {
         $contents .= "/etc/init.d/".$service." \$*\n";
       }
     }
     
     my $fh = CAF::FileWriter->new($init_script_name,
-                                  contents => $contents,
                                   owner => 'root',
                                   group => 'root',
                                   mode => 0755,
                                   log => $self,
                                  );
+    print $fh $contents;
     if ( $fh->close() < 0 ) {
       $self->warn("Error creating init script to control all ".$self->getCurrentProduct()." services ($init_script_name)");
     }
@@ -1707,9 +1669,9 @@ sub restartServices () {
   # Need to do stop+start as sometimes dpm daemon doesn't restart properly with
   # 'restart'. Try to restart even if stop failed (can be just the daemon is 
   # already stopped)
-  if ( my $list = $self->getServiceRestartList() ) {
-    $self->debug(1,"$function_name: list of services to restart : ".join(" ",keys(%{$list})));
-    for my $service (keys %{$list}) {
+  if ( %$service_restart_list ) {
+    $self->debug(1,"$function_name: list of services to restart : ".join(" ",keys(%$service_restart_list)));
+    for my $service (keys %$service_restart_list) {
       $self->info("Restarting service $service");
       CAF::Process->new([$servicecmd, $service, "stop"],log=>$self)->run();
       if ( $? ) {
