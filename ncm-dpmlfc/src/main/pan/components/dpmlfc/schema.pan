@@ -82,6 +82,11 @@ function component_dpmlfc_dav_config_valid = {
         if ( !match(flag,'Write|RemoteCopy|NoAuthn') ) return(false);
       };
    };
+   if ( is_defined(SELF['NSFlags']) ) {
+      foreach (i;flag;SELF['NSFlags']) {
+        if ( !match(flag,'Write|RemoteCopy|NoAuthn') ) return(false);
+      };
+   };
    true;
 };
 
@@ -134,14 +139,47 @@ type ${project.artifactId}_component_dpns_node_config = {
         "readonly" ? boolean
 };
 
-# Placeholder to have a config structure similar to other services
+# DAV related parameters: see zlcgdm-dav.conf for parameter documentation
 type ${project.artifactId}_component_dav_node_config = {
+	"DiskAnonUser" ? string
 	"DiskFlags" ? string[]
+	"NSAnonUser" ? string
+	"NSFlags" ? string[]
+        "NSRedirectPort" ? long[] with length(SELF) == 2
+	"NSSecureRedirect" ? string[] with match(SELF,'on|off')
+        "NSType" ? string with match(SELF,'DPM|LFC')
+        "SSLCertFile" ? string
+        "SSLCertKey" ? string
+        "SSLCACertPath" ? string
+        "SSLCARevocationPath" ? string
+        "SSLCipherSuite" ? string[]
+        "SSLHonorCipherOrder" ? string
+        "SSLProtocol" ? string[]
+        "SSLSessionCache" ? string
+        "SSLSessionCacheTimeout" ? long
+        "SSLVerifyClient" ? string with match(SELF,'none|optional|require')
+        "SSLVerifyDepth" ? long
 } with component_dpmlfc_dav_config_valid(SELF);
 
 type ${project.artifactId}_component_lfc_node_config = {
         include ${project.artifactId}_component_dpns_node_config
         "disableAutoVirtualIDs" ? boolean
+};
+
+# Protocol options acts as default values for node specific options.
+# Using protocol options rather than node specific options helps to
+# maintain a consistent configuration across nodes.
+type ${project.artifactId}_component_protocol_options = {
+        "dav"      ? ${project.artifactId}_component_dav_node_config
+        "dpm"      ? ${project.artifactId}_component_dpm_node_config
+        "dpns"     ? ${project.artifactId}_component_dpns_node_config
+        "gsiftp"   ? ${project.artifactId}_component_rfio_gsiftp_node_config
+        "rfio"     ? ${project.artifactId}_component_rfio_gsiftp_node_config
+        "srmv1"    ? ${project.artifactId}_component_node_config
+        "srmv2"    ? ${project.artifactId}_component_node_config
+        "srmv22"   ? ${project.artifactId}_component_node_config
+        "xroot"    ? ${project.artifactId}_component_node_config
+        "copyd"    ? ${project.artifactId}_component_node_config
 };
 
 type ${project.artifactId}_component_db_conn_options = {
@@ -191,7 +229,8 @@ type ${project.artifactId}_component = {
         "lfc"      ? ${project.artifactId}_component_lfc_node_config{}
         "lfc-dli"  ? ${project.artifactId}_component_node_config{}
 
-	      "options"  ? ${project.artifactId}_component_global_options_tree
+        "options"  ? ${project.artifactId}_component_global_options_tree
+        "protocols"  ? ${project.artifactId}_component_protocol_options
 };
 
 bind "/software/components/dpmlfc" = ${project.artifactId}_component;

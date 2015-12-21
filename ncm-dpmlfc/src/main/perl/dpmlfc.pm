@@ -150,7 +150,8 @@ my %lfc_comp_max_servers = (
 #
 # If the line keyword (hash key) is starting with a '-', this means that the matching
 # configuration line must be removed/commented out (instead of added/updated) from the
-# configuration file if present.
+# configuration file if present. If it is starting with a '?', this means that the
+# matching line must be removed/commented out if the option is undefined.
 #
 # 'condition': an option or an option set that must exist for the rule to be applied.
 #              Both option_set and option_name:option_set are accepted (see below).
@@ -204,8 +205,24 @@ my %copyd_config_rules = (
 
 my $dav_config_file = "/etc/httpd/conf.d/zlcgdm-dav.conf";
 my %dav_config_rules = (
+        "DiskAnon" =>"DiskAnonUser:dav;".LINE_FORMAT_XRDCFG,
         "DiskFlags" =>"DiskFlags:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
+        "NSAnon" =>"NSAnonUser:dav;".LINE_FORMAT_XRDCFG,
         "NSFlags" =>"NSFlags:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
+        "NSRedirectPort" =>"NSRedirectPort:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
+        "NSSecureRedirect" =>"NSSecureRedirect:dav;".LINE_FORMAT_XRDCFG,
+        "NSType" =>"NSType:dav;".LINE_FORMAT_XRDCFG,
+        "SSLCertificateFile" =>"SSLCertFile:dav;".LINE_FORMAT_XRDCFG,
+        "SSLCertificateKeyFile" =>"SSLCertKey:dav;".LINE_FORMAT_XRDCFG,
+        "SSLCACertificatePath" =>"SSLCACertPath:dav;".LINE_FORMAT_XRDCFG,
+        "SSLCARevocationPath" =>"SSLCARevocationPath:dav;".LINE_FORMAT_XRDCFG,
+        "?SSLCipherSuite" =>"SSLCipherSuite:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
+        "?SSLHonorCipherOrder" =>"SSLHonorCipherOrder:dav;".LINE_FORMAT_XRDCFG,
+        "SSLProtocol" =>"SSLProtocol:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
+        "SSLSessionCache" =>"SSLSessionCache:dav;".LINE_FORMAT_XRDCFG,
+        "SSLSessionCacheTimeout" =>"SSLSessionCacheTimeout:dav;".LINE_FORMAT_XRDCFG,
+        "SSLVerifyClient" =>"SSLVerifyClient:dav;".LINE_FORMAT_XRDCFG,
+        "SSLVerifyDepth" =>"SSLVerifyDepth:dav;".LINE_FORMAT_XRDCFG,
 );
 
 my $dpm_config_file = "/etc/sysconfig/dpm";
@@ -655,8 +672,10 @@ sub configureNode {
 
     # Retrieve from profile configuration about roles.
     # For each role retrieve the role configuration for this host if it is in the role list,
-    # else the information from the first host in the list. In addition, add role host list and
-    # copy the role enabled info from global options to role options.
+    # else the information from the first host in the list. Then apply all the related
+    # protocol options as default values for non specified host specific options.
+    # In addition, add role host list and copy the role enabled info from global options to 
+    # the role options.
     for my $role (@$hosts_roles) {
       if ( grep(/^$role$/,@actual_hosts_roles) ) {
         my @role_hosts = sort(keys(%{$role_host_list->{$role}}));
@@ -673,6 +692,11 @@ sub configureNode {
             $self->debug(2,"Host $this_host_full not found in role $role: using configuration from host $h");
           }
           $config_options->{$role} = $self->getHostConfig($role,$h);
+          while ( my ($option, $optval) = each(%{$dpmlfc_config->{protocols}->{$role}})) {
+            unless ( exists($config_options->{$role}->{$option}) ) {
+              $config_options->{$role}->{$option} = $optval;
+            }
+          }
           $config_options->{$role}->{hostlist} = \@role_hosts;
           # 'host' contains the name of role host whose config has been used.
           # For roles with a max of 1 host (e.g. dpm, dpns), this is the host name serving the role.
@@ -2126,8 +2150,8 @@ sub updateConfigLine () {
       $comment = LINE_QUATTOR_COMMENT;
     }
     $self->debug(1,"$function_name: checking expected configuration line ($newline) with pattern >>>".$config_param_pattern."<<<");
-    $fh->add_or_replace_lines(qr/^$config_param_pattern/,
-                              qr/^$newline$/,
+    $fh->add_or_replace_lines(qr/^\s*$config_param_pattern/,
+                              qr/^\s*$newline$/,
                               $newline.$comment."\n",
                               ENDING_OF_FILE,
                              );      
@@ -2217,12 +2241,22 @@ sub updateConfigFile () {
     my $rule = $config_rules->{$keyword};
     $rule_id++;
 
-    # Check if the keyword is prefixed by a '-': in this case the corresponding line must
-    # be commented out if it present
+    # Initialize remove_if_undef flag according the default for this file
+    my $remove_if_undef = $parser_options->{remove_if_undef};
+
+    # Check if the keyword is prefixed by:
+    #     -  a '-': in this case the corresponding line must be unconditionally 
+    #               commented out if it is present
+    #     -  a '*': in this case the corresponding line must be commented out if
+    #               it is present and the option is undefined
     my $comment_line = 0;
     if ( $keyword =~ /^-/ ) {
       $keyword =~ s/^-//;
       $comment_line = 1;
+    } elsif ( $keyword =~ /^\?/ ) {
+      $keyword =~ s/^\?//;
+      $remove_if_undef = 1;
+      $self->debug(2,"$function_name: 'remove_if_undef' option set for the current rule");
     }
 
     # Split different elements of the rule
@@ -2259,14 +2293,14 @@ sub updateConfigFile () {
       }
     }
 
-    # If the variable name was "negated", remove (comment out) configuration line if present and enabled
+    # If the keyword was "negated", remove (comment out) configuration line if present and enabled
     if ( $comment_line ) {
-      $self->debug(1,"$function_name: keywork '$keyword' negated, removing configuration line");
+      $self->debug(1,"$function_name: keyword '$keyword' negated, removing configuration line");
       $self->removeConfigLine($fh,$keyword,$line_fmt);
       next;
     }
 
-    # Check if rule condition is met
+    # Check if rule condition is met if one is defined
     unless ( $condition eq "" ) {
       $self->debug(1,"$function_name: checking condition >>>$condition<<<");
 
@@ -2303,7 +2337,7 @@ sub updateConfigFile () {
       }
       # Remove (comment out) configuration line if present and enabled
       # and if option remove_if_undef is set
-      unless ( $cond_satisfied || !$parser_options->{remove_if_undef} ) {
+      unless ( $cond_satisfied  || !$remove_if_undef ) {
         $self->debug(1,"$function_name: condition met but negated, removing configuration line");
         $self->removeConfigLine($fh,$keyword,$line_fmt);
         next;
@@ -2350,7 +2384,7 @@ sub updateConfigFile () {
         # no longer part of the configuration in a still existing LINE_VALUE_ARRAY or
         # LINE_VALUE_STRING_HASH.
         unless ( $attribute_present ) {
-          if ( $parser_options->{remove_if_undef} ) {
+          if ( $remove_if_undef ) {
             $self->debug(1,"$function_name: attribute '$attribute' undefined, removing configuration line");
             $self->removeConfigLine($fh,$keyword,$line_fmt);
           }
