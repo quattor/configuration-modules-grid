@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 10;
+use Test::More tests => 12;
 use Test::NoWarnings;
 use Test::Quattor;
 use NCM::Component::dpmlfc;
@@ -150,6 +150,11 @@ my %config_rules_3 = (
       "GLOBUS_THREAD_MODEL" => "dpns->globusThreadModel:dpm;".LINE_FORMAT_ENVVAR,
      );
 
+my %config_rules_4 = (
+      "?ALLOW_COREDUMP" => "allowCoreDump:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+      "GLOBUS_THREAD_MODEL" => "globusThreadModel:dpm;".LINE_FORMAT_ENVVAR,
+     );
+
 my %parser_options = ("remove_if_undef" => 1);
 
 $CAF::Object::NoAction = 1;
@@ -168,7 +173,7 @@ ok(defined($fh), $DPM_CONF_FILE." was opened");
 is("$fh", $DPM_EXPECTED_CONF_1, $DPM_CONF_FILE." has expected contents (negated keywords)");
 $fh->close();
 
-# Test removal of config line is config option is not defined
+# Test removal of a config line is config option is not defined
 $dpm_options = {"dpm" => {"globusThreadModel" => "pthread"}};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
 $changes = $comp->updateConfigFile($DPM_CONF_FILE,
@@ -180,7 +185,7 @@ ok(defined($fh), $DPM_CONF_FILE." was opened");
 is("$fh", $DPM_EXPECTED_CONF_2, $DPM_CONF_FILE." has expected contents (config option not defined)");
 $fh->close();
 
-# Test removal of config line is rule condition is not met
+# Test removal of a config line is rule condition is not met
 $dpm_options = {"dpm" => {"globusThreadModel" => "pthread"}};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
 $changes = $comp->updateConfigFile($DPM_CONF_FILE,
@@ -192,7 +197,20 @@ ok(defined($fh), $DPM_CONF_FILE." was opened");
 is("$fh", $DPM_EXPECTED_CONF_1, $DPM_CONF_FILE." has expected contents (rule condition not met)");
 $fh->close();
 
-# Test removal of config line appearing multiple times
+# Test removal of a config line is config option is not defined
+# when keyword is prefixed by ?
+$dpm_options = {"dpm" => {"globusThreadModel" => "pthread"}};
+set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
+$changes = $comp->updateConfigFile($DPM_CONF_FILE,
+                                   \%config_rules_4,
+                                   $dpm_options);
+$fh = get_file($DPM_CONF_FILE);
+ok(defined($fh), $DPM_CONF_FILE." was opened");
+is("$fh", $DPM_EXPECTED_CONF_2, $DPM_CONF_FILE." has expected contents (rule keyword prefixed by ?)");
+$fh->close();
+
+
+# Test removal of config lines appearing multiple times
 $dpm_options = {"dpm" => {"globusThreadModel" => "pthread"}};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_2);
 $changes = $comp->updateConfigFile($DPM_CONF_FILE,
