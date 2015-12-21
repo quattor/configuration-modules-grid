@@ -763,19 +763,15 @@ sub configureNode {
       }
     }
 
-  }
-
-  # Restart services that need to be (DPM/LFC services are stateless).
-  # Don't signal error as it has already been signaled by restartServices().
-  if ( $self->restartServices() ) {
-    return(1);
-  }
-
-
-  # If product is DPM and current node is DPNS server or if product is LFC and
-  # this node runs lfc daemon, do namespace configuration for VOs
-  for my $product (@products) {
-    $self->defineCurrentProduct($product);
+    # Restart services that need to be (DPM/LFC services are stateless).
+    # Don't signal error as it has already been signaled by restartServices().
+    if ( $self->restartServices() ) {
+      next;
+    }
+  
+  
+    # If product is DPM and current node is DPNS server or if product is LFC and
+    # this node runs lfc daemon, do namespace configuration for VOs
     if ( $self->hostHasRoles($nameserver_role{$product}) ) {
       $self->info("Checking namespace configuration for supported VOs...");
       $self->NSRootConfig();
@@ -791,20 +787,20 @@ sub configureNode {
         }
       }
     }
-  }
-
-
-  # If the current node is a DPM server (running dpm daemon) and pool configuration
-  # is present in the profile, configure pools.
-  $self->defineCurrentProduct("DPM");
-  if ( $self->hostHasRoles('dpm') ) {
-    if ( exists($dpmlfc_config->{pools}) ) {
-      my $pools = $dpmlfc_config->{pools};
-      for my $pool (sort(keys(%$pools))) {
-        my $pool_args = %{$pools->{$pool}};
-        $self->DPMConfigurePool($pool,$pool_args);
+  
+  
+    # If the current node is a DPM server (running dpm daemon) and pool configuration
+    # is present in the profile, configure pools.
+    if ( ($product eq 'DPM') && $self->hostHasRoles('dpm') ) {
+      if ( exists($dpmlfc_config->{pools}) ) {
+        my $pools = $dpmlfc_config->{pools};
+        for my $pool (sort(keys(%$pools))) {
+          my $pool_args = %{$pools->{$pool}};
+          $self->DPMConfigurePool($pool,$pool_args);
+        }
       }
     }
+
   }
 
   return 0;
