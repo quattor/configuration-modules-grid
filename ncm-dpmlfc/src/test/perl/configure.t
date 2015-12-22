@@ -983,7 +983,7 @@ NSFlags Write
 
   # On redirect, maximum number of replicas in the URL
   # (Used only by LFC)
-  NSMaxReplicas 3
+NSMaxReplicas 4
 
   # Redirect using SSL or plain HTTP? Default is On
 NSSecureRedirect on
@@ -996,12 +996,12 @@ NSRedirectPort 80 443
   # This DN can act on behalf of other users using the HTTP headers:
   # X-Auth-Dn
   # X-Auth-FqanN (Can be specified multiple times, with N starting on 0, and incrementing)
-  # NSTrustedDNS "/DC=ch/DC=cern/OU=computers/CN=trusted-host.cern.ch"
+NSTrustedDNS "/DC=ch/DC=cern/OU=computers/CN=trusted-host.cern.ch" "/DC=ch/DC=cern/OU=computers/CN=trusted-host2.cern.ch"
 
   # If mod_gridsite does not give us information about the certificate, this
   # enables mod_ssl to pass environment variables that can be used by mod_lcgdm_ns
   # to get the user DN.
-  SSLOptions +StdEnvVars
+SSLOptions +StdEnvVars
 
 </LocationMatch>
 
@@ -1020,7 +1020,7 @@ DiskDMLite /etc/dmlite.conf
   # (i.e. setting the checksum)
   # Note that for this to work, the disk must be trusted by the Head
   # (Check NSTrustedDNS)
-  # NSServer localhost 443
+NSServer headnode 1234
 
   # None, one or several flags
   # Write      Enable write access
@@ -1043,7 +1043,7 @@ DiskFlags Write
   # If mod_gridsite does not give us information about the certificate, this
   # enables mod_ssl to pass environment variables that can be used by mod_lcgdm_ns
   # to get the user DN.
-  SSLOptions +StdEnvVars
+SSLOptions +StdEnvVars
 
 </LocationMatch>
 

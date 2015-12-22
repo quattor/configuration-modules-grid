@@ -28,22 +28,29 @@ prefix '/software/components/dpmlfc';
 "options/dpm/group" = "dpmgroup";
 "options/dpm/installDir" = "/";
 "options/dpm/user" = "dpmuser";
-"protocols/dav/DiskAnonUser" = "nobody";
-"protocols/dav/DiskFlags" = list("Write");
-"protocols/dav/NSAnonUser" = "nobody";
-"protocols/dav/NSFlags" = list("Write");
-"protocols/dav/NSRedirectPort" = list(80,443);
-"protocols/dav/NSSecureRedirect" = "on";
-"protocols/dav/NSType" = "DPM";
-"protocols/dav/SSLCertFile" = "/etc/grid-security/hostcert.pem";
-"protocols/dav/SSLCertKey" = "/etc/grid-security/hostkey.pem";
-"protocols/dav/SSLCACertPath" = "/etc/grid-security/certificates";
-"protocols/dav/SSLCARevocationPath" = "/etc/grid-security/certificates";
-"protocols/dav/SSLProtocol" = list("all", "-SSLv2", "-SSLv3");
-"protocols/dav/SSLSessionCache" = "shmcb:/dev/shm/ssl_gcache_data(1024000)";
-"protocols/dav/SSLSessionCacheTimeout" = 7200;
-"protocols/dav/SSLVerifyClient" = "require";
-"protocols/dav/SSLVerifyDepth" = 10;
+"protocols/dav" = nlist("DiskAnonUser", "nobody",
+                        "DiskFlags", list("Write"),
+                        "NSAnonUser", "nobody",
+                        "NSFlags", list("Write"),
+                        "NSMaxReplicas", 4,
+                        "NSRedirectPort", list(80,443),
+                        "NSSecureRedirect", "on",
+                        "NSServer", list("headnode",1234),
+                        "NSTrustedDNs", list('"/DC=ch/DC=cern/OU=computers/CN=trusted-host.cern.ch"',
+                                             '"/DC=ch/DC=cern/OU=computers/CN=trusted-host2.cern.ch"',
+                                            ),
+                        "NSType", "DPM",
+                        "SSLCertFile", "/etc/grid-security/hostcert.pem",
+                        "SSLCertKey", "/etc/grid-security/hostkey.pem",
+                        "SSLCACertPath", "/etc/grid-security/certificates",
+                        "SSLCARevocationPath", "/etc/grid-security/certificates",
+                        "SSLOptions", list("+StdEnvVars"),
+                        "SSLProtocol", list("all", "-SSLv2", "-SSLv3"),
+                        "SSLSessionCache", "shmcb:/dev/shm/ssl_gcache_data(1024000)",
+                        "SSLSessionCacheTimeout", 7200,
+                        "SSLVerifyClient", "require",
+                        "SSLVerifyDepth", 10,
+                       );
 "rfio/grid05.lal.in2p3.fr/globusThreadModel" = "pthread";
 "rfio/grid05.lal.in2p3.fr/port" = "5001";
 "rfio/grid16.lal.in2p3.fr/globusThreadModel" = "pthread";
