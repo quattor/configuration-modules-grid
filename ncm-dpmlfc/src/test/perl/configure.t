@@ -24,8 +24,8 @@ Readonly my $DPM_DISK_HOST => 'grid16.lal.in2p3.fr';
 
 Readonly my $DPM_INITD_SCRIPT => '/etc/init.d/dpm-all-daemons';
 Readonly my $DPM_CONFIG_FILE => '/etc/DPMCONFIG';
-Readonly my $DAEMON_CERT_FILE => '/etc/grid-security/dpmmgr/dpmcert.pem';
-Readonly my $DAEMON_KEY_FILE => '/etc/grid-security/dpmmgr/dpmkey.pem';
+Readonly my $DAEMON_CERT_FILE => '/etc/grid-security/dpmuser/dpmcert.pem';
+Readonly my $DAEMON_KEY_FILE => '/etc/grid-security/dpmuser/dpmkey.pem';
 Readonly my $HOST_CERT_FILE => '/etc/grid-security/hostcert.pem';
 Readonly my $HOST_KEY_FILE => '/etc/grid-security/hostkey.pem';
 
@@ -1103,7 +1103,7 @@ SSLSessionCacheTimeout 7200
 ';
 
 
-Readonly my $DPM_CONFIG_EXPECTED => 'dpmmgr/dpmdbpwd@sqlsrv1.lal.in2p3.fr
+Readonly my $DPM_CONFIG_EXPECTED => 'dpmdb/dpmdbpwd@sqlsrv1.lal.in2p3.fr
 ';
 
 
