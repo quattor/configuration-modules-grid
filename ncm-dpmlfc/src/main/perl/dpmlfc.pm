@@ -505,6 +505,9 @@ my $dm_bin_dir;
 # dpmlfc configuration
 my $dpmlfc_config;
 
+# Product (DPM or LFC) processed
+my $product;
+
 # List of services enabled/to restart on the current node
 my $enabled_service_list;
 my $service_restart_list;
@@ -551,16 +554,16 @@ sub configureNode {
   # Process separatly DPM and LFC configuration
   
   my $comp_max_servers;
-  for my $product (@products) {
+  for my $p (@products) {
+    $product = $p;
+    $self->debug(1,"Processing configuration for $product");
+
     # Initialize options hash for the current product.
     # Options hash contains global options and one sub-hash for each role.
     # Sub-hash for each contains the options for the current host and the role host list.
     $config_options = {};
     $enabled_service_list = {};
     $service_restart_list = {};
-
-    # Establish context for other functions
-    $self->defineCurrentProduct($product);
 
     $dm_install_root = $self->getGlobalOption("installDir");
     unless ( defined($dm_install_root) ) {
@@ -605,23 +608,20 @@ sub configureNode {
       $config_options->{user} = $self->getGlobalOption("user");
     }
     if ( defined($self->getGlobalOption("group")) ) {
-      $config_options->{user} = $self->getGlobalOption("group");
+      $config_options->{group} = $self->getGlobalOption("group");
     }
     if ( defined($self->getGlobalOption("gridmapfile")) ) {
-      $config_options->{user} = $self->getGlobalOption("gridmapfile");
+      $config_options->{gridmapfile} = $self->getGlobalOption("gridmapfile");
     }
     if ( defined($self->getGlobalOption("gridmapdir")) ) {
-      $config_options->{user} = $self->getGlobalOption("gridmapdir");
+      $config_options->{gridmapdir} = $self->getGlobalOption("gridmapdir");
     }
     if ( defined($self->getGlobalOption("accessProtocols")) ) {
-      $config_options->{user} = $self->getGlobalOption("accessProtocols");
+      $config_options->{accessProtocols} = $self->getGlobalOption("accessProtocols");
     }
     if ( defined($self->getGlobalOption("controlProtocols")) ) {
-      $config_options->{user} = $self->getGlobalOption("controlProtocols");
+      $config_options->{controlProtocols} = $self->getGlobalOption("controlProtocols");
     }
-
-
-    # Define with product default value if not specified
     if ( my $v = $self->getDbOption('configfile') ) {
       $config_options->{dbconfigfile} = $v;
       $self->debug(1,"Global option 'dbconfigfile' defined to ".$config_options->{dbconfigfile});
@@ -629,13 +629,7 @@ sub configureNode {
       $config_options->{dbconfigfile} = $db_conn_config{$product};
       $self->debug(1,"Global option 'dbconfigfile' set to default : ".$config_options->{dbconfigfile});
     }
-    if ( my $v = $self->getDbOption('configmode') ) {
-      $config_options->{dbconfigmode} = $v;
-      $self->debug(1,"Global option 'dbconfigmode' defined to ".$config_options->{dbconfigmode});
-    } else {
-      $config_options->{dbconfigmode} = $db_conn_config_mode{$product};
-      $self->debug(1,"Global option 'dbconfigmode' set to default : ".$config_options->{dbconfigmode});
-    }
+
 
     # At least $dpmlfc_config->{dpm} or $dpmlfc_config->{lfc} must exist
 
@@ -739,7 +733,7 @@ sub configureNode {
     # Do necessary DB initializations (only if current host has one role needing
     # DB access
     if ( $self->hostHasRoles($db_roles{$product}) ) {
-      $self->info("Checking ".$self->getCurrentProduct()." database configuration...");
+      $self->info("Checking ".$product." database configuration...");
       my $status = $self->createDbConfigFile();
       # Negative status means success with changes requiring services restart
       if ( $status < 0 ) {
@@ -831,8 +825,6 @@ sub DPMConfigurePool () {
     return (1);
   }
     
-  my $product = $self->getCurrentProduct();
-
   $self->info('Pool configuration not yet implemented');
   
   return($status);
@@ -853,8 +845,6 @@ sub NSCheckDir () {
     return (1);
   }
   
-  my $product = $self->getCurrentProduct();
-
   my $cmd;
   if ( $product eq 'DPM' ) {
     $ENV{DPNS_HOST} = $this_host_full;
@@ -887,8 +877,6 @@ sub NSRootConfig () {
   my $self = shift;
   my $status = 0;
   
-  my $product = $self->getCurrentProduct();
-
   my $root = $self->NSGetRoot();
 
   $self->debug(1,"$function_name: checking NS root ($root) configuration for $product");
@@ -965,8 +953,6 @@ sub NSConfigureVO () {
     %vo_args = shift;
   }
     
-  my $product = $self->getCurrentProduct();
-
   my $vo_home = $self->NSGetRoot().'/'.$vo_name;
 
   $self->debug(1,"$function_name: checking VO $vo_name NS configuration ($vo_home) for $product");
@@ -1016,8 +1002,6 @@ sub NSGetRoot () {
   my $function_name = "NSGetRoot";
   my $self = shift;
   
-  my $product = $self->getCurrentProduct();
-
   $self->debug(2,"$function_name: returning namespace root for $product");
 
   my $root;
@@ -1045,8 +1029,6 @@ sub execNSCmd () {
     return (1);
   }
   
-  my $product = $self->getCurrentProduct();
-
   my $cmd = $dm_bin_dir;
   if ( $product eq 'DPM' ) {
     $ENV{DPNS_HOST} = $this_host_full;
@@ -1116,39 +1098,6 @@ sub execCmd () {
 }
 
 
-# Function to define currently processed product
-# Must be called before other function that need a product context
-#
-# Arguments :
-#  product : DPM or LFC
-sub defineCurrentProduct() {
-  my $function_name = "defineCurrentProduct";
-  my $self = shift;
-  
-  my $product = shift;
-  unless ( $product ) {
-    $self->error("$function_name: 'product' argument missing");
-    return 0;
-  }
-
-  $self->{CURRENTPRODUCT} = $product;
-  $self->debug(1,"$function_name: product context defined to $self->{CURRENTPRODUCT}");
-}
-
-
-# Function to get currently processed product
-#
-# Arguments :
-#  none
-sub getCurrentProduct() {
-  my $function_name = "getCurrentProduct";
-  my $self = shift;
-  
-  $self->debug(2,"$function_name: returning product ($self->{CURRENTPRODUCT})");
-  return $self->{CURRENTPRODUCT};
-}
-
-
 # Function returning the host FQDN.
 # localhost is handled as a special case where no domain should be added.
 #
@@ -1181,8 +1130,6 @@ sub hostFQDN () {
 sub checkSecurity () {
   my $function_name = "checkSecurity";
   my $self = shift;
-
-  my $product = $self->getCurrentProduct();
 
   $self->info("Checking host certificate and key configuration for $product");
 
@@ -1286,8 +1233,6 @@ sub getGlobalOption () {
     return 0;
   }
 
-  my $product = $self->getCurrentProduct();
-
   if ( exists($dpmlfc_config->{options}->{lc($product)}->{$option}) ) {
     my $value = $dpmlfc_config->{options}->{lc($product)}->{$option};
     $self->debug(2,"$function_name: Global option '$option' found : ".$value);
@@ -1314,12 +1259,10 @@ sub getDbOption () {
     return 0;
   }
 
-  my $product = $self->getCurrentProduct();
-
   if ( exists($dpmlfc_config->{options}->{lc($product)}->{db}->{$option}) ) {
     return $dpmlfc_config->{options}->{lc($product)}->{db}->{$option};
   } else {
-    $self->debug(1,"DB option '$option' not found for product $product");
+    $self->debug(1,"$function_name: DB option '$option' not found for product $product");
     return undef;
   }
 
@@ -1335,9 +1278,7 @@ sub getDaemonUser () {
   my $function_name = "getDaemonUser";
   my $self = shift;
 
-  my $product = $self->getCurrentProduct();
-
-  my $daemon_user = $config_options->{$product}->{"user"};
+  my $daemon_user = $config_options->{"user"};
   unless ( $daemon_user ) {
     $daemon_user = $users_def{$product};
     $self->debug(1,"$function_name: daemon user set to default value ($daemon_user)");
@@ -1356,8 +1297,7 @@ sub getDaemonGroup () {
   my $function_name = "getDaemonGroup";
   my $self = shift;
 
-  my $product = $self->getCurrentProduct();
-  my $daemon_group = $config_options->{$product}->{"group"};
+  my $daemon_group = $config_options->{"group"};
   unless ( $daemon_group ) {
     $daemon_group = $self->getDaemonUser();
     $self->debug(1,"$function_name: daemon group set to default value ($daemon_group)");
@@ -1398,7 +1338,6 @@ sub createDbConfigFile () {
   my $function_name = "createDbConfigFile";
   my $self = shift;
 
-  my $product = $self->getCurrentProduct();
   $self->debug(1,"$function_name: Creating database configuration file for $product");
 
   unless ( exists($dpmlfc_config->{options}->{lc($product)}->{db}) ) {
@@ -1408,9 +1347,16 @@ sub createDbConfigFile () {
 
   my $do_db_config = 1;
 
-  # Owner of the DB configuration file
+  # Owner and mode of the DB configuration file
   my $daemon_user = $self->getDaemonUser();
   my $daemon_group = $self->getDaemonGroup();
+  my $dbconfigmode = $self->getDbOption('configmode');
+  if ( $dbconfigmode ) {
+    $self->debug(1,"Global option 'dbconfigmode' defined to ".$dbconfigmode);
+  } else {
+    $dbconfigmode = $db_conn_config_mode{$product};
+    $self->debug(1,"Global option 'dbconfigmode' set to default : ".$dbconfigmode);
+  }
 
   my $db_user = $self->getDbOption("user");
   unless ( $db_user ) {
@@ -1477,7 +1423,7 @@ sub createDbConfigFile () {
                                        backup => $config_bck_ext,
                                        owner => $daemon_user,
                                        group => $daemon_group,
-                                       mode => oct($config_options->{"dbconfigmode"}),
+                                       mode => oct($dbconfigmode),
                                        log => $self,
                                       );
   print $config_fh "$db_user/$db_pwd\@$db_server\n";
@@ -1491,7 +1437,7 @@ sub createDbConfigFile () {
                                        backup => $config_bck_ext,
                                        owner => $gip_user,
                                        group => $daemon_group,
-                                       mode => oct($config_options->{"dbconfigmode"}),
+                                       mode => oct($dbconfigmode),
                                        log => $self,
                                       );
     print $info_fh "$db_info_user/$db_info_pwd\@$db_server\n";
@@ -1654,12 +1600,12 @@ sub buildEnabledServiceInitScript () {
   my $function_name = "buildEnabledServiceInitScript";
   my $self = shift;
 
-  my $init_script_name = '/etc/init.d/'.lc($self->getCurrentProduct()).'-all-daemons';
+  my $init_script_name = '/etc/init.d/'.lc($product).'-all-daemons';
   my $contents;
 
   # Don't do anything if the list is empty
   if ( %$enabled_service_list ) {
-    $self->info("Checking init script used to control all ".$self->getCurrentProduct()." enabled services (".$init_script_name.")...");
+    $self->info("Checking init script used to control all ".$product." enabled services (".$init_script_name.")...");
     $contents = "#!/bin/sh\n\n";
     for my $service (sort(keys(%$enabled_service_list))) {
       if ( $enabled_service_list->{$service} ) {
@@ -1675,10 +1621,10 @@ sub buildEnabledServiceInitScript () {
                                  );
     print $fh $contents;
     if ( $fh->close() < 0 ) {
-      $self->warn("Error creating init script to control all ".$self->getCurrentProduct()." services ($init_script_name)");
+      $self->warn("Error creating init script to control all ".$product." services ($init_script_name)");
     }
   } else {
-    $self->debug(1,"$function_name: no service enabled for ".$self->getCurrentProduct().' ('.$init_script_name.')');
+    $self->debug(1,"$function_name: no service enabled for ".$product.' ('.$init_script_name.')');
   }
 }
 
