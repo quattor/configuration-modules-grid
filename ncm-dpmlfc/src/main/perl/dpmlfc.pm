@@ -52,6 +52,7 @@ use File::stat;
 use LC::Check;
 use CAF::FileWriter;
 use CAF::FileEditor;
+use CAF::FileReader;
 use CAF::Process;
 use CAF::Object;
 
@@ -1194,14 +1195,16 @@ sub checkSecurity () {
   unless ( $gridmapdir ) {
     $gridmapdir = $gridmapdir_def;
   }
-  if ( -d $gridmapdir ) {
+  if ( -d $gridmapdir || $CAF::Object::NoAction ) {
     $self->debug(1,"$function_name: Checking permission on $gridmapdir");
-    $changes = LC::Check::status($gridmapdir,
-         group => $daemon_group,
-         mode => 01774
-        );
-    unless (defined($changes)) {
-      $self->error("error setting $gridmapdir for $product");
+    unless ( $CAF::Object::NoAction ) {
+      $changes = LC::Check::status($gridmapdir,
+                                   group => $daemon_group,
+                                   mode => 01774
+                                  );
+      unless (defined($changes)) {
+        $self->error("error setting $gridmapdir for $product");
+      }
     }
   } else {
       $self->error("$gridmapdir not found or not a directory. Check gridmap stuff is installed and properly configured");
@@ -1215,55 +1218,56 @@ sub checkSecurity () {
   my $host_hostcert = $grid_security_dir."/".$hostcert;
   my $do_keycert_config = 1;
 
-  $self->debug(1,"$function_name: Checking existence of host key and certifiate");
-  unless ( -f $host_hostkey ) {
-    $self->error("Host key ($host_hostkey) not found. Check your configuration");
-    $do_keycert_config = 0;
-  }
-  unless ( -f $host_hostcert ) {
-    $self->error("Host certificate ($host_hostcert) not found. Check your configuration");
-    $do_keycert_config = 0;
-  }
-
-  if ( $do_keycert_config ) {
+  unless ( $CAF::Object::NoAction ) {
     $self->debug(1,"$function_name: Checking existence and permission of $daemon_security_dir");
-    $changes = LC::Check::directory($daemon_security_dir
-         );
+    $changes = LC::Check::directory($daemon_security_dir);
     unless (defined($changes)) {
       $self->error("error creating $daemon_security_dir");
       return 1;
     }
     $changes = LC::Check::status($daemon_security_dir,
-         mode => 0755,
-         owner => $daemon_user,
-         group => $daemon_group
-        );
+                                 mode => 0755,
+                                 owner => $daemon_user,
+                                 group => $daemon_group
+                                );
     unless (defined($changes)) {
       $self->error("error setting security on $daemon_security_dir");
       return 1;
     }
+  };
 
-    $self->debug(1,"$function_name: Copying host certificate ($hostcert) and key ($hostkey) to $daemon_security_dir");
-    my $daemon_hostkey .= $daemon_security_dir."/".lc($product)."key.pem";
-    $changes = LC::Check::file($daemon_hostkey,
-             source => $host_hostkey,
-             owner => $daemon_user,
-             group => $daemon_group,
-             mode => 0400
-            );
-    unless (defined($changes)) {
-      $self->error("error creating $hostkey copy for $product");
-    }
-    my $daemon_hostcert .= $daemon_security_dir."/".lc($product)."cert.pem";
-    $changes = LC::Check::file($daemon_hostcert,
-             source => $host_hostcert,
-             owner => $daemon_user,
-             group => $daemon_group,
-             mode => 0644
-            );
-    unless (defined($changes)) {
-      $self->error("error creating $hostcert copy for $product");
-    }
+  $self->debug(1,"$function_name: Copying host certificate ($hostcert) and key ($hostkey) to $daemon_security_dir");
+  my $daemon_hostkey .= $daemon_security_dir."/".lc($product)."key.pem";
+  my $daemon_hostcert .= $daemon_security_dir."/".lc($product)."cert.pem";
+  my $key_src = CAF::FileReader->new($host_hostkey);
+  my $cert_src = CAF::FileReader->new($host_hostcert);
+  unless ( $key_src && $cert_src) {
+    $self->error("Host key ($host_hostkey) not found. Check your configuration") unless $key_src;
+    $self->error("Host certificate ($host_hostcert) not found. Check your configuration") unless $cert_src;
+    return 1
+  }
+  my $key_fh = CAF::FileWriter->new($daemon_hostkey,
+                                    owner => $daemon_user,
+                                    group => $daemon_group,
+                                    mode => 0400,
+                                   );
+  print $key_fh "$key_src";
+  $key_src->close();
+  $changes = $key_fh->close();
+  unless (defined($changes)) {
+    $self->error("error creating $hostkey copy for $product");
+  }
+
+  my $cert_fh = CAF::FileWriter->new($daemon_hostcert,
+                                     owner => $daemon_user,
+                                     group => $daemon_group,
+                                     mode => 0644,
+                                    );
+  print $cert_fh "$cert_src";
+  $cert_src->close();
+  $changes = $cert_fh->close();
+  unless (defined($changes)) {
+    $self->error("error creating $hostcert copy for $product");
   }
 
 }
@@ -1331,9 +1335,11 @@ sub getDaemonUser () {
   my $function_name = "getDaemonUser";
   my $self = shift;
 
-  my $daemon_user = $config_options->{"user"};
+  my $product = $self->getCurrentProduct();
+
+  my $daemon_user = $config_options->{$product}->{"user"};
   unless ( $daemon_user ) {
-    $daemon_user = $users_def{$self->getCurrentProduct()};
+    $daemon_user = $users_def{$product};
     $self->debug(1,"$function_name: daemon user set to default value ($daemon_user)");
   }
  
@@ -1350,7 +1356,8 @@ sub getDaemonGroup () {
   my $function_name = "getDaemonGroup";
   my $self = shift;
 
-  my $daemon_group = $config_options->{"group"};
+  my $product = $self->getCurrentProduct();
+  my $daemon_group = $config_options->{$product}->{"group"};
   unless ( $daemon_group ) {
     $daemon_group = $self->getDaemonUser();
     $self->debug(1,"$function_name: daemon group set to default value ($daemon_group)");
@@ -1461,7 +1468,7 @@ sub createDbConfigFile () {
       $self->debug(1,"$function_name: DB infoUser not defined, DB configuration for GIP ignored.");
     }
   } else {
-    $self->debug(1,"GIP no configured on this node. Skipping $product DB configuration for GIP.");
+    $self->debug(1,"GIP not configured on this node. Skipping $product DB configuration for GIP.");
   }
 
   # Update DB connection configuration file for main user if content has changed
