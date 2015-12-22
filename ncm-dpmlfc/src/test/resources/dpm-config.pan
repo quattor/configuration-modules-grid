@@ -22,7 +22,7 @@ prefix '/software/components/dpmlfc';
 "gsiftp/grid17.lal.in2p3.fr/port" = "2811";
 "options/dpm/accessProtocols" = list("gsiftp","rfio","https","xroot");
 "options/dpm/db/configfile" = "/etc/DPMCONFIG";
-"options/dpm/db/password" = "daipouseur";
+"options/dpm/db/password" = "dpmdbpwd";
 "options/dpm/db/server" = "sqlsrv1.lal.in2p3.fr";
 "options/dpm/db/user" = "dpmmgr";
 "options/dpm/group" = "dpmmgr";
@@ -56,3 +56,7 @@ prefix '/software/components/dpmlfc';
 "srmv22/grid05.lal.in2p3.fr/port" = "8446";
 "xroot/grid16.lal.in2p3.fr/globusThreadModel" = "pthread";
 "xroot/grid17.lal.in2p3.fr/globusThreadModel" = "pthread";
+
+
+prefix '/software/components/gip2';
+"user" = "ldap";

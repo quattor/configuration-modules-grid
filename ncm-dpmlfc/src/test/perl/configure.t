@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Test::More tests => 18;
+use Test::More tests => 24;
 use Test::NoWarnings;
 use Test::Quattor qw(dpm-config);
 use NCM::Component::dpmlfc;
@@ -23,6 +23,12 @@ Readonly my $DPM_HEAD_HOST => 'grid05.lal.in2p3.fr';
 Readonly my $DPM_DISK_HOST => 'grid16.lal.in2p3.fr';
 
 Readonly my $DPM_INITD_SCRIPT => '/etc/init.d/dpm-all-daemons';
+Readonly my $DPM_CONFIG_FILE => '/etc/DPMCONFIG';
+Readonly my $DAEMON_CERT_FILE => '/etc/grid-security/dpmmgr/dpmcert.pem';
+Readonly my $DAEMON_KEY_FILE => '/etc/grid-security/dpmmgr/dpmkey.pem';
+Readonly my $HOST_CERT_FILE => '/etc/grid-security/hostcert.pem';
+Readonly my $HOST_KEY_FILE => '/etc/grid-security/hostkey.pem';
+
 Readonly my $DPM_SYSCONFIG_FILE => '/etc/sysconfig/dpm';
 Readonly my $DPNS_SYSCONFIG_FILE => '/etc/sysconfig/dpnsdaemon';
 Readonly my $RFIO_SYSCONFIG_FILE => '/etc/sysconfig/rfiod';
@@ -1097,6 +1103,42 @@ SSLSessionCacheTimeout 7200
 ';
 
 
+Readonly my $DPM_CONFIG_EXPECTED => 'dpmmgr/dpmdbpwd@sqlsrv1.lal.in2p3.fr
+';
+
+
+Readonly my $HOST_CERT => '-----BEGIN CERTIFICATE-----
+MIID5TCCAs2gAwIBAgICMc0wDQYJKoZIhvcNAQENBQAwLzELMAkGA1UEBhMCRlIx
+DTALBgNVBAoTBENOUlMxETAPBgNVBAMTCEdSSUQyLUZSMB4XDTE1MDQxNjEzNTg0
+N1oXDTE2MDQxNTEzNTg0N1owWjEQMA4GA1UEChMHR1JJRC1GUjELMAkGA1UEBhMC
+RlIxDTALBgNVBAoTBENOUlMxDDAKBgNVBAsTA0xBTDEcMBoGA1UEAxMTZ3JpZDA1
+LmxhbC5pbjJwMy5mcjCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAvkYVZOJp
+qTifpm/oC6pQi6l/n6UtLbfdWCmJjrVkZN9+8m7JM0hjv650R7XVSQtZFuX7Z+Y4
+900pyffx5oAuiwQedozkmfL3j9oVjgJ0HpUIq0axlhxqQGEqtO9KNM4zaLjeGa1C
+m9l7+VKelQE/5QAOgfil2MbszdArFQzc4y8CAwEAAaOCAWIwggFeMAwGA1UdEwEB
+/wQCMAAwEQYJYIZIAYb4QgEBBAQDAgbAMA4GA1UdDwEB/wQEAwID+DAqBglghkgB
+hvhCAQ0EHRYbR1JJRDItRlIgc2VydmVyIGNlcnRpZmljYXRlMB0GA1UdDgQWBBSI
+8OQqAh3NBq4doEIIk63aMq8kHjBcBgNVHSMEVTBTgBQnlkgn7iG28q+xLX3699dI
+JXCVk6E4pDYwNDELMAkGA1UEBhMCRlIxDTALBgNVBAoTBENOUlMxFjAUBgNVBAMT
+DUNOUlMyLVByb2pldHOCAQMwJwYDVR0gBCAwHjAOBgwrBgEEAdQ9AQEIAgEwDAYK
+KoZIhvdMBQICATBBBgNVHR8EOjA4MDagNKAyhjBodHRwOi8vY3Jscy5zZXJ2aWNl
+cy5jbnJzLmZyL0dSSUQyLUZSL2dldGRlci5jcmwwFgYIKwYBBAG7YgEECnVuaWNv
+cmVOSlMwDQYJKoZIhvcNAQENBQADggEBANXYv5Cnd9exd7Zfr/MzY4Rh8jp1FmiF
+PBxPDsNhZ5Ipk5PaWonXSapyYQg5YMT8/BYAP9X+ntv9GlxNy5fEVN1Tk9pHbQer
+yFEaVPs/YaJhB9Ianic4DSoDWQxCImU++UU5jYRZVML0etcR8C0Tp0BUXGEQ4Ps0
+phYGL8NiAKEQ/M7wDc3VTRHItGc54s9fmrFzk6VS5UhMsmAHwkMDfdz4WePQG23m
+tLv9WCanrhlWJri/tzObcXUNERFJIMd/qRWAx6jjw+DYNZK0YFyINg3VKqj+KDtL
+6EPmnKNg7YAHQ1RmnHTZi8YDp2ZTOVuRLxlfuOTNOHEHMISTlhPqQgA=
+-----END CERTIFICATE-----
+';
+
+
+Readonly my $HOST_KEY => '-----BEGIN RSA PRIVATE KEY-----
+This is a secret key
+-----END RSA PRIVATE KEY-----
+';
+
+
 ###########################
 # Tests for DPM head node #
 ###########################
@@ -1114,6 +1156,8 @@ set_file_contents($SRMV1_SYSCONFIG_FILE, $SRMV1_INITIAL_CONFIG);
 set_file_contents($SRMV2_SYSCONFIG_FILE, $SRMV2_INITIAL_CONFIG);
 set_file_contents($SRMV22_SYSCONFIG_FILE, $SRMV22_INITIAL_CONFIG);
 set_file_contents($DMLITE_CONFIG_FILE, $DMLITE_INITIAL_CONFIG);
+set_file_contents($HOST_CERT_FILE, $HOST_CERT);
+set_file_contents($HOST_KEY_FILE, $HOST_KEY);
 
 $cmp->configureNode($DPM_HEAD_HOST,$config);
 
@@ -1163,6 +1207,22 @@ $fh->close();
 $fh = get_file($DPM_INITD_SCRIPT);
 ok(defined($fh), "$DPM_INITD_SCRIPT was opened");
 is("$fh",$DPM_INITD_EXPECTED,"$DPM_INITD_SCRIPT has expected contents");
+$fh->close();
+
+# DPM DB config file
+$fh = get_file($DPM_CONFIG_FILE);
+ok(defined($fh), "$DPM_CONFIG_FILE was opened");
+is("$fh",$DPM_CONFIG_EXPECTED,"$DPM_CONFIG_FILE has expected contents");
+$fh->close();
+
+#  Certificate/key
+$fh = get_file($DAEMON_KEY_FILE);
+ok(defined($fh), "$DAEMON_KEY_FILE was opened");
+is("$fh",$HOST_KEY,"$DAEMON_KEY_FILE has expected contents");
+$fh->close();
+$fh = get_file($DAEMON_CERT_FILE);
+ok(defined($fh), "$DAEMON_CERT_FILE was opened");
+is("$fh",$HOST_CERT,"$DAEMON_CERT_FILE has expected contents");
 $fh->close();
 
 Test::NoWarnings::had_no_warnings();
