@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Test::More tests => 24;
+use Test::More tests => 25;
 use Test::NoWarnings;
 use Test::Quattor qw(dpm-config);
 use NCM::Component::dpmlfc;
@@ -1139,6 +1139,9 @@ This is a secret key
 ';
 
 
+Readonly my $SERVICE_RESTART_LIST_EXPECTED => 'dpm dpmcopyd dpnsdaemon httpd rfiod srmv2.2';
+
+
 ###########################
 # Tests for DPM head node #
 ###########################
@@ -1224,5 +1227,10 @@ $fh = get_file($DAEMON_CERT_FILE);
 ok(defined($fh), "$DAEMON_CERT_FILE was opened");
 is("$fh",$HOST_CERT,"$DAEMON_CERT_FILE has expected contents");
 $fh->close();
+
+# Check that the list of services is the expected list
+my $service_restart_list = $cmp->getServiceRestartList();
+is("$service_restart_list",$SERVICE_RESTART_LIST_EXPECTED,"List of services to restart has expected contents");
+
 
 Test::NoWarnings::had_no_warnings();

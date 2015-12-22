@@ -558,13 +558,6 @@ sub configureNode {
     $product = $p;
     $self->debug(1,"Processing configuration for $product");
 
-    # Initialize options hash for the current product.
-    # Options hash contains global options and one sub-hash for each role.
-    # Sub-hash for each contains the options for the current host and the role host list.
-    $config_options = {};
-    $enabled_service_list = {};
-    $service_restart_list = {};
-
     $dm_install_root = $self->getGlobalOption("installDir");
     unless ( defined($dm_install_root) ) {
       $dm_install_root = $dm_install_root_default;
@@ -599,6 +592,16 @@ sub configureNode {
       $self->debug(1,"Product $product not configured: skipping its configuration");
       next;  
     }
+
+    # Initialize options hash for the current product.
+    # Options hash contains global options and one sub-hash for each role.
+    # Sub-hash for each contains the options for the current host and the role host list.
+    # Do it after validating that the current product is configured to keep the previous
+    # values accessible (unit tests).
+
+    $config_options = {};
+    $enabled_service_list = {};
+    $service_restart_list = {};
 
     # Retrieve some general options
     # Don't define 'user' global option with a default value to keep it
@@ -1552,9 +1555,24 @@ sub serviceRestartNeeded () {
     }
   }
 
-  $self->debug(2,"$function_name: restart list = '".join(" ",keys(%$service_restart_list))."'");
+  $self->getServiceRestartList();
 }
 
+
+# Return the list of services to be restarted as a space-separated list.
+# For unit testing mainly.
+#
+# Arguments: None
+#
+# Return value: string containing the sorted list of services to be restarted
+sub getServiceRestartList () {
+  my $function_name = "getServiceRestartList";
+  my $self = shift;
+
+  my $service_list = join(" ",sort(keys(%$service_restart_list)));
+  $self->debug(2,"$function_name: restart list = '$service_list'");
+  return $service_list;
+}
 
 # Enable a service to be started during system startup
 #
