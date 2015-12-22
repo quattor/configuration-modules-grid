@@ -147,7 +147,7 @@ type ${project.artifactId}_component_dav_node_config = {
 	"NSFlags" ? string[]
 	"NSMaxReplicas" ? long
         "NSRedirectPort" ? long[] with length(SELF) == 2
-	"NSSecureRedirect" ? string[] with match(SELF,'on|off')
+	"NSSecureRedirect" ? string with match(SELF,'on|off')
         "NSServer" ? string[] with length(SELF) == 2
         "NSTrustedDNs" ? string[]
         "NSType" ? string with match(SELF,'DPM|LFC')
