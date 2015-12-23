@@ -8,6 +8,14 @@ declaration template components/dpmlfc/schema;
 
 include { 'quattor/schema' };
 
+function component_dpmlfc_number_string_valid = {
+  if ( !match(ARGV[0],'^\d+$') ) {
+    error(format("String '%s' is not a valid number",ARGV[0]));
+    return(false);
+  };
+  true;
+};
+
 function component_dpmlfc_global_options_valid = {
   if ( !is_defined(SELF) ) {
     error('Internal error: DPM/LFC global options undefined in validation function');
@@ -148,7 +156,7 @@ type ${project.artifactId}_component_dav_node_config = {
 	"NSMaxReplicas" ? long
         "NSRedirectPort" ? long[] with length(SELF) == 2
 	"NSSecureRedirect" ? string with match(SELF,'on|off')
-        "NSServer" ? string[] with length(SELF) == 2
+        "NSServer" ? string[] with length(SELF) == 2 && component_dpmlfc_number_string_valid(SELF[1])
         "NSTrustedDNs" ? string[]
         "NSType" ? string with match(SELF,'DPM|LFC')
         "SSLCertFile" ? string
