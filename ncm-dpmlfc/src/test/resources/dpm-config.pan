@@ -2,6 +2,8 @@
 
 object template dpm-config;
 
+include 'components/dpmlfc/schema';
+
 prefix '/software/components/dpmlfc';
 
 "copyd/grid05.lal.in2p3.fr/globusThreadModel" = "pthread";
@@ -9,17 +11,17 @@ prefix '/software/components/dpmlfc';
 "dav/grid16.lal.in2p3.fr" = nlist();
 "dav/grid17.lal.in2p3.fr" = nlist();
 "dpm/grid05.lal.in2p3.fr/allowCoreDump" = true;
-"dpm/grid05.lal.in2p3.fr/fastThreads" = "70";
+"dpm/grid05.lal.in2p3.fr/fastThreads" = 70;
 "dpm/grid05.lal.in2p3.fr/globusThreadModel" = "pthread";
-"dpm/grid05.lal.in2p3.fr/port" = "5015";
+"dpm/grid05.lal.in2p3.fr/port" = 5015;
 "dpm/grid05.lal.in2p3.fr/requestMaxAge" = "180d";
-"dpm/grid05.lal.in2p3.fr/slowThreads" = "20";
+"dpm/grid05.lal.in2p3.fr/slowThreads" = 20;
 "dpns/grid05.lal.in2p3.fr/globusThreadModel" = "pthread";
-"dpns/grid05.lal.in2p3.fr/port" = "5010";
+"dpns/grid05.lal.in2p3.fr/port" = 5010;
 "gsiftp/grid16.lal.in2p3.fr/globusThreadModel" = "pthread";
-"gsiftp/grid16.lal.in2p3.fr/port" = "2811";
+"gsiftp/grid16.lal.in2p3.fr/port" = 2811;
 "gsiftp/grid17.lal.in2p3.fr/globusThreadModel" = "pthread";
-"gsiftp/grid17.lal.in2p3.fr/port" = "2811";
+"gsiftp/grid17.lal.in2p3.fr/port" = 2811;
 "options/dpm/accessProtocols" = list("gsiftp","rfio","https","xroot");
 "options/dpm/db/configfile" = "/etc/DPMCONFIG";
 "options/dpm/db/password" = "dpmdbpwd";
@@ -35,7 +37,7 @@ prefix '/software/components/dpmlfc';
                         "NSMaxReplicas", 4,
                         "NSRedirectPort", list(80,443),
                         "NSSecureRedirect", "on",
-                        "NSServer", list("headnode",1234),
+                        "NSServer", list("headnode","1234"),
                         "NSTrustedDNs", list('"/DC=ch/DC=cern/OU=computers/CN=trusted-host.cern.ch"',
                                              '"/DC=ch/DC=cern/OU=computers/CN=trusted-host2.cern.ch"',
                                             ),
@@ -52,15 +54,15 @@ prefix '/software/components/dpmlfc';
                         "SSLVerifyDepth", 10,
                        );
 "rfio/grid05.lal.in2p3.fr/globusThreadModel" = "pthread";
-"rfio/grid05.lal.in2p3.fr/port" = "5001";
+"rfio/grid05.lal.in2p3.fr/port" = 5001;
 "rfio/grid16.lal.in2p3.fr/globusThreadModel" = "pthread";
-"rfio/grid16.lal.in2p3.fr/port" = "5001";
+"rfio/grid16.lal.in2p3.fr/port" = 5001;
 "rfio/grid17.lal.in2p3.fr/globusThreadModel" = "pthread";
-"rfio/grid17.lal.in2p3.fr/port" = "5001";
+"rfio/grid17.lal.in2p3.fr/port" = 5001;
 "srmv1/grid05.lal.in2p3.fr/globusThreadModel" = "pthread";
-"srmv1/grid05.lal.in2p3.fr/port" = "8443";
+"srmv1/grid05.lal.in2p3.fr/port" = 8443;
 "srmv22/grid05.lal.in2p3.fr/globusThreadModel" = "pthread";
-"srmv22/grid05.lal.in2p3.fr/port" = "8446";
+"srmv22/grid05.lal.in2p3.fr/port" = 8446;
 "xroot/grid16.lal.in2p3.fr/globusThreadModel" = "pthread";
 "xroot/grid17.lal.in2p3.fr/globusThreadModel" = "pthread";
 
