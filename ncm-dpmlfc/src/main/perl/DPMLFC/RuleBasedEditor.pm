@@ -116,13 +116,30 @@ $EXPORT_TAGS{rule_constants} = \@RULE_CONSTANTS;
 use constant BACKUP_FILE_EXT => ".old";
 
 
+=pod
 
-# This function formats an attribute value based on the value format specified.
-#
-# Arguments :
-#        attr_value : attribue value
-#        line_fmt : line format (see LINE_FORMAT_xxx constants)
-#        value_fmt : value format (see LINE_VALUE_xxx constants)
+=head1 DESCRIPTION
+
+This module implements a rule-based editor. It has only one public method: B<updateConfigfile>.
+Rules are passed as a hash.
+
+See https://github.com/quattor/CAF/issues/123#issue-123702165 for details.
+
+=head2 Private methods
+
+=over
+
+=item formatAttrValue
+
+This function formats an attribute value based on the value format specified.
+
+Arguments :
+    attr_value : attribue value
+    line_fmt : line format (see LINE_FORMAT_xxx constants)
+    value_fmt : value format (see LINE_VALUE_xxx constants)
+
+=cut
+
 sub formatAttributeValue () {
   my $function_name = "formatAttributeValue";
   my $self = shift;
@@ -208,14 +225,21 @@ sub formatAttributeValue () {
 }
 
 
-# This function formats a configuration line using keyword and value,
-# according to the line format requested. Values containing spaces are
-# quoted if the line format is not LINE_FORMAT_XRDCFG.
-#
-# Arguments :
-#        keyword : line keyword
-#        value : keyword value (can be empty)
-#        line_fmt : line format (see LINE_FORMAT_xxx constants)
+=pod
+
+=item formatConfigLine
+
+This function formats a configuration line using keyword and value,
+according to the line format requested. Values containing spaces are
+quoted if the line format is not LINE_FORMAT_XRDCFG.
+
+Arguments :
+    keyword : line keyword
+    value : keyword value (can be empty)
+    line_fmt : line format (see LINE_FORMAT_xxx constants)
+
+=cut
+
 sub formatConfigLine () {
   my $function_name = "formatConfigLine";
   my $self = shift;
@@ -262,18 +286,25 @@ sub formatConfigLine () {
 }
 
 
-# This function builds a pattern that will match an existing configuration line for
-# the configuration parameter specified. The pattern built takes into account the line format.
-# Every whitespace in the pattern (configuration parameter) are replaced by \s+.
-# If the line format is LINE_FORMAT_XRDCFG, no whitespace is
-# imposed at the end of the pattern, as these format can be used to write a configuration
-# directive as a keyword with no value.
-#
-# Arguments :
-#   config_param: parameter to update
-#   line_fmt: line format (see LINE_FORMAT_xxx constants)
-#   config_value: when defined, make it part of the pattern (used when multiple lines
-#                 with the same keyword are allowed)
+=pod
+
+=item buildLinePattern
+
+This function builds a pattern that will match an existing configuration line for
+the configuration parameter specified. The pattern built takes into account the line format.
+Every whitespace in the pattern (configuration parameter) are replaced by \s+.
+If the line format is LINE_FORMAT_XRDCFG, no whitespace is
+imposed at the end of the pattern, as these format can be used to write a configuration
+directive as a keyword with no value.
+
+Arguments :
+    config_param: parameter to update
+    line_fmt: line format (see LINE_FORMAT_xxx constants)
+    config_value: when defined, make it part of the pattern (used when multiple lines
+                  with the same keyword are allowed)
+
+=cut
+
 sub buildLinePattern () {
   my $function_name = "buildLinePattern";
   my $self = shift;
@@ -330,13 +361,20 @@ sub buildLinePattern () {
 }
 
 
-# This function comments out a configuration line matching the configuration parameter.
-# Match operation takes into account the line format.
-#
-# Arguments :
-#        fh : a FileEditor object
-#        config_param: parameter to update
-#        line_fmt : line format (see LINE_FORMAT_xxx constants)
+=pod
+
+=item removeConfigLine
+
+This function comments out a configuration line matching the configuration parameter.
+Match operation takes into account the line format.
+
+Arguments :
+    fh : a FileEditor object
+    config_param: parameter to update
+    line_fmt : line format (see LINE_FORMAT_xxx constants)
+
+=cut
+
 sub removeConfigLine () {
   my $function_name = "removeConfigLine";
   my $self = shift;
@@ -385,15 +423,22 @@ sub removeConfigLine () {
 }
 
 
-# This function do the actual update of a configuration line after doing the final
-# line formatting based on the line format.
-#
-# Arguments :
-#        fh : a FileEditor object
-#        config_param: parameter to update
-#        config_value : parameter value (can be empty)
-#        line_fmt : line format (see LINE_FORMAT_xxx constants)
-#        multiple : if true, multiple lines with the same keyword can exist (D: false)
+=pod
+
+=item updateConfigLine
+
+This function do the actual update of a configuration line after doing the final
+line formatting based on the line format.
+
+Arguments :
+    fh : a FileEditor object
+    config_param: parameter to update
+    config_value : parameter value (can be empty)
+    line_fmt : line format (see LINE_FORMAT_xxx constants)
+    multiple : if true, multiple lines with the same keyword can exist (D: false)
+
+=cut
+
 sub updateConfigLine () {
   my $function_name = "updateConfigLine";
   my $self = shift;
@@ -456,17 +501,29 @@ sub updateConfigLine () {
 }
 
 
-# Update configuration file content,  applying configuration rules.
-#
-# Arguments :
-#       file_name: name of the file to update
-#       config_rules: config rules corresponding to the file to build
-#       config_options: configuration parameters used to build actual configuration
-#       options: a hash setting options to modify the behaviour of this function
-#
-# Supported entries for options hash:
-#       always_rules_only: if true, apply only rules with ALWAYS condition (D: false)
-#       remove_if_undef: if true, remove maatching configuration line is rule condition is not met (D: false)
+=pod
+
+=back
+
+=head2 Public methods
+
+=over
+
+=item updateConfigfile
+
+Update configuration file content,  applying configuration rules.
+
+Arguments :
+    file_name: name of the file to update
+    config_rules: config rules corresponding to the file to build
+    config_options: configuration parameters used to build actual configuration
+    options: a hash setting options to modify the behaviour of this function
+
+Supported entries for options hash:
+    always_rules_only: if true, apply only rules with ALWAYS condition (D: false)
+    remove_if_undef: if true, remove maatching configuration line is rule condition is not met (D: false)
+
+=cut
 
 sub updateConfigFile () {
   my $function_name = "updateConfigFile";
@@ -764,5 +821,10 @@ sub updateConfigFile () {
   return $changes;
 }
 
+=pod
+
+=back
+
+=cut
 
 1;      # Required for PERL modules
