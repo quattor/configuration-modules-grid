@@ -140,7 +140,7 @@ Arguments :
 
 =cut
 
-sub formatAttributeValue () {
+sub formatAttributeValue {
   my $function_name = "formatAttributeValue";
   my $self = shift;
 
@@ -240,7 +240,7 @@ Arguments :
 
 =cut
 
-sub formatConfigLine () {
+sub formatConfigLine {
   my $function_name = "formatConfigLine";
   my $self = shift;
 
@@ -305,7 +305,7 @@ Arguments :
 
 =cut
 
-sub buildLinePattern () {
+sub buildLinePattern {
   my $function_name = "buildLinePattern";
   my $self = shift;
 
@@ -375,7 +375,7 @@ Arguments :
 
 =cut
 
-sub removeConfigLine () {
+sub removeConfigLine {
   my $function_name = "removeConfigLine";
   my $self = shift;
 
@@ -439,7 +439,7 @@ Arguments :
 
 =cut
 
-sub updateConfigLine () {
+sub updateConfigLine {
   my $function_name = "updateConfigLine";
   my $self = shift;
 
@@ -525,7 +525,7 @@ Supported entries for options hash:
 
 =cut
 
-sub updateConfigFile () {
+sub updateConfigFile {
   my $function_name = "updateConfigFile";
   my $self = shift;
 

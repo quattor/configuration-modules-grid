@@ -790,7 +790,7 @@ sub configureNode {
 # Returns 0 if the pool already exists or has been configured successfully, else error code of 
 # the failed command.
 # No attempt is made to modify an existing pool.
-sub DPMConfigurePool () {
+sub DPMConfigurePool {
   my $function_name = "DPMConfigurePool";
   my $self = shift;
   my $status = 0;
@@ -818,7 +818,7 @@ sub DPMConfigurePool () {
 # Returns 0 if the directory already exists, -1 if not, error code
 # if namespace command returned another error.
 
-sub NSCheckDir () {
+sub NSCheckDir {
   my $function_name = "NSCheckDir";
   my $self = shift;
   my $directory;
@@ -856,7 +856,7 @@ sub NSCheckDir () {
 # Returns 0 if already configured or if configuration has been done successfully.
 # Root is considered already configured if it exists (permission/ACL not checked).
 
-sub NSRootConfig () {
+sub NSRootConfig {
   my $function_name = "NSRootConfig";
   my $self = shift;
   my $status = 0;
@@ -921,7 +921,7 @@ sub NSRootConfig () {
 # Returns 0 if already configured or if configuration has been done successfully.
 # Root is considered already configured if it exists (permission/ACL not checked).
 
-sub NSConfigureVO () {
+sub NSConfigureVO {
   my $function_name = "NSConfigureVO";
   my $self = shift;
   my $status = 0;
@@ -982,7 +982,7 @@ sub NSConfigureVO () {
 
 
 # Function returning the namespace root according to the currently selected product
-sub NSGetRoot () {
+sub NSGetRoot {
   my $function_name = "NSGetRoot";
   my $self = shift;
   
@@ -1002,7 +1002,7 @@ sub NSGetRoot () {
 # Function to execute a nameserver command.
 # Returns command status code.
 
-sub execNSCmd () {
+sub execNSCmd {
   my $function_name = "execNSCmd";
   my $self = shift;
   my $ns_cmd;
@@ -1042,7 +1042,7 @@ sub execNSCmd () {
 # reference provided as second argument, if present. stdout is discarded.
 # Returns command status code.
 
-sub execCmd () {
+sub execCmd {
   my $function_name = "execCmd";
   my $self = shift;
   my $cmd;
@@ -1087,7 +1087,7 @@ sub execCmd () {
 #
 # Arguments :
 #  host : a host name
-sub hostFQDN () {
+sub hostFQDN {
   my $function_name = "hostFQDN";
   my $self = shift;
   
@@ -1111,7 +1111,7 @@ sub hostFQDN () {
 # are present in the right place to be used by DPM or LFC
 #
 # Arguments :
-sub checkSecurity () {
+sub checkSecurity {
   my $function_name = "checkSecurity";
   my $self = shift;
 
@@ -1207,7 +1207,7 @@ sub checkSecurity () {
 # Function to return a global option value from configuration
 # Arguments :
 #  option : option name
-sub getGlobalOption () {
+sub getGlobalOption {
   my $function_name = "getGlobalOption";
   my $self = shift;
 
@@ -1233,7 +1233,7 @@ sub getGlobalOption () {
 # Function to retrieve a DB option value from configuration
 # Arguments :
 #  option : option name
-sub getDbOption () {
+sub getDbOption {
   my $function_name = "getDbOption";
   my $self = shift;
 
@@ -1258,7 +1258,7 @@ sub getDbOption () {
 #
 # Arguments : 
 #  none
-sub getDaemonUser () {
+sub getDaemonUser {
   my $function_name = "getDaemonUser";
   my $self = shift;
 
@@ -1277,7 +1277,7 @@ sub getDaemonUser () {
 #
 # Arguments : 
 #  none
-sub getDaemonGroup () {
+sub getDaemonGroup {
   my $function_name = "getDaemonGroup";
   my $self = shift;
 
@@ -1297,7 +1297,7 @@ sub getDaemonGroup () {
 #
 # Arguments : 
 #  none
-sub getDbAdminServer () {
+sub getDbAdminServer {
   my $function_name = "getDbAdminServer";
   my $self = shift;
 
@@ -1318,7 +1318,7 @@ sub getDbAdminServer () {
 # Function to create the DB configuration file
 #
 # Arguments : 
-sub createDbConfigFile () {
+sub createDbConfigFile {
   my $function_name = "createDbConfigFile";
   my $self = shift;
 
@@ -1448,7 +1448,7 @@ sub createDbConfigFile () {
 #
 # Arguments :
 #  role : role the services need to be restarted
-sub getRoleServices () {
+sub getRoleServices {
   my $function_name = "getRoleServices";
   my $self = shift;
 
@@ -1515,7 +1515,7 @@ sub getRoleServices () {
 #
 # Arguments :
 #  roles : roles the associated services need to be restarted (comma separated list)
-sub serviceRestartNeeded () {
+sub serviceRestartNeeded {
   my $function_name = "serviceRestartNeeded";
   my $self = shift;
 
@@ -1546,7 +1546,7 @@ sub serviceRestartNeeded () {
 # Arguments: None
 #
 # Return value: string containing the sorted list of services to be restarted
-sub getServiceRestartList () {
+sub getServiceRestartList {
   my $function_name = "getServiceRestartList";
   my $self = shift;
 
@@ -1559,7 +1559,7 @@ sub getServiceRestartList () {
 #
 # Arguments :
 #  service : name of the service
-sub enableService () {
+sub enableService {
   my $function_name = "enableService";
   my $self = shift;
 
@@ -1595,7 +1595,7 @@ sub enableService () {
 
 # Generate an init script to control (start/stop/restart) all enabled services.
 
-sub buildEnabledServiceInitScript () {
+sub buildEnabledServiceInitScript {
   my $function_name = "buildEnabledServiceInitScript";
   my $self = shift;
 
@@ -1632,7 +1632,7 @@ sub buildEnabledServiceInitScript () {
 # Returns 0 if all services have been restarted successfully, else
 # the number of services which failed to restart.
 
-sub restartServices () {
+sub restartServices {
   my $function_name = "RestartServices";
   my $self = shift;
   my $global_status = 0;
@@ -1682,7 +1682,7 @@ sub restartServices () {
 #
 # Arguments
 #       roles : comma separated roles list. 
-sub hostHasRoles () {
+sub hostHasRoles {
   my $function_name = "hostHasRoles";
   my $self = shift;
 
@@ -1717,7 +1717,7 @@ sub hostHasRoles () {
 #
 # Arguments
 #       role : role for which the hosts list must be normalized
-sub getHostsList () {
+sub getHostsList {
   my $function_name = "getHostsList";
   my $self = shift;
 
@@ -1744,7 +1744,7 @@ sub getHostsList () {
 # Arguments
 #       role : role for which the hosts list must be normalized
 #       host : host for which configuration must be returned
-sub getHostConfig () {
+sub getHostConfig {
   my $function_name = "getHostConfig";
   my $self = shift;
 
@@ -1777,7 +1777,7 @@ sub getHostConfig () {
 # Arguments :
 #       role: role a configuration file must be build for
 #       config: hash containing the global options and the configuration of roles
-sub updateRoleConfig () {
+sub updateRoleConfig {
   my $function_name = "updateRoleConfig";
   my $self = shift;
  
