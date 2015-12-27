@@ -34,6 +34,7 @@
 package NCM::Component::${project.artifactId};
 
 use strict;
+use warnings;
 use vars qw($EC);
 use NCM::Component::DPMLFC::RuleBasedEditor qw(:rule_constants);
 use parent qw(NCM::Component NCM::Component::DPMLFC::RuleBasedEditor);

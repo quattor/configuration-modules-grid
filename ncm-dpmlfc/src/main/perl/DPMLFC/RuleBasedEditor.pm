@@ -15,6 +15,7 @@
 package NCM::Component::DPMLFC::RuleBasedEditor;
 
 use strict;
+use warnings;
 use NCM::Component;
 use vars qw(@ISA $EC);
 @ISA = qw(NCM::Component);
@@ -68,7 +69,6 @@ use constant LINE_OPT_DEF_ALWAYS_RULES_ONLY => 0;
 # Define and export the constants used to define rules
 # Keep in sync with ncm-xrootd
 # See http://www.perlmonks.org/?node_id=1072731 for the exporting method
-#use warnings;
 #my %rule_constants;
 #BEGIN {
 #  %rule_constants = (
