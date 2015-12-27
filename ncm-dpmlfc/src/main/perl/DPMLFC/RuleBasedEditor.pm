@@ -25,18 +25,7 @@ use EDG::WP4::CCM::Element;
 
 use Readonly;
 
-use File::Path;
-use File::Copy;
-use File::Compare;
-use File::Basename;
-use File::stat;
-
-use LC::Check;
-use CAF::FileWriter;
 use CAF::FileEditor;
-use CAF::FileReader;
-use CAF::Process;
-use CAF::Object;
 
 use Encode qw(encode_utf8);
 use Fcntl qw(SEEK_SET);
@@ -69,6 +58,9 @@ use constant LINE_OPT_DEF_ALWAYS_RULES_ONLY => 0;
 # Define and export the constants used to define rules
 # Keep in sync with ncm-xrootd
 # See http://www.perlmonks.org/?node_id=1072731 for the exporting method
+# This doesn't work as long as this module is a dpmlfc submodule but kept 
+# here for reference as it allows to avoid the separate declaration of constant
+# value and export.
 #my %rule_constants;
 #BEGIN {
 #  %rule_constants = (
@@ -92,34 +84,32 @@ use constant LINE_OPT_DEF_ALWAYS_RULES_ONLY => 0;
 #    "LINE_OPT_DEF_ALWAYS_RULES_ONLY" => 0,
 #  );
 #}
-
 #use constant \%rule_constants;
 
-use base 'Exporter';
-
-my @rule_constants = ('LINE_FORMAT_PARAM',
-                   'LINE_FORMAT_ENVVAR',
-                   'LINE_FORMAT_XRDCFG',
-                   'LINE_FORMAT_XRDCFG_SETENV',
-                   'LINE_FORMAT_XRDCFG_SET',
-                   'LINE_VALUE_AS_IS',
-                   'LINE_VALUE_BOOLEAN',
-                   'LINE_VALUE_HOST_LIST',
-                   'LINE_VALUE_INSTANCE_PARAMS',
-                   'LINE_VALUE_ARRAY',
-                   'LINE_VALUE_HASH_KEYS',
-                   'LINE_VALUE_STRING_HASH',
-                   'LINE_VALUE_OPT_NONE',
-                   'LINE_VALUE_OPT_SINGLE',
-                   'LINE_FORMAT_DEFAULT',
-                   'LINE_QUATTOR_COMMENT',
-                   'LINE_OPT_DEF_REMOVE_IF_UNDEF',
-                   'LINE_OPT_DEF_ALWAYS_RULES_ONLY',
-                  );
+# Export constants used to build rules
+Readonly my @RULE_CONSTANTS => ('LINE_FORMAT_PARAM',
+                                'LINE_FORMAT_ENVVAR',
+                                'LINE_FORMAT_XRDCFG',
+                                'LINE_FORMAT_XRDCFG_SETENV',
+                                'LINE_FORMAT_XRDCFG_SET',
+                                'LINE_VALUE_AS_IS',
+                                'LINE_VALUE_BOOLEAN',
+                                'LINE_VALUE_HOST_LIST',
+                                'LINE_VALUE_INSTANCE_PARAMS',
+                                'LINE_VALUE_ARRAY',
+                                'LINE_VALUE_HASH_KEYS',
+                                'LINE_VALUE_STRING_HASH',
+                                'LINE_VALUE_OPT_NONE',
+                                'LINE_VALUE_OPT_SINGLE',
+                                'LINE_FORMAT_DEFAULT',
+                                'LINE_QUATTOR_COMMENT',
+                                'LINE_OPT_DEF_REMOVE_IF_UNDEF',
+                                'LINE_OPT_DEF_ALWAYS_RULES_ONLY',
+                               );
 our @EXPORT_OK;
 our %EXPORT_TAGS;
-push @EXPORT_OK, @rule_constants;
-$EXPORT_TAGS{rule_constants} = \@rule_constants;
+push @EXPORT_OK, @RULE_CONSTANTS;
+$EXPORT_TAGS{rule_constants} = \@RULE_CONSTANTS;
 
 
 # Backup file extension
