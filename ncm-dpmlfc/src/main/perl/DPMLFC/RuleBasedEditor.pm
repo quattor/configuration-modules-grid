@@ -403,9 +403,8 @@ sub updateConfigLine {
     $multiple = 0;
   }
 
-  my $newline;
   my $config_param_pattern;
-  $newline = $self->formatConfigLine($config_param,$config_value,$line_fmt);
+  my $new_line = $self->formatConfigLine($config_param,$config_value,$line_fmt);
 
   # Build a pattern to look for.
   if ( $multiple ) {
@@ -413,23 +412,21 @@ sub updateConfigLine {
     $config_param_pattern = $self->buildLinePattern($config_param,$line_fmt,$config_value);    
   } else {
     $config_param_pattern = $self->buildLinePattern($config_param,$line_fmt);
-  }
-  if ( ($line_fmt == LINE_FORMAT_XRDCFG) && !$multiple ) {
-    if ( $config_value ) {
+    if ( ($line_fmt == LINE_FORMAT_XRDCFG) && $config_value ) {
       $config_param_pattern .= "\\s+";    # If the value is defined in these formats, impose a whitespace at the end
     }
   }
 
   # Update the matching configuration lines
-  if ( $newline ) {
+  if ( $new_line ) {
     my $comment = "";
     if ( ($line_fmt == LINE_FORMAT_PARAM) || ($line_fmt == LINE_FORMAT_ENVVAR) ) {
       $comment = LINE_QUATTOR_COMMENT;
     }
-    $self->debug(1,"$function_name: checking expected configuration line ($newline) with pattern >>>".$config_param_pattern."<<<");
+    $self->debug(1,"$function_name: checking expected configuration line ($new_line) with pattern >>>".$config_param_pattern."<<<");
     $fh->add_or_replace_lines(qr/^\s*$config_param_pattern/,
-                              qr/^\s*$newline$/,
-                              $newline.$comment."\n",
+                              qr/^\s*$new_line$/,
+                              $new_line.$comment."\n",
                               ENDING_OF_FILE,
                              );      
   }
