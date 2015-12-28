@@ -110,19 +110,16 @@ Arguments :
 
 sub formatAttributeValue {
   my $function_name = "formatAttributeValue";
-  my $self = shift;
+  my ($self, $attr_value, $line_fmt, $value_fmt) = @_;
 
-  my $attr_value = shift;
   unless ( defined($attr_value) ) {
     $self->error("$function_name: 'attr_value' argument missing");
     return 1;
   }
-  my $line_fmt = shift;
   unless ( defined($line_fmt) ) {
     $self->error("$function_name: 'list_fmt' argument missing");
     return 1;
   }
-  my $value_fmt = shift;
   unless ( defined($value_fmt) ) {
     $self->error("$function_name: 'value_fmt' argument missing");
     return 1;
@@ -210,19 +207,16 @@ Arguments :
 
 sub formatConfigLine {
   my $function_name = "formatConfigLine";
-  my $self = shift;
+  my ($self, $keyword, $value, $line_fmt) = @_;
 
-  my $keyword = shift;
   unless ( $keyword ) {
     $self->error("$function_name: 'keyword' argument missing");
     return 1;
   }
-  my $value = shift;
   unless ( defined($value) ) {
     $self->error("$function_name: 'value' argument missing");
     return 1;
   }
-  my $line_fmt = shift;
   unless ( defined($line_fmt) ) {
     $self->error("$function_name: 'line_fmt' argument missing");
     return 1;
@@ -275,19 +269,16 @@ Arguments :
 
 sub buildLinePattern {
   my $function_name = "buildLinePattern";
-  my $self = shift;
+  my ($self, $config_param, $line_fmt, $config_value) = @_;
 
-  my $config_param = shift;
   unless ( $config_param ) {
     $self->error("$function_name: 'config_param' argument missing");
     return undef;
   }
-  my $line_fmt = shift;
   unless ( defined($line_fmt) ) {
     $self->error("$function_name: 'line_fmt' argument missing");
     return undef;
   }
-  my $config_value = shift;
   if ( $config_value ) {
     $self->debug(2,"$function_name: configuration value '$config_value' will be added to the pattern");
     $config_value =~ s/\s+/\\s+/g;
@@ -345,19 +336,16 @@ Arguments :
 
 sub removeConfigLine {
   my $function_name = "removeConfigLine";
-  my $self = shift;
+  my ($self, $fh, $config_param, $line_fmt) = @_;
 
-  my $fh = shift;
   unless ( $fh ) {
     $self->error("$function_name: 'fh' argument missing");
     return 1;
   }
-  my $config_param = shift;
   unless ( $config_param ) {
     $self->error("$function_name: 'config_param' argument missing");
     return 1;
   }
-  my $line_fmt = shift;
   unless ( defined($line_fmt) ) {
     $self->error("$function_name: 'line_fmt' argument missing");
     return 1;
@@ -409,29 +397,24 @@ Arguments :
 
 sub updateConfigLine {
   my $function_name = "updateConfigLine";
-  my $self = shift;
+  my ($self, $fh, $config_param, $config_value, $line_fmt, $multiple) = @_;
 
-  my $fh = shift;
   unless ( $fh ) {
     $self->error("$function_name: 'fh' argument missing");
     return 1;
   }
-  my $config_param = shift;
   unless ( $config_param ) {
     $self->error("$function_name: 'config_param' argument missing");
     return 1;
   }
-  my $config_value = shift;
   unless ( defined($config_value) ) {
     $self->error("$function_name: 'config_value' argument missing");
     return 1;
   }
-  my $line_fmt = shift;
   unless ( defined($line_fmt) ) {
     $self->error("$function_name: 'line_fmt' argument missing");
     return 1;
   }
-  my $multiple = shift;
   unless ( defined($multiple) ) {
     $multiple = 0;
   }
@@ -495,24 +478,20 @@ Supported entries for options hash:
 
 sub updateConfigFile {
   my $function_name = "updateConfigFile";
-  my $self = shift;
+  my ($self, $file_name, $config_rules, $config_options, $parser_options) = @_;
 
-  my $file_name = shift;
   unless ( $file_name ) {
     $self->error("$function_name: 'file_name' argument missing");
     return 1;
   }
-  my $config_rules = shift;
   unless ( $config_rules ) {
     $self->error("$function_name: 'config_rules' argument missing");
     return 1;
   }
-  my $config_options = shift;
   unless ( $config_options ) {
     $self->error("$function_name: 'config_options' argument missing");
     return 1;
   }
-  my $parser_options = shift;
   unless ( defined($parser_options) ) {
     $self->debug(2,"$function_name: 'parser_options' undefined");
     $parser_options = {};
