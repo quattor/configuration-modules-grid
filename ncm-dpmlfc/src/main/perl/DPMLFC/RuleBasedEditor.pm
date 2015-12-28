@@ -28,7 +28,6 @@ use Readonly;
 use CAF::FileEditor;
 
 use Encode qw(encode_utf8);
-use Fcntl qw(SEEK_SET);
 
 local(*DTA);
 
@@ -263,23 +262,22 @@ sub buildLinePattern {
     $self->error("$function_name: 'line_fmt' argument missing (internal error)");
     return undef;
   }
-  if ( $config_value ) {
+  if ( defined($config_value ) ) {
     $self->debug(2,"$function_name: configuration value '$config_value' will be added to the pattern");
+    $config_value =~ s/\\/\\\\/g;
+    $config_value =~ s/([\-\+\?\.\*\[\]()\^\$])/\\$1/g;
     $config_value =~ s/\s+/\\s+/g;
-    $config_value =~ s/\-/\\-/g;
-    $config_value =~ s/\./\\./g;
-    $config_value =~ s/\*/\\*/g;
-    $config_value =~ s/\[/\\[/g;
-    $config_value =~ s/\]/\\]/g;
-    $config_value =~ s/\(/[(]/g;
-    $config_value =~ s/\)/\\)/g;
-    $config_value =~ s/\$/\\\$/g;
-    $config_value =~ s/\^/\\^/g;
   } else {
     $config_value = "";
   }
 
+  # config_param is generally a keyword and in this case it contains no whitespace.
+  # A special case is when config_param (the rule keyword) is used to match a line
+  # without specifying a rule: in this case it may contains whitespaces. Remove strict
+  # matching of them (match any type/number of whitespaces at the same position). 
+  # Look at %trust_config_rules in ncm-dpmlfc Perl module for an example.
   $config_param =~ s/\s+/\\s+/g;
+
   my $config_param_pattern;
   if ( $line_fmt == LINE_FORMAT_PARAM ) {
     $config_param_pattern = "#?\\s*$config_param=".$config_value;
@@ -291,7 +289,7 @@ sub buildLinePattern {
     $config_param_pattern = "#?\\s*set\\s+$config_param\\s*=\\s*".$config_value;
   } elsif ( $line_fmt == LINE_FORMAT_XRDCFG ) {
     $config_param_pattern = "#?\\s*$config_param";
-    # Avoid adding a withespace requirement if there is no config_value
+    # Avoid adding a whitespace requirement if there is no config_value
     if ( $config_value ne "" ) {
       $config_param_pattern .= "\\s+" . $config_value;
     }
@@ -340,10 +338,12 @@ sub removeConfigLine {
 
   $self->debug(1,"$function_name: commenting out lines matching pattern >>>".$config_param_pattern."<<<");
   # All matching lines must be commented out, except if they are already commented out.
-  # The code used is a customized version of FileEditor::replace() that lacks backreferences.
+  # The code used is a customized version of FileEditor::replace() that lacks support for backreferences
+  # in the replacement value (here we want to rewrite the same line commented out but we don't know the
+  # current line contents, only a regexp matching it).
   my @lns;
   my $line_count = 0;
-  seek($fh, 0, SEEK_SET);
+  $fh->seek_begin();
   while (my $l = <$fh>) {
     if ($l =~ qr/^$config_param_pattern/ && $l !~ qr/^\s*#/) {
         $self->debug(2,"$function_name: commenting out matching line >>>".$l."<<<");
@@ -496,7 +496,7 @@ sub updateConfigFile {
   my $fh = CAF::FileEditor->new($file_name,
                                 backup => BACKUP_FILE_EXT,
                                 log => $self);
-  seek($fh, 0, SEEK_SET);
+  $fh->seek_begin();
 
   # Check that config file has an appropriate header
   my $intro_pattern = "# This file is managed by Quattor";
