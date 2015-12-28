@@ -113,15 +113,15 @@ sub formatAttributeValue {
   my ($self, $attr_value, $line_fmt, $value_fmt) = @_;
 
   unless ( defined($attr_value) ) {
-    $self->error("$function_name: 'attr_value' argument missing");
+    $self->error("$function_name: 'attr_value' argument missing (internal error)");
     return 1;
   }
   unless ( defined($line_fmt) ) {
-    $self->error("$function_name: 'list_fmt' argument missing");
+    $self->error("$function_name: 'list_fmt' argument missing (internal error)");
     return 1;
   }
   unless ( defined($value_fmt) ) {
-    $self->error("$function_name: 'value_fmt' argument missing");
+    $self->error("$function_name: 'value_fmt' argument missing (internal error)");
     return 1;
   }
 
@@ -210,15 +210,15 @@ sub formatConfigLine {
   my ($self, $keyword, $value, $line_fmt) = @_;
 
   unless ( $keyword ) {
-    $self->error("$function_name: 'keyword' argument missing");
+    $self->error("$function_name: 'keyword' argument missing (internal error)");
     return 1;
   }
   unless ( defined($value) ) {
-    $self->error("$function_name: 'value' argument missing");
+    $self->error("$function_name: 'value' argument missing (internal error)");
     return 1;
   }
   unless ( defined($line_fmt) ) {
-    $self->error("$function_name: 'line_fmt' argument missing");
+    $self->error("$function_name: 'line_fmt' argument missing (internal error)");
     return 1;
   }
 
@@ -272,11 +272,11 @@ sub buildLinePattern {
   my ($self, $config_param, $line_fmt, $config_value) = @_;
 
   unless ( $config_param ) {
-    $self->error("$function_name: 'config_param' argument missing");
+    $self->error("$function_name: 'config_param' argument missing (internal error)");
     return undef;
   }
   unless ( defined($line_fmt) ) {
-    $self->error("$function_name: 'line_fmt' argument missing");
+    $self->error("$function_name: 'line_fmt' argument missing (internal error)");
     return undef;
   }
   if ( $config_value ) {
@@ -339,15 +339,15 @@ sub removeConfigLine {
   my ($self, $fh, $config_param, $line_fmt) = @_;
 
   unless ( $fh ) {
-    $self->error("$function_name: 'fh' argument missing");
+    $self->error("$function_name: 'fh' argument missing (internal error)");
     return 1;
   }
   unless ( $config_param ) {
-    $self->error("$function_name: 'config_param' argument missing");
+    $self->error("$function_name: 'config_param' argument missing (internal error)");
     return 1;
   }
   unless ( defined($line_fmt) ) {
-    $self->error("$function_name: 'line_fmt' argument missing");
+    $self->error("$function_name: 'line_fmt' argument missing (internal error)");
     return 1;
   }
 
@@ -400,19 +400,19 @@ sub updateConfigLine {
   my ($self, $fh, $config_param, $config_value, $line_fmt, $multiple) = @_;
 
   unless ( $fh ) {
-    $self->error("$function_name: 'fh' argument missing");
+    $self->error("$function_name: 'fh' argument missing (internal error)");
     return 1;
   }
   unless ( $config_param ) {
-    $self->error("$function_name: 'config_param' argument missing");
+    $self->error("$function_name: 'config_param' argument missing (internal error)");
     return 1;
   }
   unless ( defined($config_value) ) {
-    $self->error("$function_name: 'config_value' argument missing");
+    $self->error("$function_name: 'config_value' argument missing (internal error)");
     return 1;
   }
   unless ( defined($line_fmt) ) {
-    $self->error("$function_name: 'line_fmt' argument missing");
+    $self->error("$function_name: 'line_fmt' argument missing (internal error)");
     return 1;
   }
   unless ( defined($multiple) ) {
@@ -481,15 +481,15 @@ sub updateConfigFile {
   my ($self, $file_name, $config_rules, $config_options, $parser_options) = @_;
 
   unless ( $file_name ) {
-    $self->error("$function_name: 'file_name' argument missing");
+    $self->error("$function_name: 'file_name' argument missing (internal error)");
     return 1;
   }
   unless ( $config_rules ) {
-    $self->error("$function_name: 'config_rules' argument missing");
+    $self->error("$function_name: 'config_rules' argument missing (internal error)");
     return 1;
   }
   unless ( $config_options ) {
-    $self->error("$function_name: 'config_options' argument missing");
+    $self->error("$function_name: 'config_options' argument missing (internal error)");
     return 1;
   }
   unless ( defined($parser_options) ) {

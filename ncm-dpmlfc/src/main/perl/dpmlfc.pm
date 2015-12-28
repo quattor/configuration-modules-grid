@@ -880,7 +880,7 @@ sub NSRootConfig {
     }
     $self->debug(2,"$function_name: checking $path");
     if ( $self->NSCheckDir($path) ) {
-      $self->debug(1,"$function_name: $path missing");
+      $self->debug(1,"$function_name: $path missing (internal error)");
       $ns_root_ok = 0;
     } else {
       last;
@@ -944,7 +944,7 @@ sub NSConfigureVO {
   # Check if VO home already exists. Create and configure it if not.
 
   if ( $self->NSCheckDir($vo_home) ) {
-    $self->debug(1,"$function_name: $vo_home missing");
+    $self->debug(1,"$function_name: $vo_home missing (internal error)");
 
     my $gid_option = '';
     if ( defined($vo_args{gid}) ) {
@@ -1093,7 +1093,7 @@ sub hostFQDN {
   
   my $host = shift;
   unless ( $host ) {
-    $self->error("$function_name: 'host' argument missing");
+    $self->error("$function_name: 'host' argument missing (internal error)");
     return 0;
   }
 
@@ -1213,7 +1213,7 @@ sub getGlobalOption {
 
   my $option = shift;
   unless ( $option ) {
-    $self->error("$function_name: 'option' argument missing");
+    $self->error("$function_name: 'option' argument missing (internal error)");
     return 0;
   }
 
@@ -1239,7 +1239,7 @@ sub getDbOption {
 
   my $option = shift;
   unless ( $option ) {
-    $self->error("$function_name: 'option' argument missing");
+    $self->error("$function_name: 'option' argument missing (internal error)");
     return 0;
   }
 
@@ -1344,14 +1344,14 @@ sub createDbConfigFile {
 
   my $db_user = $self->getDbOption("user");
   unless ( $db_user ) {
-    $self->warn("Cannot configure DB connection : DB username missing");
+    $self->warn("Cannot configure DB connection : DB username missing (internal error)");
     return 1; 
   }
   $config_options->{"dbuser"} = $db_user;
 
   my $db_pwd = $self->getDbOption("password");
   unless ( $db_pwd ) {
-    $self->warn("Cannot configure DB connection : DB password missing");
+    $self->warn("Cannot configure DB connection : DB password missing (internal error)");
     return 1;
   }
   $config_options->{"dbpwd"} = $db_pwd;
@@ -1454,7 +1454,7 @@ sub getRoleServices {
 
   my $role = shift;
   unless ( $role ) {
-    $self->error("$function_name: 'role' argument missing");
+    $self->error("$function_name: 'role' argument missing (internal error)");
     return 0;
   }
 
@@ -1521,7 +1521,7 @@ sub serviceRestartNeeded {
 
   my $roles = shift;
   unless ( $roles ) {
-    $self->error("$function_name: 'roles' argument missing");
+    $self->error("$function_name: 'roles' argument missing (internal error)");
     return 0;
   }
 
@@ -1565,7 +1565,7 @@ sub enableService {
 
   my $service = shift;
   unless ( $service ) {
-    $self->error("$function_name: 'service' argument missing");
+    $self->error("$function_name: 'service' argument missing (internal error)");
     return 0;
   }
 
@@ -1688,7 +1688,7 @@ sub hostHasRoles {
 
   my $roles = shift;
   unless ( $roles ) {
-    $self->error("$function_name: 'roles' argument missing");
+    $self->error("$function_name: 'roles' argument missing (internal error)");
     return 0;
   }
 
@@ -1723,7 +1723,7 @@ sub getHostsList {
 
   my $role = shift;
   unless ( $role ) {
-    $self->error("$function_name: 'role' argument missing");
+    $self->error("$function_name: 'role' argument missing (internal error)");
     return 1;
   }
 
@@ -1750,12 +1750,12 @@ sub getHostConfig {
 
   my $role = shift;
   unless ( $role ) {
-    $self->error("$function_name: 'role' argument missing");
+    $self->error("$function_name: 'role' argument missing (internal error)");
     return 1;
   }
   my $host = shift;
   unless ( $host ) {
-    $self->error("$function_name: 'host' argument missing");
+    $self->error("$function_name: 'host' argument missing (internal error)");
     return 1;
   }
 
@@ -1783,13 +1783,13 @@ sub updateRoleConfig {
  
   my $role = shift;
   unless ( $role ) {
-    $self->error("$function_name: 'role' argument missing");
+    $self->error("$function_name: 'role' argument missing (internal error)");
     return 1;
   }
  
   my $config = shift;
   unless ( $config ) {
-    $self->error("$function_name: 'config' argument missing");
+    $self->error("$function_name: 'config' argument missing (internal error)");
     return 1;
   }
  
