@@ -130,45 +130,27 @@ sub formatAttributeValue {
   my $formatted_value;
   if ( $value_fmt == LINE_VALUE_HOST_LIST ) {    
     # Duplicates may exist as result of a join. Check it.
+    # Some config files are sensitive to extra spaces : this code ensure that there is none.
     my @hosts = split /\s+/, $attr_value;
-    my %hosts;
-    for my $host (@hosts) {
-      unless ( exists($hosts{$host}) ) {
-        $hosts{$host} = "";
-      }
-    }  
-    my $formatted_value="";
-    for my $host (sort keys %hosts) {
-      $formatted_value .= "$host ";
-    }
-    # Some config files are sensitive to extra spaces : suppress trailing spaces
-    $formatted_value =~ s/\s+$//;
+    my %hosts = map { $_ => '' } @hosts;
+    $formatted_value = join(" ", sort keys %hosts);
     $self->debug(1,"Formatted hosts list : >>$formatted_value<<");
 
   } elsif ( $value_fmt == LINE_VALUE_BOOLEAN ) {
-    if ( $attr_value ) {
-      $formatted_value = '"yes"';
-    } else {
-      $formatted_value = '"no"';
-    }
+    $formatted_value = $attr_value ? 'yes' : 'no';
 
   } elsif ( $value_fmt == LINE_VALUE_INSTANCE_PARAMS ) {
+    $formatted_value = '';          # Don't return undef if no matching attributes is found
     # Instance parameters are described in a nlist
-    if ( exists($attr_value->{logFile}) ) {
-      $formatted_value .= " -l $attr_value->{logFile}";
-    }
-    if ( exists($attr_value->{configFile}) ) {
-      $formatted_value .= " -c $attr_value->{configFile}";
-    }
-    if ( exists($attr_value->{logKeep}) ) {
-      $formatted_value .= " -k $attr_value->{logKeep}";
-    }
+    $formatted_value .= " -l $attr_value->{logFile}" if $attr_value->{logFile};
+    $formatted_value .= " -c $attr_value->{configFile}" if $attr_value->{configFile};
+    $formatted_value .= " -k $attr_value->{logKeep}" if $attr_value->{logKeep};
     
   } elsif ( $value_fmt == LINE_VALUE_ARRAY ) {
     $formatted_value = join " ", @$attr_value;
 
   } elsif ( $value_fmt == LINE_VALUE_HASH_KEYS ) {
-    $formatted_value = join " ", keys(%$attr_value);
+    $formatted_value = join " ", sort keys %$attr_value;
     
   } elsif ( ($value_fmt == LINE_VALUE_AS_IS) || ($value_fmt == LINE_VALUE_STRING_HASH) ) {
     $formatted_value = $attr_value;
@@ -179,7 +161,9 @@ sub formatAttributeValue {
 
   # Quote value if necessary
   if ( ($line_fmt == LINE_FORMAT_PARAM) || ($line_fmt == LINE_FORMAT_ENVVAR) ) {
-    if ( $formatted_value =~ /\s+/ ) {
+    if ( (($formatted_value =~ /\s+/) && ($formatted_value !~ /^".*"$/)) ||
+         ($value_fmt == LINE_VALUE_BOOLEAN) ||
+         ($formatted_value eq '') ) {
       $self->debug(2,"$function_name: quoting value '$formatted_value'");
       $formatted_value = '"' . $formatted_value . '"';
     }
@@ -658,7 +642,7 @@ sub updateConfigFile {
     my $attribute_present = 1;
     my $config_updated = 0;
     if ( $attribute ) {
-      for my $option_set (@option_sets) {
+      foreach my $option_set (@option_sets) {
         my $attr_value;
         if ( $option_set eq "GLOBAL" ) {
           if ( exists($config_options->{$attribute}) ) {
