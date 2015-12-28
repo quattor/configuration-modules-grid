@@ -8,7 +8,7 @@ use warnings;
 use Test::More tests => 12;
 use Test::NoWarnings;
 use Test::Quattor;
-use NCM::Component::DPMLFC::RuleBasedEditor qw(:rule_constants);
+use NCM::Component::dpmlfc::RuleBasedEditor qw(:rule_constants);
 use Readonly;
 use CAF::Object;
 Test::NoWarnings::clear_warnings();
@@ -144,7 +144,7 @@ $CAF::Object::NoAction = 1;
 # Test negated keywords
 my $dpm_options = {};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
-my $changes = NCM::Component::DPMLFC::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
+my $changes = NCM::Component::dpmlfc::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
                                                                         \%config_rules_1,
                                                                         $dpm_options,
                                                                         \%parser_options);
@@ -156,7 +156,7 @@ $fh->close();
 # Test removal of a config line is config option is not defined
 $dpm_options = {"dpm" => {"globusThreadModel" => "pthread"}};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
-$changes = NCM::Component::DPMLFC::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
+$changes = NCM::Component::dpmlfc::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
                                                                      \%config_rules_2,
                                                                      $dpm_options,
                                                                      \%parser_options);
@@ -168,7 +168,7 @@ $fh->close();
 # Test removal of a config line is rule condition is not met
 $dpm_options = {"dpm" => {"globusThreadModel" => "pthread"}};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
-$changes = NCM::Component::DPMLFC::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
+$changes = NCM::Component::dpmlfc::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
                                                                      \%config_rules_3,
                                                                      $dpm_options,
                                                                      \%parser_options);
@@ -181,7 +181,7 @@ $fh->close();
 # when keyword is prefixed by ?
 $dpm_options = {"dpm" => {"globusThreadModel" => "pthread"}};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
-$changes = NCM::Component::DPMLFC::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
+$changes = NCM::Component::dpmlfc::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
                                                                      \%config_rules_4,
                                                                      $dpm_options);
 $fh = get_file($DPM_CONF_FILE);
@@ -193,7 +193,7 @@ $fh->close();
 # Test removal of config lines appearing multiple times
 $dpm_options = {"dpm" => {"globusThreadModel" => "pthread"}};
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_2);
-$changes = NCM::Component::DPMLFC::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
+$changes = NCM::Component::dpmlfc::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
                                                                      \%config_rules_1,
                                                                      $dpm_options,
                                                                      \%parser_options);

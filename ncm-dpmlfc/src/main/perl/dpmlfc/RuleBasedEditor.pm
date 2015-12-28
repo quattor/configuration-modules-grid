@@ -12,7 +12,7 @@
 #
 #######################################################################
 
-package NCM::Component::DPMLFC::RuleBasedEditor;
+package NCM::Component::${project.artifactId}::RuleBasedEditor;
 
 use strict;
 use warnings;

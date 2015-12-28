@@ -8,7 +8,7 @@ use warnings;
 use Test::More tests => 10;
 use Test::NoWarnings;
 use Test::Quattor;
-use NCM::Component::DPMLFC::RuleBasedEditor qw(:rule_constants);
+use NCM::Component::dpmlfc::RuleBasedEditor qw(:rule_constants);
 use Readonly;
 use CAF::Object;
 Test::NoWarnings::clear_warnings();
@@ -233,7 +233,7 @@ my $dpm_options = {"dpm" => {"allowCoreDump" => 1,
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
 # Test  simple variable substitution
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
-my $changes = NCM::Component::DPMLFC::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
+my $changes = NCM::Component::dpmlfc::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
                                                                         \%dpm_config_rules_1,
                                                                         $dpm_options);
 my $fh = get_file($DPM_CONF_FILE);
@@ -243,7 +243,7 @@ $fh->close();
 
 # Test potentially ambiguous config (duplicated lines, similar keywords)
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_2);
-$changes = NCM::Component::DPMLFC::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
+$changes = NCM::Component::dpmlfc::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
                                                                      \%dpm_config_rules_1,
                                                                      $dpm_options);
 $fh = get_file($DPM_CONF_FILE);
@@ -253,7 +253,7 @@ $fh->close();
 
 # Test array displayed as list
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_3);
-$changes = NCM::Component::DPMLFC::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
+$changes = NCM::Component::dpmlfc::RuleBasedEditor->updateConfigFile($DPM_CONF_FILE,
                                                                      \%dpm_config_rules_2,
                                                                      $dpm_options);
 $fh = get_file($DPM_CONF_FILE);
@@ -265,7 +265,7 @@ $fh->close();
 my $dmlite_options = {"dav" => {"NSFlags" => [ "Write", "RemoteCopy" ],
                                }};
 set_file_contents($DMLITE_CONF_FILE,$DMLITE_INITIAL_CONF_1);
-$changes = NCM::Component::DPMLFC::RuleBasedEditor->updateConfigFile($DMLITE_CONF_FILE,
+$changes = NCM::Component::dpmlfc::RuleBasedEditor->updateConfigFile($DMLITE_CONF_FILE,
                                                                      \%dav_config_rules,
                                                                      $dmlite_options);
 $fh = get_file($DMLITE_CONF_FILE);

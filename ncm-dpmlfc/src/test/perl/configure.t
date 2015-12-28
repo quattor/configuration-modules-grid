@@ -17,7 +17,7 @@ This is a test suite for ncm-dpmlfc (full cconfiguration).
 
 =cut
 
-Readonly my $DPMLFC_CONFIG_PATH => '/software/components/dpmlfc';
+Readonly my $dpmlfc_CONFIG_PATH => '/software/components/dpmlfc';
 
 Readonly my $DPM_HEAD_HOST => 'grid05.lal.in2p3.fr';
 Readonly my $DPM_DISK_HOST => 'grid16.lal.in2p3.fr';
