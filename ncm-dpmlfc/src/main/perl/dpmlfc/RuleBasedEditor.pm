@@ -620,21 +620,25 @@ sub _parse_rules {
     $self->debug(1,"$function_name: processing rule $rule_id (variable=>>>$keyword<<<, comment_line=",
                           "$comment_line, condition=>>>$condition<<<, rule=>>>$rule<<<, fmt=$line_fmt)");
 
-    # Check if only rules with ALWAYS conditions must be applied 
-    if ( $parser_options->{always_rules_only} ) {
-      if ( $condition eq $RULE_CONDITION_ALWAYS ) {
-        $condition = '';
-      } else {
-        $self->debug(1,"$function_name: rule ignored ($RULE_CONDITION_ALWAYS condition not set)");
-        next;
-      }
-    }
-
     # If the keyword was "negated", remove (comment out) configuration line if present and enabled
     if ( $comment_line ) {
       $self->debug(1,"$function_name: keyword '$keyword' negated, removing configuration line");
       $self->_removeConfigLine($fh,$keyword,$line_fmt);
       next;
+    }
+
+    # Check if only rules with ALWAYS condition must be applied.
+    # ALWAYS is a special condition that is used to flag the only rules that
+    # must be applied if the option always_rules_only is set. When this option
+    # is not set, this condition has no effect and is just reset to an empty conditions.
+    if ( $parser_options->{always_rules_only} ) {
+      if ( $condition ne $RULE_CONDITION_ALWAYS ) {
+        $self->debug(1,"$function_name: rule ignored ($RULE_CONDITION_ALWAYS condition not set)");
+        next;
+      }
+    }
+    if ( $condition eq $RULE_CONDITION_ALWAYS ) {
+      $condition = '';
     }
 
     # Check if rule condition is met if one is defined
@@ -673,11 +677,14 @@ sub _parse_rules {
           $cond_satisfied = 0 unless exists($config_options->{$cond_option_set});
         }
       }
-      # When the condition is not satisfied and if option remove_if_undef is set, 
-      # remove configuration line (if present).
-      if ( !$cond_satisfied  && $remove_if_undef ) {
-        $self->debug(1,"$function_name: condition met but negated, removing configuration line");
-        $self->_removeConfigLine($fh,$keyword,$line_fmt);
+      if ( !$cond_satisfied  ) {
+        # When the condition is not satisfied and if option remove_if_undef is set, 
+        # remove configuration line (if present).
+        $self->debug(1,"$function_name: condition not satisfied");
+        if ( $remove_if_undef ) {
+          $self->debug(1,"$function_name: removing configuration line (remove_if_undef set)");
+          $self->_removeConfigLine($fh,$keyword,$line_fmt);
+        }
         next;
       }
     }
