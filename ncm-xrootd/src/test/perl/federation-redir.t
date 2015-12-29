@@ -287,6 +287,8 @@ $CAF::Object::NoAction = 1;
 
 my $comp = NCM::Component::xrootd->new('xrootd');
 my $fed_redir_rules = $comp->getRules("fedredir");
+my %parser_options;
+$parser_options{remove_if_undef} = 1;
 
 
 # Test with CMS federation parameters
@@ -300,7 +302,8 @@ $xrootd_options->{fedparams} = $xrootd_options->{federations}->{$federation};
 set_file_contents(REDIR_CONF_FILE,REDIR_INITIAL_CONF_1);
 my $changes = $comp->updateConfigFile(REDIR_CONF_FILE,
                                       $fed_redir_rules,
-                                      $xrootd_options);
+                                      $xrootd_options,
+                                      \%parser_options);
 my $fh = get_file(REDIR_CONF_FILE);
 ok(defined($fh), REDIR_CONF_FILE." was opened");
 is("$fh", REDIR_EXPECTED_CONF_1, REDIR_CONF_FILE." has expected contents");
@@ -310,7 +313,8 @@ $fh->close();
 set_file_contents(REDIR_CONF_FILE,REDIR_INITIAL_CONF_2);
 $changes = $comp->updateConfigFile(REDIR_CONF_FILE,
                                       $fed_redir_rules,
-                                      $xrootd_options);
+                                      $xrootd_options,
+                                      \%parser_options);
 $fh = get_file(REDIR_CONF_FILE);
 ok(defined($fh), REDIR_CONF_FILE." was opened");
 is("$fh", CMS_REDIR_EXPECT_CONFG, REDIR_CONF_FILE." (cms) has expected contents");
@@ -327,7 +331,8 @@ $xrootd_options->{fedparams} = $xrootd_options->{federations}->{$federation};
 set_file_contents(REDIR_CONF_FILE,REDIR_INITIAL_CONF_2);
 $changes = $comp->updateConfigFile(REDIR_CONF_FILE,
                                       $fed_redir_rules,
-                                      $xrootd_options);
+                                      $xrootd_options,
+                                      \%parser_options);
 $fh = get_file(REDIR_CONF_FILE);
 ok(defined($fh), REDIR_CONF_FILE." was opened");
 is("$fh", ATLAS_REDIR_EXPECT_CONFG, REDIR_CONF_FILE." (atlas) has expected contents");
