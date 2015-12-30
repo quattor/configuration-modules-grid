@@ -5,7 +5,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 18;
+use Test::More tests => 19;
 use Test::NoWarnings;
 use Test::Quattor;
 use NCM::Component::dpmlfc::RuleBasedEditor qw(:rule_constants);
@@ -34,11 +34,11 @@ is($formatted_value, $HOST_LIST_OK, "Simple host list correctly formatted");
 $formatted_value = NCM::Component::dpmlfc::RuleBasedEditor->_formatAttributeValue($HOST_LIST_OK,
                                                                                   LINE_FORMAT_PARAM,
                                                                                   LINE_VALUE_HOST_LIST);
-is($formatted_value, $HOST_LIST_QUOTED, "Qoted host list correctly formatted");
+is($formatted_value, $HOST_LIST_QUOTED, "Quoted host list correctly formatted");
 $formatted_value = NCM::Component::dpmlfc::RuleBasedEditor->_formatAttributeValue($HOST_LIST_DUPLICATES,
                                                                                   LINE_FORMAT_PARAM,
                                                                                   LINE_VALUE_HOST_LIST);
-is($formatted_value, $HOST_LIST_QUOTED, "Qoted list with duplicates correctly formatted");
+is($formatted_value, $HOST_LIST_QUOTED, "Quoted list with duplicates correctly formatted");
 
 
 # LINE_VALUE_BOOLEAN
@@ -61,7 +61,8 @@ is($formatted_value, $TRUE_QUOTED, "Boolean (true, quoted) correctly formatted")
 
 # LINE_VALUE_AS_IS
 Readonly my $AS_IS_VALUE => 'This is a Test';
-Readonly my $AS_IS_VALUE_QUOTED => '"This is a Test"';
+Readonly my $AS_IS_VALUE_DOUBLE_QUOTED => '"This is a Test"';
+Readonly my $AS_IS_VALUE_SINGLE_QUOTED => "'This is a Test'";
 Readonly my $EMPTY_VALUE => '';
 Readonly my $EMPTY_VALUE_QUOTED => '""';
 $formatted_value = NCM::Component::dpmlfc::RuleBasedEditor->_formatAttributeValue($AS_IS_VALUE,
@@ -71,15 +72,19 @@ is($formatted_value, $AS_IS_VALUE, "Literal value correctly formatted");
 $formatted_value = NCM::Component::dpmlfc::RuleBasedEditor->_formatAttributeValue($AS_IS_VALUE,
                                                                                   LINE_FORMAT_ENVVAR,
                                                                                   LINE_VALUE_AS_IS);
-is($formatted_value, $AS_IS_VALUE_QUOTED, "Literal value (quoted) correctly formatted");
-$formatted_value = NCM::Component::dpmlfc::RuleBasedEditor->_formatAttributeValue($AS_IS_VALUE_QUOTED,
+is($formatted_value, $AS_IS_VALUE_DOUBLE_QUOTED, "Literal value (quoted) correctly formatted");
+$formatted_value = NCM::Component::dpmlfc::RuleBasedEditor->_formatAttributeValue($AS_IS_VALUE_DOUBLE_QUOTED,
                                                                                   LINE_FORMAT_XRDCFG,
                                                                                   LINE_VALUE_AS_IS);
-is($formatted_value, $AS_IS_VALUE_QUOTED, "Quoted literal value correctly formatted");
-$formatted_value = NCM::Component::dpmlfc::RuleBasedEditor->_formatAttributeValue($AS_IS_VALUE_QUOTED,
+is($formatted_value, $AS_IS_VALUE_DOUBLE_QUOTED, "Quoted literal value correctly formatted");
+$formatted_value = NCM::Component::dpmlfc::RuleBasedEditor->_formatAttributeValue($AS_IS_VALUE_DOUBLE_QUOTED,
                                                                                   LINE_FORMAT_ENVVAR,
                                                                                   LINE_VALUE_AS_IS);
-is($formatted_value, $AS_IS_VALUE_QUOTED, "Already quoted literal value correctly formatted");
+is($formatted_value, $AS_IS_VALUE_DOUBLE_QUOTED, "Already quoted literal value correctly formatted");
+$formatted_value = NCM::Component::dpmlfc::RuleBasedEditor->_formatAttributeValue($AS_IS_VALUE_SINGLE_QUOTED,
+                                                                                  LINE_FORMAT_ENVVAR,
+                                                                                  LINE_VALUE_AS_IS);
+is($formatted_value, $AS_IS_VALUE_SINGLE_QUOTED, "Already single quoted literal value correctly formatted");
 $formatted_value = NCM::Component::dpmlfc::RuleBasedEditor->_formatAttributeValue($EMPTY_VALUE,
                                                                                   LINE_FORMAT_XRDCFG,
                                                                                   LINE_VALUE_AS_IS);
