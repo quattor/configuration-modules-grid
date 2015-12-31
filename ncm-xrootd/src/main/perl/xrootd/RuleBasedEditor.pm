@@ -156,7 +156,7 @@ sub updateConfigFile {
                             BEGINNING_OF_FILE,
                            );
   
-  $self->_parse_rules($fh,
+  $self->_apply_rules($fh,
                       $config_rules,
                       $config_options,
                       $parser_options);
@@ -521,7 +521,136 @@ sub _updateConfigLine {
 
 =pod
 
-=item _parse_rules
+=item _parse_rule
+
+Parse a rule and return as a hash the information necessary to edit lines. If the rule
+condition is not met, undef is returned. If an error occured, the hash contains more
+information about the error.
+
+Arguments :
+    rule: rule to parse
+    config_options: configuration parameters used to build actual configuration
+    parser_options: a hash setting options to modify the behaviour of this method
+
+Supported entries for options hash:
+    always_rules_only: if true, apply only rules with ALWAYS condition (D: false)
+    remove_if_undef: if true, remove matching configuration line is rule condition is not met (D: false)
+
+Return value: undef if the rule condition is not met or a hash with the following information:
+    error_msg: a non empty string if an error happened during parsing
+    remove_matching_lines: a boolean indicating that the matching lines must be removed
+    option_sets: a list of option sets containing the attribute to use in the updated line
+    attribute: the option attribute to use in the updated line
+    
+=cut
+
+sub _parse_rule {
+  my $function_name = "_parse_rule";
+  my ($self, $rule, $config_options, $parser_options) = @_;
+  my %rule_info;
+
+  unless ( $rule ) {
+    $self->error("$function_name: 'rule' argument missing (internal error)");
+    $rule_info{error_msg} = "rule parser internal error (missing argument)";
+    return \%rule_info;
+  }
+  unless ( $config_options ) {
+    $self->error("$function_name: 'config_options' argument missing (internal error)");
+    $rule_info{error_msg} = "rule parser internal error (missing argument)";
+    return \%rule_info;
+  }
+  unless ( defined($parser_options) ) {
+    $self->debug(2,"$function_name: 'parser_options' undefined");
+    $parser_options = {};
+  }
+  if ( defined($parser_options->{always_rules_only}) ) {
+    $self->debug(1,"$function_name: 'always_rules_only' option set to ".$parser_options->{always_rules_only});
+  } else {
+    $self->debug(1,"$function_name: 'always_rules_only' option not defined: assuming $LINE_OPT_DEF_ALWAYS_RULES_ONLY");
+    $parser_options->{always_rules_only} = $LINE_OPT_DEF_ALWAYS_RULES_ONLY;
+  }
+
+  (my $condition, my $tmp) = split /->/, $rule;
+  if ( $tmp ) {
+    $rule = $tmp;
+  } else {
+    $condition = "";
+  }
+  $self->debug(1,"$function_name: condition=>>>$condition<<<, rule=>>>$rule<<<");
+
+  # Check if only rules with ALWAYS condition must be applied.
+  # ALWAYS is a special condition that is used to flag the only rules that
+  # must be applied if the option always_rules_only is set. When this option
+  # is not set, this condition has no effect and is just reset to an empty conditions.
+  if ( $parser_options->{always_rules_only} ) {
+    if ( $condition ne $RULE_CONDITION_ALWAYS ) {
+      $self->debug(1,"$function_name: rule ignored ($RULE_CONDITION_ALWAYS condition not set)");
+      return;
+    }
+  }
+  if ( $condition eq $RULE_CONDITION_ALWAYS ) {
+    $condition = '';
+  }
+
+  # Check if rule condition is met if one is defined
+  if ( $condition ne "" ) {
+    $self->debug(1,"$function_name: checking condition >>>$condition<<<");
+
+    # Condition may be negated if it starts with a !: remove it from the condition value.
+    # If the condition is negated, when the condition is true the rule must not be applied.
+    my $negate = 0;
+    if ( $condition =~ /^!/ ) {
+      $negate = 1;
+      $condition =~ s/^!//;
+    }
+    my ($cond_attribute,$cond_option_set) = split /:/, $condition;
+    unless ( $cond_option_set ) {
+      $cond_option_set = $cond_attribute;
+      $cond_attribute = "";
+    }
+    $self->debug(2,"$function_name: condition option set = '$cond_option_set', ".
+                       "condition attribute = '$cond_attribute', negate=$negate");
+    my $cond_satisfied = 1;       # Assume condition is satisfied
+    if ( $cond_attribute ) {
+      # Due to Perl autovivification, testing directly exists($config_options->{$cond_option_set}->{$cond_attribute}) will spring
+      # $config_options->{$cond_option_set} into existence if it doesn't exist.
+      my $cond_true = $config_options->{$cond_option_set} && 
+                      exists($config_options->{$cond_option_set}->{$cond_attribute});          
+      if ( $negate ) {
+        $cond_satisfied = 0 if $cond_true;
+      } else {          
+        $cond_satisfied = 0 unless $cond_true;
+      }
+    } elsif ( $cond_option_set ) {
+      if ( $negate ) {
+        $cond_satisfied = 0 if exists($config_options->{$cond_option_set});
+      } else {         
+        $cond_satisfied = 0 unless exists($config_options->{$cond_option_set});
+      }
+    }
+    if ( !$cond_satisfied  ) {
+      # When the condition is not satisfied and if option remove_if_undef is set, 
+      # remove configuration line (if present).
+      $self->debug(1,"$function_name: condition not satisfied, flag set to remove matching configuration lines");
+      $rule_info{remove_matching_lines} = 1;
+      return \%rule_info;
+    }
+  }  
+
+  my @option_sets;
+  ($rule_info{attribute}, my $option_sets_str) = split /:/, $rule;
+  if ( $option_sets_str ) {
+    @option_sets = split /\s*,\s*/, $option_sets_str;
+  }
+  $rule_info{option_sets} = \@option_sets;
+
+  return \%rule_info;
+}
+
+
+=pod
+
+=item _apply_rules
 
 Apply configuration rules. This method is the real workhorse of the rule-based editor.
 
@@ -529,7 +658,7 @@ Arguments :
     fh : a FileEditor object
     config_rules: config rules corresponding to the file to build
     config_options: configuration parameters used to build actual configuration
-    options: a hash setting options to modify the behaviour of this function
+    parser_options: a hash setting options to modify the behaviour of this function
 
 Supported entries for options hash:
     always_rules_only: if true, apply only rules with ALWAYS condition (D: false)
@@ -537,8 +666,8 @@ Supported entries for options hash:
 
 =cut
 
-sub _parse_rules {
-  my $function_name = "_parse_rules";
+sub _apply_rules {
+  my $function_name = "_apply_rules";
   my ($self, $fh, $config_rules, $config_options, $parser_options) = @_;
 
   unless ( $fh ) {
@@ -557,18 +686,13 @@ sub _parse_rules {
     $self->debug(2,"$function_name: 'parser_options' undefined");
     $parser_options = {};
   }
-  if ( defined($parser_options->{always_rules_only}) ) {
-    $self->debug(1,"$function_name: 'always_rules_only' option set to ".$parser_options->{always_rules_only});
-  } else {
-    $self->debug(1,"$function_name: 'always_rules_only' option not defined: assuming $LINE_OPT_DEF_ALWAYS_RULES_ONLY");
-    $parser_options->{always_rules_only} = $LINE_OPT_DEF_ALWAYS_RULES_ONLY;
-  }
   if ( defined($parser_options->{remove_if_undef}) ) {
     $self->debug(1,"$function_name: 'remove_if_undef' option set to ".$parser_options->{remove_if_undef});
   } else {
     $self->debug(1,"$function_name: 'remove_if_undef' option not defined: assuming $LINE_OPT_DEF_REMOVE_IF_UNDEF");
     $parser_options->{remove_if_undef} = $LINE_OPT_DEF_REMOVE_IF_UNDEF;
   }
+
 
   # Loop over all config rule entries.
   # Config rules are stored in a hash whose key is the variable to write
@@ -587,10 +711,11 @@ sub _parse_rules {
   my $rule_id = 0;
   foreach my $keyword (sort keys %$config_rules) {
     my $rule = $config_rules->{$keyword};
+    $rule = '' unless defined($rule);
     $rule_id++;
 
-    # Initialize remove_if_undef flag according the default for this file
-    my $remove_if_undef = $parser_options->{remove_if_undef};
+    # Initialize parser_options for this rule according the default for this file
+    my $rule_parsing_options = { %{$parser_options} };
 
     # Check if the keyword is prefixed by:
     #     -  a '-': in this case the corresponding line must be unconditionally 
@@ -603,7 +728,7 @@ sub _parse_rules {
       $comment_line = 1;
     } elsif ( $keyword =~ /^\?/ ) {
       $keyword =~ s/^\?//;
-      $remove_if_undef = 1;
+      $rule_parsing_options->{remove_if_undef} = 1;
       $self->debug(2,"$function_name: 'remove_if_undef' option set for the current rule");
     }
 
@@ -622,14 +747,6 @@ sub _parse_rules {
       $value_opt = LINE_VALUE_OPT_NONE;      
     }
 
-    (my $condition, my $tmp) = split /->/, $rule;
-    if ( $tmp ) {
-      $rule = $tmp;
-    } else {
-      $condition = "";
-    }
-    $self->debug(1,"$function_name: processing rule $rule_id (variable=>>>$keyword<<<, comment_line=",
-                          "$comment_line, condition=>>>$condition<<<, rule=>>>$rule<<<, fmt=$line_fmt)");
 
     # If the keyword was "negated", remove (comment out) configuration line if present and enabled
     if ( $comment_line ) {
@@ -638,72 +755,29 @@ sub _parse_rules {
       next;
     }
 
-    # Check if only rules with ALWAYS condition must be applied.
-    # ALWAYS is a special condition that is used to flag the only rules that
-    # must be applied if the option always_rules_only is set. When this option
-    # is not set, this condition has no effect and is just reset to an empty conditions.
-    if ( $parser_options->{always_rules_only} ) {
-      if ( $condition ne $RULE_CONDITION_ALWAYS ) {
-        $self->debug(1,"$function_name: rule ignored ($RULE_CONDITION_ALWAYS condition not set)");
+
+    # Parse rule if it is non empty
+    my $rule_info;
+    if ( $rule ne '' ) {
+      $self->debug(1,"$function_name: processing rule $rule_id (variable=>>>$keyword<<<, rule=>>>$rule<<<, fmt=$line_fmt)");
+      $rule_info = $self->_parse_rule($rule,$config_options,$rule_parsing_options);
+      next unless $rule_info;
+      $self->debug(2,"$function_name: information returned by rule parser: ".join(" ",sort(keys(%$rule_info))));
+  
+      if ( exists($rule_info->{error_msg}) ) {
+        $self->error("Error parsing rule >>>$rule<<<: ".$rule_info->{error_msg});
+        # FIXME: decide whether an invalid rule is just ignored or causes any modification to be prevented.
+        # $fh->cancel()
         next;
-      }
-    }
-    if ( $condition eq $RULE_CONDITION_ALWAYS ) {
-      $condition = '';
-    }
-
-    # Check if rule condition is met if one is defined
-    if ( $condition ne "" ) {
-      $self->debug(1,"$function_name: checking condition >>>$condition<<<");
-
-      # Condition may be negated if it starts with a !: remove it from the condition value.
-      # If the condition is negated, when the condition is true the rule must not be applied.
-      my $negate = 0;
-      if ( $condition =~ /^!/ ) {
-        $negate = 1;
-        $condition =~ s/^!//;
-      }
-      my ($cond_attribute,$cond_option_set) = split /:/, $condition;
-      unless ( $cond_option_set ) {
-        $cond_option_set = $cond_attribute;
-        $cond_attribute = "";
-      }
-      $self->debug(2,"$function_name: condition option set = '$cond_option_set', ".
-                         "condition attribute = '$cond_attribute', negate=$negate");
-      my $cond_satisfied = 1;       # Assume condition is satisfied
-      if ( $cond_attribute ) {
-        # Due to Perl autovivification, testing directly exists($config_options->{$cond_option_set}->{$cond_attribute}) will spring
-        # $config_options->{$cond_option_set} into existence if it doesn't exist.
-        my $cond_true = $config_options->{$cond_option_set} && 
-                        exists($config_options->{$cond_option_set}->{$cond_attribute});          
-        if ( $negate ) {
-          $cond_satisfied = 0 if $cond_true;
-        } else {          
-          $cond_satisfied = 0 unless $cond_true;
-        }
-      } elsif ( $cond_option_set ) {
-        if ( $negate ) {
-          $cond_satisfied = 0 if exists($config_options->{$cond_option_set});
-        } else {         
-          $cond_satisfied = 0 unless exists($config_options->{$cond_option_set});
-        }
-      }
-      if ( !$cond_satisfied  ) {
-        # When the condition is not satisfied and if option remove_if_undef is set, 
-        # remove configuration line (if present).
-        $self->debug(1,"$function_name: condition not satisfied");
-        if ( $remove_if_undef ) {
-          $self->debug(1,"$function_name: removing configuration line (remove_if_undef set)");
+      } elsif ( $rule_info->{remove_matching_lines} ) {
+        if ( $rule_parsing_options->{remove_if_undef} ) {
+          $self->debug(1,"$function_name: removing configuration lines for keyword '$keyword'");
           $self->_removeConfigLine($fh,$keyword,$line_fmt);
+        } else {
+          $self->debug(1,"$function_name: remove_if_undef not set, ignoring line to remove");
         }
-        next;
+        next;      
       }
-    }
-
-    my @option_sets;
-    (my $attribute, my $option_sets_str) = split /:/, $rule;
-    if ( $option_sets_str ) {
-      @option_sets = split /\s*,\s*/, $option_sets_str;
     }
 
     # Build the value to be substitued for each option set specified.
@@ -712,22 +786,23 @@ sub _parse_rules {
     my $config_value = "";
     my $attribute_present = 1;
     my $config_updated = 0;
-    if ( $attribute ) {
-      foreach my $option_set (@option_sets) {
+    if ( $rule_info->{attribute} ) {
+      foreach my $option_set (@{$rule_info->{option_sets}}) {
         my $attr_value;
+        $self->debug(1,"$function_name: retrieving '".$rule_info->{attribute}."' value in option set $option_set");
         if ( $option_set eq $RULE_OPTION_SET_GLOBAL ) {
-          if ( exists($config_options->{$attribute}) ) {
-            $attr_value = $config_options->{$attribute};
+          if ( exists($config_options->{$rule_info->{attribute}}) ) {
+            $attr_value = $config_options->{$rule_info->{attribute}};
           } else {
-            $self->debug(1,"$function_name: attribute '$attribute' not found in global option set");
+            $self->debug(1,"$function_name: attribute '".$rule_info->{attribute}."' not found in global option set");
             $attribute_present = 0;
           }
         } else {
           # See comment above about Perl autovivification and impact on testing attribute existence
-          if ( $config_options->{$option_set} && exists($config_options->{$option_set}->{$attribute}) ) {
-            $attr_value = $config_options->{$option_set}->{$attribute};
+          if ( $config_options->{$option_set} && exists($config_options->{$option_set}->{$rule_info->{attribute}}) ) {
+            $attr_value = $config_options->{$option_set}->{$rule_info->{attribute}};
           } else {
-            $self->debug(1,"$function_name: attribute '$attribute' not found in option set '$option_set'");
+            $self->debug(1,"$function_name: attribute '".$rule_info->{attribute}."' not found in option set '$option_set'");
             $attribute_present = 0;
           } 
         }
@@ -739,8 +814,8 @@ sub _parse_rules {
         # no longer part of the configuration in a still existing LINE_VALUE_ARRAY or
         # LINE_VALUE_STRING_HASH.
         unless ( $attribute_present ) {
-          if ( $remove_if_undef ) {
-            $self->debug(1,"$function_name: attribute '$attribute' undefined, removing configuration line");
+          if ( $rule_parsing_options->{remove_if_undef} ) {
+            $self->debug(1,"$function_name: attribute '".$rule_info->{attribute}."' undefined, removing configuration line");
             $self->_removeConfigLine($fh,$keyword,$line_fmt);
           }
           next;
@@ -774,7 +849,7 @@ sub _parse_rules {
             # Keys may be escaped if they contain characters like '/': unescaping a non-escaped
             # string is generally harmless.
             my $tmp = unescape($k)." $v";
-            $self->debug(1,"$function_name: formatting (string hash) attribute '$attribute' value ($tmp, value_fmt=$value_fmt)");
+            $self->debug(1,"$function_name: formatting (string hash) attribute '".$rule_info->{attribute}."' value ($tmp, value_fmt=$value_fmt)");
             $config_value = $self->_formatAttributeValue($tmp,
                                                          $line_fmt,
                                                          $value_fmt,
@@ -787,7 +862,7 @@ sub _parse_rules {
           # one for each array value (if value_opt is not LINE_VALUE_OPT_SINGLE, all
           # the values are concatenated on one line).
           foreach my $val (@$attr_value) {
-            $self->debug(1,"$function_name: formatting (array) attribute '$attribute' value ($val, value_fmt=".LINE_VALUE_AS_IS.")");
+            $self->debug(1,"$function_name: formatting (array) attribute '".$rule_info->{attribute}."' value ($val, value_fmt=".LINE_VALUE_AS_IS.")");
             $config_value = $self->_formatAttributeValue($val,
                                                          $line_fmt,
                                                          LINE_VALUE_AS_IS,
@@ -796,16 +871,16 @@ sub _parse_rules {
           }
           $config_updated = 1;
         } else {
-          $self->debug(1,"$function_name: formatting attribute '$attribute' value ($attr_value, value_fmt=$value_fmt)");
+          $self->debug(1,"$function_name: formatting attribute '".$rule_info->{attribute}."' value ($attr_value, value_fmt=$value_fmt)");
           $config_value .= $self->_formatAttributeValue($attr_value,
                                                         $line_fmt,
                                                         $value_fmt);
-          $self->debug(2,"$function_name: adding attribute '".$attribute."' from option set '".$option_set.
+          $self->debug(2,"$function_name: adding attribute '".$rule_info->{attribute}."' from option set '".$option_set.
                                                                 "' to value (config_value=".$config_value.")");
         }
       }
     } else {
-      # $attribute empty means an empty rule : in this case,just write the configuration param.
+      # $rule_info->{attribute} empty means an empty rule : in this case,just write the configuration param.
       $self->debug(1,"$function_name: no attribute specified in rule '$rule'");
     }
 
