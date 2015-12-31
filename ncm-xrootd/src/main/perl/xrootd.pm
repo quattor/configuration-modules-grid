@@ -31,7 +31,7 @@
 package NCM::Component::${project.artifactId};
 
 use strict;
-#use warnings;
+use warnings;
 use vars qw($EC);
 use NCM::Component::${project.artifactId}::RuleBasedEditor qw(:rule_constants);
 use parent qw(NCM::Component NCM::Component::${project.artifactId}::RuleBasedEditor);

@@ -10,6 +10,12 @@
 # updating the file is the Quattor configuration and conditions can be defined
 # based on the contents of this configuration.
 #
+# IMPORTANT NOTE: this code is used (duplicated) in both ncm-dpmlfc and ncm-xrootd.
+#                 It is planned to move it as a CAF module (see
+#                 https://github.com/quattor/CAF/issues/123). In the meantime be
+#                 sure to keep in sync the code used in both components. The
+#                 main version (with the relevant unit tests) is in ncm-dpmlfc).
+#
 #######################################################################
 
 package NCM::Component::${project.artifactId}::RuleBasedEditor;
@@ -156,8 +162,13 @@ sub updateConfigFile {
                       $parser_options);
 
   # Update configuration file if content has changed
+  # When using this method in unit tests, be sure to execute
+  #    set_caf_file_close_diff(1);
+  # in test application before calling this method. Else $changes
+  # will be undefined (and this will cause a warning).
   $self->debug(1,"$function_name: actually updating the file...");
   my $changes = $fh->close();
+  $self->debug(2,"$function_name: $changes modifications applied");
 
   return $changes;
 }

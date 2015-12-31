@@ -290,7 +290,12 @@ my $dmlite_options = {"dav" => {"NSFlags" => [ "Write", "RemoteCopy" ],
 my $all_options = {%$dpm_options, %$dmlite_options};
 
 
+#############
+# Main code #
+#############
+
 $CAF::Object::NoAction = 1;
+set_caf_file_close_diff(1);
 
 set_file_contents($DPM_CONF_FILE,$DPM_INITIAL_CONF_1);
 

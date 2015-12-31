@@ -4,11 +4,17 @@
 # ${build-info}
 #
 #
-# This module implement a rule-based editor that is used to modify the content
+# This module implements a rule-based editor that is used to modify the content
 # of an existing file without taking care of the whole file. Each rule
 # driving the edition process is applied to one matching line. The input for
 # updating the file is the Quattor configuration and conditions can be defined
 # based on the contents of this configuration.
+#
+# IMPORTANT NOTE: this code is used (duplicated) in both ncm-dpmlfc and ncm-xrootd.
+#                 It is planned to move it as a CAF module (see
+#                 https://github.com/quattor/CAF/issues/123). In the meantime be
+#                 sure to keep in sync the code used in both components. The
+#                 main version (with the relevant unit tests) is in ncm-dpmlfc).
 #
 #######################################################################
 
@@ -60,21 +66,21 @@ Readonly my $RULE_OPTION_SET_GLOBAL => 'GLOBAL';
 
 
 # Export constants used to build rules
-Readonly my @RULE_CONSTANTS => ('LINE_FORMAT_PARAM',
-                                'LINE_FORMAT_ENVVAR',
-                                'LINE_FORMAT_XRDCFG',
-                                'LINE_FORMAT_XRDCFG_SETENV',
-                                'LINE_FORMAT_XRDCFG_SET',
-                                'LINE_VALUE_AS_IS',
-                                'LINE_VALUE_BOOLEAN',
-                                'LINE_VALUE_HOST_LIST',
-                                'LINE_VALUE_INSTANCE_PARAMS',
-                                'LINE_VALUE_ARRAY',
-                                'LINE_VALUE_HASH_KEYS',
-                                'LINE_VALUE_STRING_HASH',
-                                'LINE_VALUE_OPT_NONE',
-                                'LINE_VALUE_OPT_SINGLE',
-                               );
+Readonly my @RULE_CONSTANTS => qw(LINE_FORMAT_PARAM
+                                  LINE_FORMAT_ENVVAR
+                                  LINE_FORMAT_XRDCFG
+                                  LINE_FORMAT_XRDCFG_SETENV
+                                  LINE_FORMAT_XRDCFG_SET
+                                  LINE_VALUE_AS_IS
+                                  LINE_VALUE_BOOLEAN
+                                  LINE_VALUE_HOST_LIST
+                                  LINE_VALUE_INSTANCE_PARAMS
+                                  LINE_VALUE_ARRAY
+                                  LINE_VALUE_HASH_KEYS
+                                  LINE_VALUE_STRING_HASH
+                                  LINE_VALUE_OPT_NONE
+                                  LINE_VALUE_OPT_SINGLE
+                                 );
 our @EXPORT_OK;
 our %EXPORT_TAGS;
 push @EXPORT_OK, @RULE_CONSTANTS;
@@ -82,7 +88,7 @@ $EXPORT_TAGS{rule_constants} = \@RULE_CONSTANTS;
 
 
 # Backup file extension
-use constant BACKUP_FILE_EXT => ".old";
+Readonly my $BACKUP_FILE_EXT => ".old";
 
 
 =pod
@@ -111,7 +117,7 @@ Arguments :
 
 Supported entries for options hash:
     always_rules_only: if true, apply only rules with ALWAYS condition (D: false)
-    remove_if_undef: if true, remove maatching configuration line is rule condition is not met (D: false)
+    remove_if_undef: if true, remove matching configuration line is rule condition is not met (D: false)
 
 =cut
 
@@ -137,7 +143,7 @@ sub updateConfigFile {
   }
 
   my $fh = CAF::FileEditor->new($file_name,
-                                backup => BACKUP_FILE_EXT,
+                                backup => $BACKUP_FILE_EXT,
                                 log => $self);
   $fh->seek_begin();
 
@@ -156,8 +162,13 @@ sub updateConfigFile {
                       $parser_options);
 
   # Update configuration file if content has changed
+  # When using this method in unit tests, be sure to execute
+  #    set_caf_file_close_diff(1);
+  # in test application before calling this method. Else $changes
+  # will be undefined (and this will cause a warning).
   $self->debug(1,"$function_name: actually updating the file...");
   my $changes = $fh->close();
+  $self->debug(2,"$function_name: $changes modifications applied");
 
   return $changes;
 }
@@ -235,7 +246,7 @@ sub _formatAttributeValue {
 
   # Quote value if necessary
   if ( ($line_fmt == LINE_FORMAT_PARAM) || ($line_fmt == LINE_FORMAT_ENVVAR) ) {
-    if ( (($formatted_value =~ /\s+/) && ($formatted_value !~ /^".*"$/)) ||
+    if ( (($formatted_value =~ /\s+/) && ($formatted_value !~ /^(["']).*\g1$/)) ||
          ($value_fmt == LINE_VALUE_BOOLEAN) ||
          ($formatted_value eq '') ) {
       $self->debug(2,"$function_name: quoting value '$formatted_value'");
@@ -442,7 +453,7 @@ sub _removeConfigLine {
 
 =item _updateConfigLine
 
-This function do the actual update of a configuration line after doing the final
+This function does the actual update of a configuration line after doing the final
 line formatting based on the line format.
 
 Arguments :
@@ -522,7 +533,7 @@ Arguments :
 
 Supported entries for options hash:
     always_rules_only: if true, apply only rules with ALWAYS condition (D: false)
-    remove_if_undef: if true, remove maatching configuration line is rule condition is not met (D: false)
+    remove_if_undef: if true, remove matching configuration line is rule condition is not met (D: false)
 
 =cut
 
@@ -642,7 +653,7 @@ sub _parse_rules {
     }
 
     # Check if rule condition is met if one is defined
-    unless ( $condition eq "" ) {
+    if ( $condition ne "" ) {
       $self->debug(1,"$function_name: checking condition >>>$condition<<<");
 
       # Condition may be negated if it starts with a !: remove it from the condition value.
@@ -663,7 +674,7 @@ sub _parse_rules {
       if ( $cond_attribute ) {
         # Due to Perl autovivification, testing directly exists($config_options->{$cond_option_set}->{$cond_attribute}) will spring
         # $config_options->{$cond_option_set} into existence if it doesn't exist.
-        my $cond_true = exists($config_options->{$cond_option_set}) && 
+        my $cond_true = $config_options->{$cond_option_set} && 
                         exists($config_options->{$cond_option_set}->{$cond_attribute});          
         if ( $negate ) {
           $cond_satisfied = 0 if $cond_true;
@@ -712,9 +723,8 @@ sub _parse_rules {
             $attribute_present = 0;
           }
         } else {
-          # Due to an exists() flaw, testing directly exists($config_options->{$cond_option_set}->{$cond_attribute}) will spring
-          # into existence $config_options->{$cond_option_set} if it doesn't exist.
-          if ( exists($config_options->{$option_set}) && exists($config_options->{$option_set}->{$attribute}) ) {
+          # See comment above about Perl autovivification and impact on testing attribute existence
+          if ( $config_options->{$option_set} && exists($config_options->{$option_set}->{$attribute}) ) {
             $attr_value = $config_options->{$option_set}->{$attribute};
           } else {
             $self->debug(1,"$function_name: attribute '$attribute' not found in option set '$option_set'");

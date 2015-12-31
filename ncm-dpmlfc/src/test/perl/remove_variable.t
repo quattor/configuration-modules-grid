@@ -139,7 +139,14 @@ my %config_rules_4 = (
 
 my %parser_options = ("remove_if_undef" => 1);
 
+
+#############
+# Main code #
+#############
+
 $CAF::Object::NoAction = 1;
+set_caf_file_close_diff(1);
+
 
 # Test negated keywords
 my $dpm_options = {};
