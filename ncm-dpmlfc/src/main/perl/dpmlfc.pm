@@ -334,7 +334,7 @@ my %srmv22_config_rules = (
 my $trust_roles = "dpm,dpns,rfio,gsiftp";
 my $trust_config_file = "/etc/shift.conf";
 my %trust_config_rules = (
-        "DPM PROTOCOLS" => "accessProtocols:GLOBAL;".LINE_FORMAT_XRDCFG,
+        "DPM PROTOCOLS" => "accessProtocols:GLOBAL;".LINE_FORMAT_XRDCFG.';'.LINE_VALUE_ARRAY,
         "DPM TRUST" => "dpm->host:dpns,xroot;".LINE_FORMAT_XRDCFG,
         "DPNS TRUST" => "dpns->host:dpm,srmv1,srmv2,srm22,rfio;".LINE_FORMAT_XRDCFG,
         "RFIOD TRUST" => "rfio->host:dpm,rfio;".LINE_FORMAT_XRDCFG,
@@ -708,6 +708,7 @@ sub configureNode {
     }
 
     if ( $product eq "DPM" ) {
+      $config_options->{trusts}->{role_enabled} = 1;
       $self->updateRoleConfig("trusts",$config_options) if $self->hostHasRoles($trust_roles);
     }
 
@@ -1713,32 +1714,6 @@ sub hostHasRoles {
 }
 
 
-# This function returns a string containing hosts list for a role (sorted)
-#
-# Arguments
-#       role : role for which the hosts list must be normalized
-sub getHostsList {
-  my $function_name = "getHostsList";
-  my $self = shift;
-
-  my $role = shift;
-  unless ( $role ) {
-    $self->error("$function_name: 'role' argument missing (internal error)");
-    return 1;
-  }
-
-  my $hostlist="";
-  if ( exists($config_options->{$role}) ) {
-    $hostlist = join(" ",@{$config_options->{$role}->{hostlist}});
-  } else {
-    $self->error("$function_name: role $role not defined in configuration");
-  }
-
-  $self->debug(1,"Hosts list for role ".uc($role)." : >>$hostlist<<");
-  return $hostlist;
-}
-
-
 # This function returns host config.
 #
 # Arguments
@@ -1805,6 +1780,25 @@ sub updateRoleConfig {
   if ( $changes > 0 ) {
     $self->serviceRestartNeeded($role);
   }
+}
+
+
+##########################################################################
+# This is a helper function returning the appropriate rule based on the
+# dpmlfc service.
+# This function is mainly to help with unit testing (get rules).
+sub getRules {
+##########################################################################
+
+  my ( $self, $service) = @_;
+
+  unless ( $config_rules{$service} ) {
+    $self->error("Internal error: invalid service '$service)");
+    return;
+  }
+
+  return $config_rules{$service};
+
 }
 
 

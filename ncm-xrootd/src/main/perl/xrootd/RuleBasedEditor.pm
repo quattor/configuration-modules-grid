@@ -47,7 +47,6 @@ use enum qw(LINE_FORMAT_PARAM=1
            );
 use enum qw(LINE_VALUE_AS_IS
             LINE_VALUE_BOOLEAN
-            LINE_VALUE_HOST_LIST
             LINE_VALUE_INSTANCE_PARAMS
             LINE_VALUE_ARRAY
             LINE_VALUE_HASH_KEYS
@@ -73,7 +72,6 @@ Readonly my @RULE_CONSTANTS => qw(LINE_FORMAT_PARAM
                                   LINE_FORMAT_XRDCFG_SET
                                   LINE_VALUE_AS_IS
                                   LINE_VALUE_BOOLEAN
-                                  LINE_VALUE_HOST_LIST
                                   LINE_VALUE_INSTANCE_PARAMS
                                   LINE_VALUE_ARRAY
                                   LINE_VALUE_HASH_KEYS
@@ -213,15 +211,7 @@ sub _formatAttributeValue {
   $self->debug(2,"$function_name: formatting attribute value >>>$attr_value<<< (line fmt=$line_fmt, value fmt=$value_fmt)");
 
   my $formatted_value;
-  if ( $value_fmt == LINE_VALUE_HOST_LIST ) {    
-    # Duplicates may exist as result of a join. Check it.
-    # Some config files are sensitive to extra spaces : this code ensure that there is none.
-    my @hosts = split /\s+/, $attr_value;
-    my %hosts = map { $_ => '' } @hosts;
-    $formatted_value = join(" ", sort keys %hosts);
-    $self->debug(1,"Formatted hosts list : >>$formatted_value<<");
-
-  } elsif ( $value_fmt == LINE_VALUE_BOOLEAN ) {
+  if ( $value_fmt == LINE_VALUE_BOOLEAN ) {
     $formatted_value = $attr_value ? 'yes' : 'no';
 
   } elsif ( $value_fmt == LINE_VALUE_INSTANCE_PARAMS ) {
@@ -872,6 +862,7 @@ sub _apply_rules {
           $config_updated = 1;
         } else {
           $self->debug(1,"$function_name: formatting attribute '".$rule_info->{attribute}."' value ($attr_value, value_fmt=$value_fmt)");
+          $config_value .= ' ' if $config_value;
           $config_value .= $self->_formatAttributeValue($attr_value,
                                                         $line_fmt,
                                                         $value_fmt);
