@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
-use Test::More tests => 27;
+use Test::More tests => 29;
 use Test::NoWarnings;
 use Test::Quattor qw(dpm-config);
 use NCM::Component::dpmlfc;
@@ -1108,13 +1108,13 @@ Readonly my $TRUSTS_EXPECTED_CONFIG => '# This file is managed by Quattor - DO N
 #
 DPM PROTOCOLS gsiftp rfio https xroot
 DPM REQCLEAN 180d
-DPM TRUST grid05.lal.in2p3.fr grid16.lal.in2p3.fr
+DPM TRUST grid05.lal.in2p3.fr grid16.lal.in2p3.fr grid17.lal.in2p3.fr
 RFIO DAEMONV3_WRMT 1
-RFIOD FTRUST grid05.lal.in2p3.fr grid05.lal.in2p3.fr
-RFIOD RTRUST grid05.lal.in2p3.fr grid05.lal.in2p3.fr
-RFIOD TRUST grid05.lal.in2p3.fr grid05.lal.in2p3.fr
-RFIOD WTRUST grid05.lal.in2p3.fr grid05.lal.in2p3.fr
-RFIOD XTRUST grid05.lal.in2p3.fr grid05.lal.in2p3.fr
+RFIOD FTRUST grid05.lal.in2p3.fr grid16.lal.in2p3.fr grid17.lal.in2p3.fr
+RFIOD RTRUST grid05.lal.in2p3.fr grid16.lal.in2p3.fr grid17.lal.in2p3.fr
+RFIOD TRUST grid05.lal.in2p3.fr grid16.lal.in2p3.fr grid17.lal.in2p3.fr
+RFIOD WTRUST grid05.lal.in2p3.fr grid16.lal.in2p3.fr grid17.lal.in2p3.fr
+RFIOD XTRUST grid05.lal.in2p3.fr grid16.lal.in2p3.fr grid17.lal.in2p3.fr
 ';
 
 
@@ -1157,9 +1157,13 @@ This is a secret key
 Readonly my $SERVICE_RESTART_LIST_EXPECTED => 'dpm dpmcopyd dpnsdaemon httpd rfiod srmv2.2';
 
 
-###########################
-# Tests for DPM head node #
-###########################
+=pod
+
+=head2 DPM head node
+
+Test configuration of a DPM head node.
+
+=cut
 
 $CAF::Object::NoAction = 1;
 set_caf_file_close_diff(1);
@@ -1256,4 +1260,22 @@ my $service_restart_list = $cmp->getServiceRestartList();
 is("$service_restart_list",$SERVICE_RESTART_LIST_EXPECTED,"List of services to restart has expected contents");
 
 
+=pod
+
+=head2 Disk server
+
+Test configuration of a disk server.
+
+=cut
+
+$cmp->configureNode($DPM_DISK_HOST,$config);
+
+
+# shift.conf
+$fh = get_file($TRUSTS_FILE);
+ok(defined($fh), "$TRUSTS_FILE was opened");
+is("$fh",$TRUSTS_EXPECTED_CONFIG,"Disk server $TRUSTS_FILE has expected contents");
+$fh->close();
+
+ 
 Test::NoWarnings::had_no_warnings();
