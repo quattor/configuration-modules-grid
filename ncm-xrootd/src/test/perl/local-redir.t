@@ -189,19 +189,28 @@ use constant FED_REDIRECT_CONF => 'xrootd.redirect grid05.lal.in2p3.fr:11001 /st
 use constant FED_REDIRECT_EXPECTED => 'xrootd.redirect grid05.lal.in2p3.fr:11001 /store/
 ';
 
+
+#############
+# Main code #
+#############
+
 $CAF::Object::NoAction = 1;
+set_caf_file_close_diff(1);
 
 my $comp = NCM::Component::xrootd->new('xrootd');
 
 my $config = get_config_for_profile("local-redir");
 my $xrootd_options = $config->getElement("/software/components/xrootd/options")->getTree();
 my $local_redir_rules = $comp->getRules("redir");
+my %parser_options;
+$parser_options{remove_if_undef} = 1;
 
 # Initial file empty
 set_file_contents(REDIR_CONF_FILE,"");
 my $changes = $comp->updateConfigFile(REDIR_CONF_FILE,
                                       $local_redir_rules,
-                                      $xrootd_options);
+                                      $xrootd_options,
+                                      \%parser_options);
 my $fh = get_file(REDIR_CONF_FILE);
 ok(defined($fh), REDIR_CONF_FILE." was opened");
 is("$fh", REDIR_EXPECTED_CONF_1, REDIR_CONF_FILE." (minimal) has expected contents");
@@ -211,7 +220,8 @@ $fh->close();
 set_file_contents(REDIR_CONF_FILE,REDIR_INITIAL_CONF);
 $changes = $comp->updateConfigFile(REDIR_CONF_FILE,
                                       $local_redir_rules,
-                                      $xrootd_options);
+                                      $xrootd_options,
+                                      \%parser_options);
 $fh = get_file(REDIR_CONF_FILE);
 ok(defined($fh), REDIR_CONF_FILE." was opened");
 is("$fh", REDIR_EXPECTED_CONF_2, REDIR_CONF_FILE." (initial ok) has expected contents");
@@ -221,7 +231,8 @@ $fh->close();
 set_file_contents(REDIR_CONF_FILE,REDIR_INITIAL_CONF.FED_REDIRECT_CONF);
 $changes = $comp->updateConfigFile(REDIR_CONF_FILE,
                                       $local_redir_rules,
-                                      $xrootd_options);
+                                      $xrootd_options,
+                                      \%parser_options);
 $fh = get_file(REDIR_CONF_FILE);
 ok(defined($fh), REDIR_CONF_FILE." was opened");
 is("$fh", REDIR_EXPECTED_CONF_2."#".FED_REDIRECT_EXPECTED, REDIR_CONF_FILE." (fed disabled) has expected contents");
@@ -237,7 +248,8 @@ $comp->mergeLocalRedirects($xrootd_options);
 set_file_contents(REDIR_CONF_FILE,REDIR_INITIAL_CONF.FED_REDIRECT_CONF);
 $changes = $comp->updateConfigFile(REDIR_CONF_FILE,
                                       $local_redir_rules,
-                                      $xrootd_options);
+                                      $xrootd_options,
+                                      \%parser_options);
 $fh = get_file(REDIR_CONF_FILE);
 ok(defined($fh), REDIR_CONF_FILE." was opened");
 is("$fh", REDIR_EXPECTED_CONF_2.FED_REDIRECT_EXPECTED, REDIR_CONF_FILE." (fed enabled) has expected contents");
@@ -246,7 +258,8 @@ $fh->close();
 set_file_contents(REDIR_CONF_FILE,REDIR_INITIAL_CONF."#".FED_REDIRECT_CONF);
 $changes = $comp->updateConfigFile(REDIR_CONF_FILE,
                                       $local_redir_rules,
-                                      $xrootd_options);
+                                      $xrootd_options,
+                                      \%parser_options);
 $fh = get_file(REDIR_CONF_FILE);
 ok(defined($fh), REDIR_CONF_FILE." was opened");
 is("$fh", REDIR_EXPECTED_CONF_2.FED_REDIRECT_EXPECTED, REDIR_CONF_FILE." (init fed disabled )has expected contents");
@@ -255,7 +268,8 @@ $fh->close();
 set_file_contents(REDIR_CONF_FILE,REDIR_INITIAL_CONF);
 $changes = $comp->updateConfigFile(REDIR_CONF_FILE,
                                       $local_redir_rules,
-                                      $xrootd_options);
+                                      $xrootd_options,
+                                      \%parser_options);
 $fh = get_file(REDIR_CONF_FILE);
 ok(defined($fh), REDIR_CONF_FILE." was opened");
 is("$fh", REDIR_EXPECTED_CONF_2.FED_REDIRECT_EXPECTED, REDIR_CONF_FILE." (init fed absent) has expected contents");

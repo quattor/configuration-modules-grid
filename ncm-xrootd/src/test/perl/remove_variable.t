@@ -58,7 +58,13 @@ my %config_rules = (
       "-DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_XRDCFG_SETENV,
      );
 
+
+#############
+# Main code #
+#############
+
 $CAF::Object::NoAction = 1;
+set_caf_file_close_diff(1);
 
 my $comp = NCM::Component::xrootd->new('xrootd');
 
