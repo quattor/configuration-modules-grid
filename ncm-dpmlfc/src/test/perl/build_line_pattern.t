@@ -8,6 +8,7 @@ use warnings;
 use Test::More tests => 7;
 use Test::NoWarnings;
 use Test::Quattor;
+use NCM::Component::dpmlfc;
 use NCM::Component::dpmlfc::RuleBasedEditor qw(:rule_constants);
 use Readonly;
 use CAF::Object;
@@ -22,16 +23,17 @@ Basic test for rule-based editor (line pattern build)
 
 =cut
 
+my $cmp = NCM::Component::dpmlfc->new('dpmlfc');
 
 # Build a line pattern without a parameter value
 Readonly my $KEYWORD => 'DPNS_HOST';
 Readonly my $LINE_PATTERN_ENV_VAR => '#?\s*export DPNS_HOST=';
 Readonly my $LINE_PATTERN_KEY_VALUE => '#?\s*DPNS_HOST';
-my $escaped_pattern = NCM::Component::dpmlfc::RuleBasedEditor->_buildLinePattern($KEYWORD,
-                                                                                LINE_FORMAT_ENVVAR);
+my $escaped_pattern = $cmp->_buildLinePattern($KEYWORD,
+                                              LINE_FORMAT_ENVVAR);
 is($escaped_pattern, $LINE_PATTERN_ENV_VAR, "Environment variable pattern ok");
-$escaped_pattern = NCM::Component::dpmlfc::RuleBasedEditor->_buildLinePattern($KEYWORD,
-                                                                             LINE_FORMAT_XRDCFG);
+$escaped_pattern = $cmp->_buildLinePattern($KEYWORD,
+                                           LINE_FORMAT_XRDCFG);
 is($escaped_pattern, $LINE_PATTERN_KEY_VALUE, "Key/value pattern ok");
 
 # Build a line pattern without a parameter value
@@ -45,21 +47,21 @@ Readonly my $EXPECTED_PATTERN_3 => '#?\s*export DPNS_HOST=\^dp\$n\-s\.\*ex\]\s+a
 # to be successful!
 Readonly my $VALUE_4 => 'a\b';
 Readonly my $EXPECTED_PATTERN_4 => '#?\s*export DPNS_HOST=a\\\\b';
-$escaped_pattern = NCM::Component::dpmlfc::RuleBasedEditor->_buildLinePattern($KEYWORD,
-                                                                              LINE_FORMAT_ENVVAR,
-                                                                              $VALUE_1);
+$escaped_pattern = $cmp->_buildLinePattern($KEYWORD,
+                                           LINE_FORMAT_ENVVAR,
+                                           $VALUE_1);
 is($escaped_pattern, $EXPECTED_PATTERN_1, "Environment variable with value (host name): pattern ok");
-$escaped_pattern = NCM::Component::dpmlfc::RuleBasedEditor->_buildLinePattern($KEYWORD,
-                                                                              LINE_FORMAT_ENVVAR,
-                                                                              $VALUE_2);
+$escaped_pattern = $cmp->_buildLinePattern($KEYWORD,
+                                           LINE_FORMAT_ENVVAR,
+                                           $VALUE_2);
 is($escaped_pattern, $EXPECTED_PATTERN_2, "Environment variable with value (0): pattern ok");
-$escaped_pattern = NCM::Component::dpmlfc::RuleBasedEditor->_buildLinePattern($KEYWORD,
-                                                                              LINE_FORMAT_ENVVAR,
-                                                                              $VALUE_3);
+$escaped_pattern = $cmp->_buildLinePattern($KEYWORD,
+                                           LINE_FORMAT_ENVVAR,
+                                           $VALUE_3);
 is($escaped_pattern, $EXPECTED_PATTERN_3, "Environment variable with value (special characters): pattern ok");
-$escaped_pattern = NCM::Component::dpmlfc::RuleBasedEditor->_buildLinePattern($KEYWORD,
-                                                                              LINE_FORMAT_ENVVAR,
-                                                                              $VALUE_4);
+$escaped_pattern = $cmp->_buildLinePattern($KEYWORD,
+                                           LINE_FORMAT_ENVVAR,
+                                           $VALUE_4);
 is($escaped_pattern, $EXPECTED_PATTERN_4, "Environment variable with value (backslash): pattern ok");
 
 

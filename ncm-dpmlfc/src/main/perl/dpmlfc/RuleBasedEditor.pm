@@ -52,8 +52,9 @@ use enum qw(LINE_VALUE_AS_IS
             LINE_VALUE_HASH_KEYS
             LINE_VALUE_STRING_HASH
            );
-use enum qw(LINE_VALUE_OPT_NONE
-            LINE_VALUE_OPT_SINGLE
+use enum qw(BITMASK: LINE_VALUE_OPT_SINGLE
+                     LINE_VALUE_OPT_UNIQUE
+                     LINE_VALUE_OPT_SORTED
            );
 # Internal constants
 Readonly my $LINE_FORMAT_DEFAULT => LINE_FORMAT_PARAM;
@@ -76,8 +77,9 @@ Readonly my @RULE_CONSTANTS => qw(LINE_FORMAT_PARAM
                                   LINE_VALUE_ARRAY
                                   LINE_VALUE_HASH_KEYS
                                   LINE_VALUE_STRING_HASH
-                                  LINE_VALUE_OPT_NONE
                                   LINE_VALUE_OPT_SINGLE
+                                  LINE_VALUE_OPT_UNIQUE
+                                  LINE_VALUE_OPT_SORTED
                                  );
 our @EXPORT_OK;
 our %EXPORT_TAGS;
@@ -188,12 +190,13 @@ Arguments :
     attr_value : attribue value
     line_fmt : line format (see LINE_FORMAT_xxx constants)
     value_fmt : value format (see LINE_VALUE_xxx constants)
+    value_opt : value interpretation/formatting options (bitmask, see LINE_VALUE_OPT_xxx constants)
 
 =cut
 
 sub _formatAttributeValue {
   my $function_name = "_formatAttributeValue";
-  my ($self, $attr_value, $line_fmt, $value_fmt) = @_;
+  my ($self, $attr_value, $line_fmt, $value_fmt, $value_opt) = @_;
 
   unless ( defined($attr_value) ) {
     $self->error("$function_name: 'attr_value' argument missing (internal error)");
@@ -207,8 +210,12 @@ sub _formatAttributeValue {
     $self->error("$function_name: 'value_fmt' argument missing (internal error)");
     return 1;
   }
+  unless ( defined($value_opt) ) {
+    $self->error("$function_name: 'value_opt' argument missing (internal error)");
+    return 1;
+  }
 
-  $self->debug(2,"$function_name: formatting attribute value >>>$attr_value<<< (line fmt=$line_fmt, value fmt=$value_fmt)");
+  $self->debug(2,"$function_name: formatting attribute value >>>$attr_value<<< (line fmt=$line_fmt, value fmt=$value_fmt, value_opt=$value_opt)");
 
   my $formatted_value;
   if ( $value_fmt == LINE_VALUE_BOOLEAN ) {
@@ -222,6 +229,17 @@ sub _formatAttributeValue {
     $formatted_value .= " -k $attr_value->{logKeep}" if $attr_value->{logKeep};
     
   } elsif ( $value_fmt == LINE_VALUE_ARRAY ) {
+    $self->debug(2, "$function_name: array values received: ", join(",",@$attr_value));
+    if ( $value_opt & LINE_VALUE_OPT_UNIQUE ) {
+      my %values = map(($_ => 1), @$attr_value);
+      $attr_value = [ keys(%values) ];
+      $self->debug(2, "$function_name: array values made unique: ", join(",",@$attr_value));
+    }
+    # LINE_VALUE_OPT_UNIQUE implies LINE_VALUE_OPT_SORTED
+    if ( $value_opt & (LINE_VALUE_OPT_UNIQUE | LINE_VALUE_OPT_SORTED) ) {
+      $attr_value = [ sort(@$attr_value) ] if $value_opt & (LINE_VALUE_OPT_UNIQUE | LINE_VALUE_OPT_SORTED);
+      $self->debug(2, "$function_name: array values sorted: ", join(",",@$attr_value));
+    };
     $formatted_value = join " ", @$attr_value;
 
   } elsif ( $value_fmt == LINE_VALUE_HASH_KEYS ) {
@@ -734,7 +752,8 @@ sub _apply_rules {
       $value_fmt = LINE_VALUE_AS_IS;
     }
     unless ( defined($value_opt) ) {
-      $value_opt = LINE_VALUE_OPT_NONE;      
+      # $value_opt is a bitmask. Set to 0 if not specified.
+      $value_opt = 0;      
     }
 
 
@@ -776,6 +795,7 @@ sub _apply_rules {
     my $config_value = "";
     my $attribute_present = 1;
     my $config_updated = 0;
+    my @array_values;
     if ( $rule_info->{attribute} ) {
       foreach my $option_set (@{$rule_info->{option_sets}}) {
         my $attr_value;
@@ -822,6 +842,7 @@ sub _apply_rules {
             $config_value = $self->_formatAttributeValue($params,
                                                          $line_fmt,
                                                          $value_fmt,
+                                                         $value_opt,
                                                         );
             my $config_param = $keyword;
             my $instance_uc = uc($instance);
@@ -843,29 +864,24 @@ sub _apply_rules {
             $config_value = $self->_formatAttributeValue($tmp,
                                                          $line_fmt,
                                                          $value_fmt,
+                                                         $value_opt,
                                                         );
             $self->_updateConfigLine($fh,$keyword,$config_value,$line_fmt,1);
           }
           $config_updated = 1;
-        } elsif ( ($value_fmt == LINE_VALUE_ARRAY) && ($value_opt == LINE_VALUE_OPT_SINGLE) ) {
-          # With this value format, several lines with the same keyword are generated,
-          # one for each array value (if value_opt is not LINE_VALUE_OPT_SINGLE, all
-          # the values are concatenated on one line).
-          foreach my $val (@$attr_value) {
-            $self->debug(1,"$function_name: formatting (array) attribute '".$rule_info->{attribute}."' value ($val, value_fmt=".LINE_VALUE_AS_IS.")");
-            $config_value = $self->_formatAttributeValue($val,
-                                                         $line_fmt,
-                                                         LINE_VALUE_AS_IS,
-                                                        );
-            $self->_updateConfigLine($fh,$keyword,$config_value,$line_fmt,1);            
-          }
-          $config_updated = 1;
+        } elsif ( $value_fmt == LINE_VALUE_ARRAY ) {
+          # Arrays are not processed immediately. First, all the values from all the options sets
+          # are collected into one array that will be processed later according to LINE_VALUE_OPT_xxx 
+          # options specified (if any).
+          @array_values = (@array_values, @$attr_value)
         } else {
           $self->debug(1,"$function_name: formatting attribute '".$rule_info->{attribute}."' value ($attr_value, value_fmt=$value_fmt)");
           $config_value .= ' ' if $config_value;
           $config_value .= $self->_formatAttributeValue($attr_value,
                                                         $line_fmt,
-                                                        $value_fmt);
+                                                        $value_fmt,
+                                                        $value_opt,
+                                                       );
           $self->debug(2,"$function_name: adding attribute '".$rule_info->{attribute}."' from option set '".$option_set.
                                                                 "' to value (config_value=".$config_value.")");
         }
@@ -875,10 +891,38 @@ sub _apply_rules {
       $self->debug(1,"$function_name: no attribute specified in rule '$rule'");
     }
 
+    # There is a delayed formatting of arrays after collecting all the values from all
+    # the option sets in the rule. Formatting is done taking into account the relevant
+    # LINE_VALUE_OPT_xxx specified (bitmask).
+    if ( $value_fmt == LINE_VALUE_ARRAY ) {
+      if ( $value_opt & LINE_VALUE_OPT_SINGLE ) {
+        # With this value format, several lines with the same keyword are generated,
+        # one for each array value (if value_opt is not LINE_VALUE_OPT_SINGLE, all
+        # the values are concatenated on one line).
+        $self->debug(1,"$function_name: formatting (array) attribute '".$rule_info->{attribute}."as LINE_VALUE_OPT_SINGLE");
+        foreach my $val (@array_values) {
+          $config_value = $self->_formatAttributeValue($val,
+                                                       $line_fmt,
+                                                       LINE_VALUE_AS_IS,
+                                                       $value_opt,
+                                                      );
+          $self->_updateConfigLine($fh,$keyword,$config_value,$line_fmt,1);
+        }
+        $config_updated = 1;
+      } else {
+          $config_value = $self->_formatAttributeValue(\@array_values,
+                                                       $line_fmt,
+                                                       $value_fmt,
+                                                       $value_opt,
+                                                      );
+      }
+    }
+
     # Instance parameters, string hashes have already been written
     if ( !$config_updated && $attribute_present ) {
       $self->_updateConfigLine($fh,$keyword,$config_value,$line_fmt);
     }  
+
   }
 
 }
