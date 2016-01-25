@@ -127,6 +127,15 @@ type pbs_server_attlist = {
     'moab_array_compatible' ? boolean
     
     'authorized_users'	  ? string
+
+    'record_job_info' ? boolean
+    'record_job_script' ? boolean
+
+    'use_jobs_subdirs' ? boolean
+
+    'thread_idle_seconds' ? long(-1..)
+    'max_threads' ? long(0..)
+    'min_threads' ? long(0..)
 };
 
 type pbs_server = {
