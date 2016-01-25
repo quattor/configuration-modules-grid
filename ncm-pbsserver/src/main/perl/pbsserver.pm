@@ -9,20 +9,16 @@ package NCM::Component::pbsserver;
 use strict;
 use warnings;
 
-use NCM::Component;
-use vars qw(@ISA $EC);
-@ISA = qw(NCM::Component);
-$EC=LC::Exception::Context->new->will_store_all;
-use NCM::Check;
+use parent qw(NCM::Component);
+
+our $EC = LC::Exception::Context->new->will_store_all;
+our $NoActionSupported = 1;
 
 use CAF::Process;
 use CAF::Service;
 use CAF::FileWriter;
 
-use File::Copy;
-use File::Path;
-
-local(*DTA);
+use File::Path qw(mkpath);
 
 use constant FILTER_PBSNODES_PATTERNS => qw(
     status jobs
@@ -85,13 +81,12 @@ sub Configure
         foreach my $name (sort keys %{$tree->{env}}) {
             $contents .= "$name=$tree->{env}->{$name}\n";
         }
-        my $result = LC::Check::file( $fname,
-                                      backup => ".old",
-                                      contents => $contents,
-                                    );
-        if ( $result < 0 ) {
-            $self->error("Error updating $fname");
-        } elsif ( $result > 0 ) {
+        my $fh_env = CAF::FileWriter->new($fname,
+                                          backup => ".old",
+                                          log => $self,
+                                          );
+        print $fh_env $contents;
+        if($fh_env->close()) {
             $self->verbose("$fname updated. Restarting pbs_server...");
             $started = 1;
             if (! $srv->restart()) {
@@ -107,31 +102,20 @@ sub Configure
     # Be very careful, the file will NOT work with embedded comments.
     if ( $tree->{submitfilter} ) {
         $self->info("Checking submission filter...");
-        my $fname = "$pbsroot/torque.cfg";
-        my $contents = "SUBMITFILTER $pbsroot/submit_filter\n";
-        my $result = LC::Check::file($fname,
-                                     backup => ".old",
-                                     contents => $contents,
-                                    );
-        if ( $result < 0 ) {
-            $self->error("Error updating $fname");
-        } elsif ( $result > 0 ) {
-            $self->log("$fname updated");
-        }
+        my $fh_cfg = CAF::FileWriter->new("$pbsroot/torque.cfg",
+                                          backup => ".old",
+                                          log => $self,
+                                          );
+        print $fh_cfg "SUBMITFILTER $pbsroot/submit_filter\n";
+        $fh_cfg->close();
 
-        $contents = $tree->{submitfilter};
-        $fname = "$pbsroot/submit_filter";
-        $result = LC::Check::file($fname,
-                                  backup => ".old",
-                                  contents => $contents,
-                                 );
-        if ( $result < 0 ) {
-            $self->error("Error updating $fname");
-        } elsif ( $result > 0 ) {
-            $self->log("$fname updated");
-        }
-        chmod 0755, "$fname";
-
+        my $fh_sf = CAF::FileWriter->new("$pbsroot/submit_filter",
+                                         backup => ".old",
+                                         mode => 0755,
+                                         log => $self,
+                                         );
+        print $fh_sf $tree->{submitfilter};
+        $fh_sf->close();
 
     # Ensure that any existing filter is removed.  Since the
     # submitfilter is the only parameter in torque.cfg, this file
@@ -139,13 +123,14 @@ sub Configure
     # this is far from true. if something else manages torque.cfg, set ignoretorquecfg to true
     } else {
         $self->info("Removing submission filter...");
-        my $removetorquecfg = 1;
-        if (exists($tree->{ignoretorquecfg}) && $tree->{ignoretorquecfg}) {
+        unlink "$pbsroot/submit_filter" if (-e "$pbsroot/submit_filter");
+
+        my $removetorquecfg = -e "$pbsroot/torque.cfg";
+        if ($tree->{ignoretorquecfg}) {
             $removetorquecfg = 0;
             $self->info("Ignoring torque.cfg file.");
         };
-        unlink "$pbsroot/torque.cfg" if (-e "$pbsroot/torque.cfg" && $removetorquecfg);
-        unlink "$pbsroot/submit_filter" if (-e "$pbsroot/submit_filter");
+        unlink "$pbsroot/torque.cfg" if ($removetorquecfg);
     }
 
 
@@ -276,7 +261,7 @@ sub Configure
     my $filterregexp = qr{$filterpattern};
     $self->verbose("pbsnodes attributes filter regexp $filterregexp");
     if (-e "$pbsroot/server_priv/nodes" && -s "$pbsroot/server_priv/nodes") {
-        my $output = CAF::Process->new([$pbsnodes, '-a'], log => $self)->output();
+        my $output = CAF::Process->new([$pbsnodes, '-a'], log => $self, keeps_state => 1)->output();
         if ($?) {
             $self->error("error running $pbsnodes");
             return 1;
@@ -433,12 +418,13 @@ sub force_create
 
 # execute qmgr with command cmd
 # if optional msg is passed, report the message with info level
+# if optional keeps_state is passed, run command with it
 sub qmgr
 {
-    my ($self, $cmd, $msg) = @_;
+    my ($self, $cmd, $msg, $keeps_state) = @_;
     $self->info($msg) if $msg;
 
-    my $out = CAF::Process->new([$qmgr, "-c", $cmd], log => $self)->output();
+    my $out = CAF::Process->new([$qmgr, "-c", $cmd], log => $self, keeps_state => $keeps_state ? 1 : 0)->output();
     if ($?) {
 	   $self->error("Failed to run $qmgr $cmd: $out (", $? >> 8, ")");
     } else {
@@ -461,12 +447,12 @@ sub get_current_config
     $self->info("Retrieving current configuration...");
     my $remaining = 10;
     sleep 5 if $started;
-    my $current_config = $self->qmgr("print server");
+    my $current_config = $self->qmgr("print server", undef, 1);
     while ( $? && ($remaining > 0) ) {
-        $self->log("waiting 30s for qmgr to respond; $remaining tries remaining");
+        $self->info("waiting 30s for qmgr to respond; $remaining tries remaining");
         $remaining--;
         sleep 30;
-        $current_config = $self->qmgr("print server");
+        $current_config = $self->qmgr("print server", undef, 1);
     }
     if ( $? ) {
         $self->error("qmgr is not responding; aborting configuration");
