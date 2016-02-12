@@ -1,12 +1,11 @@
 # ${license-info}
 # ${developer-info}
 # ${author-info}
-# ${build-info}
-#
 
 declaration template components/pbsserver/schema;
 
-include { 'quattor/schema' };
+include 'pan/types';
+include 'quattor/types/component';
 
 type pbs_server_extended_att = {
     'attribute' : string
@@ -80,6 +79,7 @@ type pbs_server_attlist = {
     'max_slot_limit'      ? long(0..)
     'max_running'         ? long(0..)
     'max_user_run'        ? long(0..)
+    'max_user_queuable'   ? long(1..)
     'max_group_run'       ? long(0..)
     
     'mom_job_sync'        ? boolean = true
@@ -127,6 +127,15 @@ type pbs_server_attlist = {
     'moab_array_compatible' ? boolean
     
     'authorized_users'	  ? string
+
+    'record_job_info' ? boolean
+    'record_job_script' ? boolean
+
+    'use_jobs_subdirs' ? boolean
+
+    'thread_idle_seconds' ? long(-1..)
+    'max_threads' ? long(0..)
+    'min_threads' ? long(0..)
 };
 
 type pbs_server = {
@@ -251,5 +260,3 @@ type ${project.artifactId}_component = {
     'node'         ? pbs_nodelist
     'ignoretorquecfg'    ? boolean = false
 };
-
-bind '/software/components/pbsserver' = ${project.artifactId}_component;
