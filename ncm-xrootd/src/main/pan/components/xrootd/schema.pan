@@ -177,14 +177,10 @@ type ${project.artifactId}_component_fed_options = {
 };
 
 function is_${project.artifactId}_logKeep = {
-  if (is_long(ARGV[0])) {
-    deprecated(0, "Expressing logKeep as a long is deprecated, it should be expressed as a string.");
-    return(true);
-  };
-  return(match(ARGV[0], '^([0-9]+[k|m|g]?|fifo|hup|rtmin(\+[12])?|ttou|winch|xfsz)$'));
+  match(ARGV[0], '^([0-9]+[k|m|g]?|fifo|hup|rtmin(\+[12])?|ttou|winch|xfsz)$');
 };
 
-type ${project.artifactId}_logKeep = property with is_${project.artifactId}_logKeep(SELF);
+type ${project.artifactId}_logKeep = string with is_${project.artifactId}_logKeep(SELF);
 
 type ${project.artifactId}_component_instances = {
   "configFile" : string
