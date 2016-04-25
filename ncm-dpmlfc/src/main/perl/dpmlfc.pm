@@ -36,8 +36,7 @@ package NCM::Component::${project.artifactId};
 use strict;
 use warnings;
 use vars qw($EC);
-use NCM::Component::${project.artifactId}::RuleBasedEditor qw(:rule_constants);
-use parent qw(NCM::Component NCM::Component::${project.artifactId}::RuleBasedEditor);
+use parent qw(NCM::Component);
 $EC=LC::Exception::Context->new->will_store_all;
 
 use EDG::WP4::CCM::Element;
@@ -56,11 +55,10 @@ use CAF::FileEditor;
 use CAF::FileReader;
 use CAF::Process;
 use CAF::Object;
+use CAF::RuleBasedEditor qw(:rule_constants);
 
 use Encode qw(encode_utf8);
 use Fcntl qw(SEEK_SET);
-
-local(*DTA);
 
 use Net::Domain qw(hostname hostfqdn hostdomain);
 
@@ -164,213 +162,213 @@ my %lfc_comp_max_servers = (
 #       If this is not done, the resulting sysconfig file may contain syntax errors preventing the correct daemon operations.
 my $copyd_config_file = "/etc/sysconfig/dpmcopyd";
 my %copyd_config_rules = (
-        "ALLOW_COREDUMP" => "allowCoreDump:copyd;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-        "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-        "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-        "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-        "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
-        "DPMCOPYDLOGFILE" => "logfile:copyd;".LINE_FORMAT_PARAM,
-        #"DPMCOPYD_PORT" => "port:copyd;".LINE_FORMAT_PARAM,
-        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
-        ##"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
-        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
-        "RUN_DPMCOPYDAEMON" => "ALWAYS->role_enabled:copyd;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-        "ULIMIT_N" => "maxOpenFiles:copyd;".LINE_FORMAT_PARAM,
-        "GLOBUS_THREAD_MODEL" => "globusThreadModel:copyd;".LINE_FORMAT_ENVVAR,
+        "ALLOW_COREDUMP" => "allowCoreDump:copyd;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+        "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+        "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+        "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+        "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "DPMCOPYDLOGFILE" => "logfile:copyd;".LINE_FORMAT_SH_VAR,
+        #"DPMCOPYD_PORT" => "port:copyd;".LINE_FORMAT_SH_VAR,
+        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_SH_VAR,
+        ##"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "RUN_DPMCOPYDAEMON" => "ALWAYS->role_enabled:copyd;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+        "ULIMIT_N" => "maxOpenFiles:copyd;".LINE_FORMAT_SH_VAR,
+        "GLOBUS_THREAD_MODEL" => "globusThreadModel:copyd;".LINE_FORMAT_ENV_VAR,
        );
 
 my $dav_config_file = "/etc/httpd/conf.d/zlcgdm-dav.conf";
 my %dav_config_rules = (
-        "DiskAnon" =>"DiskAnonUser:dav;".LINE_FORMAT_XRDCFG,
-        "DiskFlags" =>"DiskFlags:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-        "NSAnon" =>"NSAnonUser:dav;".LINE_FORMAT_XRDCFG,
-        "NSFlags" =>"NSFlags:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-        "NSMaxReplicas" =>"NSMaxReplicas:dav;".LINE_FORMAT_XRDCFG,
-        "NSRedirectPort" =>"NSRedirectPort:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-        "NSSecureRedirect" =>"NSSecureRedirect:dav;".LINE_FORMAT_XRDCFG,
-        "NSServer" =>"NSServer:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-        "NSTrustedDNS" =>"NSTrustedDNs:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-        "NSType" =>"NSType:dav;".LINE_FORMAT_XRDCFG,
-        "SSLCertificateFile" =>"SSLCertFile:dav;".LINE_FORMAT_XRDCFG,
-        "SSLCertificateKeyFile" =>"SSLCertKey:dav;".LINE_FORMAT_XRDCFG,
-        "SSLCACertificatePath" =>"SSLCACertPath:dav;".LINE_FORMAT_XRDCFG,
-        "SSLCARevocationPath" =>"SSLCARevocationPath:dav;".LINE_FORMAT_XRDCFG,
-        "?SSLCipherSuite" =>"SSLCipherSuite:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-        "?SSLHonorCipherOrder" =>"SSLHonorCipherOrder:dav;".LINE_FORMAT_XRDCFG,
-        "SSLOptions" =>"SSLOptions:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-        "SSLProtocol" =>"SSLProtocol:dav;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-        "SSLSessionCache" =>"SSLSessionCache:dav;".LINE_FORMAT_XRDCFG,
-        "SSLSessionCacheTimeout" =>"SSLSessionCacheTimeout:dav;".LINE_FORMAT_XRDCFG,
-        "SSLVerifyClient" =>"SSLVerifyClient:dav;".LINE_FORMAT_XRDCFG,
-        "SSLVerifyDepth" =>"SSLVerifyDepth:dav;".LINE_FORMAT_XRDCFG,
+        "DiskAnon" =>"DiskAnonUser:dav;".LINE_FORMAT_KEY_VAL,
+        "DiskFlags" =>"DiskFlags:dav;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY,
+        "NSAnon" =>"NSAnonUser:dav;".LINE_FORMAT_KEY_VAL,
+        "NSFlags" =>"NSFlags:dav;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY,
+        "NSMaxReplicas" =>"NSMaxReplicas:dav;".LINE_FORMAT_KEY_VAL,
+        "NSRedirectPort" =>"NSRedirectPort:dav;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY,
+        "NSSecureRedirect" =>"NSSecureRedirect:dav;".LINE_FORMAT_KEY_VAL,
+        "NSServer" =>"NSServer:dav;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY,
+        "NSTrustedDNS" =>"NSTrustedDNs:dav;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY,
+        "NSType" =>"NSType:dav;".LINE_FORMAT_KEY_VAL,
+        "SSLCertificateFile" =>"SSLCertFile:dav;".LINE_FORMAT_KEY_VAL,
+        "SSLCertificateKeyFile" =>"SSLCertKey:dav;".LINE_FORMAT_KEY_VAL,
+        "SSLCACertificatePath" =>"SSLCACertPath:dav;".LINE_FORMAT_KEY_VAL,
+        "SSLCARevocationPath" =>"SSLCARevocationPath:dav;".LINE_FORMAT_KEY_VAL,
+        "?SSLCipherSuite" =>"SSLCipherSuite:dav;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY,
+        "?SSLHonorCipherOrder" =>"SSLHonorCipherOrder:dav;".LINE_FORMAT_KEY_VAL,
+        "SSLOptions" =>"SSLOptions:dav;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY,
+        "SSLProtocol" =>"SSLProtocol:dav;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY,
+        "SSLSessionCache" =>"SSLSessionCache:dav;".LINE_FORMAT_KEY_VAL,
+        "SSLSessionCacheTimeout" =>"SSLSessionCacheTimeout:dav;".LINE_FORMAT_KEY_VAL,
+        "SSLVerifyClient" =>"SSLVerifyClient:dav;".LINE_FORMAT_KEY_VAL,
+        "SSLVerifyDepth" =>"SSLVerifyDepth:dav;".LINE_FORMAT_KEY_VAL,
 );
 
 my $dpm_config_file = "/etc/sysconfig/dpm";
 my %dpm_config_rules = (
-      "ALLOW_COREDUMP" => "allowCoreDump:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-      "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-      "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-      "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-      "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-      "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
-      "DPMDAEMONLOGFILE" => "logfile:dpm;".LINE_FORMAT_PARAM,
-      #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
-      #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-      #"DPM_PORT" => "port:dpm;".LINE_FORMAT_PARAM,
-      "DPM_USE_SYNCGET" => "useSyncGet:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-      "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
-      "NB_FTHREADS" => "fastThreads:dpm;".LINE_FORMAT_PARAM,
-      "NB_STHREADS" => "slowThreads:dpm;".LINE_FORMAT_PARAM,
-      "RUN_DPMDAEMON" => "ALWAYS->role_enabled:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-      "ULIMIT_N" => "maxOpenFiles:dpm;".LINE_FORMAT_PARAM,
-      "GLOBUS_THREAD_MODEL" => "globusThreadModel:dpm;".LINE_FORMAT_ENVVAR,
+      "ALLOW_COREDUMP" => "allowCoreDump:dpm;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+      "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+      "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+      "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+      "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+      "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+      "DPMDAEMONLOGFILE" => "logfile:dpm;".LINE_FORMAT_SH_VAR,
+      #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_SH_VAR,
+      #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_SH_VAR,
+      #"DPM_PORT" => "port:dpm;".LINE_FORMAT_SH_VAR,
+      "DPM_USE_SYNCGET" => "useSyncGet:dpm;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+      "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_SH_VAR,
+      "NB_FTHREADS" => "fastThreads:dpm;".LINE_FORMAT_SH_VAR,
+      "NB_STHREADS" => "slowThreads:dpm;".LINE_FORMAT_SH_VAR,
+      "RUN_DPMDAEMON" => "ALWAYS->role_enabled:dpm;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+      "ULIMIT_N" => "maxOpenFiles:dpm;".LINE_FORMAT_SH_VAR,
+      "GLOBUS_THREAD_MODEL" => "globusThreadModel:dpm;".LINE_FORMAT_ENV_VAR,
            );
 
 my $dpns_config_file = "/etc/sysconfig/dpnsdaemon";
 my %dpns_config_rules = (
-       "ALLOW_COREDUMP" => "allowCoreDump:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-       "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-       "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-       "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-       "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-       #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
-       #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-       "DPNSDAEMONLOGFILE" => "logfile:dpns;".LINE_FORMAT_PARAM,
-       #"DPNS_PORT" => "port:dpns;".LINE_FORMAT_PARAM,
-       "NB_THREADS" => "threads:dpns;".LINE_FORMAT_PARAM,
-       "NSCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
-       "RUN_DPNSDAEMON" => "ALWAYS->role_enabled:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-       "RUN_READONLY" => "readonly:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-       "ULIMIT_N" => "maxOpenFiles:dpns;".LINE_FORMAT_PARAM,
-       "GLOBUS_THREAD_MODEL" => "globusThreadModel:dpns;".LINE_FORMAT_ENVVAR,
+       "ALLOW_COREDUMP" => "allowCoreDump:dpns;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+       "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+       "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+       "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+       "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+       #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_SH_VAR,
+       #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_SH_VAR,
+       "DPNSDAEMONLOGFILE" => "logfile:dpns;".LINE_FORMAT_SH_VAR,
+       #"DPNS_PORT" => "port:dpns;".LINE_FORMAT_SH_VAR,
+       "NB_THREADS" => "threads:dpns;".LINE_FORMAT_SH_VAR,
+       "NSCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+       "RUN_DPNSDAEMON" => "ALWAYS->role_enabled:dpns;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+       "RUN_READONLY" => "readonly:dpns;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+       "ULIMIT_N" => "maxOpenFiles:dpns;".LINE_FORMAT_SH_VAR,
+       "GLOBUS_THREAD_MODEL" => "globusThreadModel:dpns;".LINE_FORMAT_ENV_VAR,
       );
 
 my $gsiftp_config_file = "/etc/sysconfig/dpm-gsiftp";
 my %gsiftp_config_rules = (
-         "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-         "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-         "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-         "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-         "FTPLOGFILE" => "logfile:gsiftp;".LINE_FORMAT_PARAM,
-         "GLOBUS_TCP_PORT_RANGE" => "portRange:gsiftp;".LINE_FORMAT_PARAM,
-         "OPTIONS" => "startupOptions:gsiftp;".LINE_FORMAT_PARAM,
-         "RUN_DPMFTP" => "ALWAYS->role_enabled:gsiftp;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
+         "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+         "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+         "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+         "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+         "FTPLOGFILE" => "logfile:gsiftp;".LINE_FORMAT_SH_VAR,
+         "GLOBUS_TCP_PORT_RANGE" => "portRange:gsiftp;".LINE_FORMAT_SH_VAR,
+         "OPTIONS" => "startupOptions:gsiftp;".LINE_FORMAT_SH_VAR,
+         "RUN_DPMFTP" => "ALWAYS->role_enabled:gsiftp;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
         );
 
 my $rfio_config_file = "/etc/sysconfig/rfiod";
 my %rfio_config_rules = (
-       "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-       "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-       "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-       "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-       "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
-       "OPTIONS" => "startupOptions:rfio;".LINE_FORMAT_PARAM,
-       "RFIOLOGFILE" => "logfile:rfio;".LINE_FORMAT_PARAM,
-       "RFIO_PORT_RANGE" => "portRange:rfio;".LINE_FORMAT_PARAM,
-       "RUN_RFIOD" => "ALWAYS->role_enabled:rfio;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-       "ULIMIT_N" => "maxOpenFiles:rfio;".LINE_FORMAT_PARAM,
+       "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+       "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+       "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+       "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+       "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_SH_VAR,
+       "OPTIONS" => "startupOptions:rfio;".LINE_FORMAT_SH_VAR,
+       "RFIOLOGFILE" => "logfile:rfio;".LINE_FORMAT_SH_VAR,
+       "RFIO_PORT_RANGE" => "portRange:rfio;".LINE_FORMAT_SH_VAR,
+       "RUN_RFIOD" => "ALWAYS->role_enabled:rfio;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+       "ULIMIT_N" => "maxOpenFiles:rfio;".LINE_FORMAT_SH_VAR,
        );
 
 my $srmv1_config_file = "/etc/sysconfig/srmv1";
 my %srmv1_config_rules = (
-        "ALLOW_COREDUMP" => "allowCoreDump:srmv1;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
-        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
-        #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-        "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-        "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-        "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-        "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
-        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
-        "RUN_SRMV1DAEMON" => "ALWAYS->role_enabled:srmv1;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-        "SRMV1DAEMONLOGFILE" => "logfile:srmv1;".LINE_FORMAT_PARAM,
-        #"SRMV1_PORT" => "port:srmv1;".LINE_FORMAT_PARAM,
-        "ULIMIT_N" => "maxOpenFiles:srmv1;".LINE_FORMAT_PARAM,
-        "GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv1;".LINE_FORMAT_ENVVAR,
+        "ALLOW_COREDUMP" => "allowCoreDump:srmv1;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_SH_VAR,
+        #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+        "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+        "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+        "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "RUN_SRMV1DAEMON" => "ALWAYS->role_enabled:srmv1;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+        "SRMV1DAEMONLOGFILE" => "logfile:srmv1;".LINE_FORMAT_SH_VAR,
+        #"SRMV1_PORT" => "port:srmv1;".LINE_FORMAT_SH_VAR,
+        "ULIMIT_N" => "maxOpenFiles:srmv1;".LINE_FORMAT_SH_VAR,
+        "GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv1;".LINE_FORMAT_ENV_VAR,
        );
 
 my $srmv2_config_file = "/etc/sysconfig/srmv2";
 my %srmv2_config_rules = (
-        "ALLOW_COREDUMP" => "allowCoreDump:srmv2;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
-        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
-        #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-        "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-        "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-        "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-        "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
-        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
-        "RUN_SRMV2DAEMON" => "ALWAYS->role_enabled:srmv2;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-        "SRMV2DAEMONLOGFILE" => "logfile:srmv2;".LINE_FORMAT_PARAM,
-        #"SRMV2_PORT" => "port:srmv2;".LINE_FORMAT_PARAM,
-        "ULIMIT_N" => "maxOpenFiles:srmv2;".LINE_FORMAT_PARAM,
-        "GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv2;".LINE_FORMAT_ENVVAR,
+        "ALLOW_COREDUMP" => "allowCoreDump:srmv2;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_SH_VAR,
+        #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+        "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+        "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+        "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "RUN_SRMV2DAEMON" => "ALWAYS->role_enabled:srmv2;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+        "SRMV2DAEMONLOGFILE" => "logfile:srmv2;".LINE_FORMAT_SH_VAR,
+        #"SRMV2_PORT" => "port:srmv2;".LINE_FORMAT_SH_VAR,
+        "ULIMIT_N" => "maxOpenFiles:srmv2;".LINE_FORMAT_SH_VAR,
+        "GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv2;".LINE_FORMAT_ENV_VAR,
        );
 
 my $srmv22_config_file = "/etc/sysconfig/srmv2.2";
 my %srmv22_config_rules = (
-        "ALLOW_COREDUMP" => "allowCoreDump:srmv22;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
-        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
-        #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-        "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-        "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-        "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-        "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
-        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
-        "NB_THREADS" => "threads:srmv22;".LINE_FORMAT_PARAM,
-        "RUN_SRMV2DAEMON" => "ALWAYS->role_enabled:srmv22;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-        "SRMV22DAEMONLOGFILE" => "logfile:srmv22;".LINE_FORMAT_PARAM,
-        #"SRMV2_2_PORT" => "port:srmv22;".LINE_FORMAT_PARAM,
-        "ULIMIT_N" => "maxOpenFiles:srmv22;".LINE_FORMAT_PARAM,
-        "GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv22;".LINE_FORMAT_ENVVAR,
+        "ALLOW_COREDUMP" => "allowCoreDump:srmv22;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+        "DPMCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+        #"DPMGROUP" => "group:GLOBAL;".LINE_FORMAT_SH_VAR,
+        #"DPMUSER" => "user:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "-DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+        "DPM_HOST" => "hostlist:dpm;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+        "-DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+        "DPNS_HOST" => "hostlist:dpns;".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+        "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "NB_THREADS" => "threads:srmv22;".LINE_FORMAT_SH_VAR,
+        "RUN_SRMV2DAEMON" => "ALWAYS->role_enabled:srmv22;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+        "SRMV22DAEMONLOGFILE" => "logfile:srmv22;".LINE_FORMAT_SH_VAR,
+        #"SRMV2_2_PORT" => "port:srmv22;".LINE_FORMAT_SH_VAR,
+        "ULIMIT_N" => "maxOpenFiles:srmv22;".LINE_FORMAT_SH_VAR,
+        "GLOBUS_THREAD_MODEL" => "globusThreadModel:srmv22;".LINE_FORMAT_ENV_VAR,
        );
 
 my $trust_roles = "dpm,dpns,rfio,gsiftp";
 my $trust_config_file = "/etc/shift.conf";
 my %trust_config_rules = (
-        "DPM PROTOCOLS" => "accessProtocols:GLOBAL;".LINE_FORMAT_XRDCFG.';'.LINE_VALUE_ARRAY,
-        "DPM TRUST" => "dpm->hostlist:dpns,xroot;".LINE_FORMAT_XRDCFG.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
-        "DPNS TRUST" => "dpns->hostlist:dpm,srmv1,srmv2,srmv22,rfio;".LINE_FORMAT_XRDCFG.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
-        "RFIOD TRUST" => "rfio->hostlist:dpm,rfio;".LINE_FORMAT_XRDCFG.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
-        "RFIOD WTRUST" => "rfio->hostlist:dpm,rfio;".LINE_FORMAT_XRDCFG.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
-        "RFIOD RTRUST" => "rfio->hostlist:dpm,rfio;".LINE_FORMAT_XRDCFG.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
-        "RFIOD XTRUST" => "rfio->hostlist:dpm,rfio;".LINE_FORMAT_XRDCFG.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
-        "RFIOD FTRUST" => "rfio->hostlist:dpm,rfio;".LINE_FORMAT_XRDCFG.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
-        "RFIO DAEMONV3_WRMT 1" => ";".LINE_FORMAT_XRDCFG,
-        "DPM REQCLEAN" => "dpm->requestMaxAge:dpm;".LINE_FORMAT_XRDCFG,
+        "DPM PROTOCOLS" => "accessProtocols:GLOBAL;".LINE_FORMAT_KEY_VAL.';'.LINE_VALUE_ARRAY,
+        "DPM TRUST" => "dpm->hostlist:dpns,xroot;".LINE_FORMAT_KEY_VAL.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
+        "DPNS TRUST" => "dpns->hostlist:dpm,srmv1,srmv2,srmv22,rfio;".LINE_FORMAT_KEY_VAL.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
+        "RFIOD TRUST" => "rfio->hostlist:dpm,rfio;".LINE_FORMAT_KEY_VAL.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
+        "RFIOD WTRUST" => "rfio->hostlist:dpm,rfio;".LINE_FORMAT_KEY_VAL.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
+        "RFIOD RTRUST" => "rfio->hostlist:dpm,rfio;".LINE_FORMAT_KEY_VAL.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
+        "RFIOD XTRUST" => "rfio->hostlist:dpm,rfio;".LINE_FORMAT_KEY_VAL.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
+        "RFIOD FTRUST" => "rfio->hostlist:dpm,rfio;".LINE_FORMAT_KEY_VAL.';'.LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_UNIQUE,
+        "RFIO DAEMONV3_WRMT 1" => ";".LINE_FORMAT_KEY_VAL,
+        "DPM REQCLEAN" => "dpm->requestMaxAge:dpm;".LINE_FORMAT_KEY_VAL,
        );
 
 my $lfc_config_file = "/etc/sysconfig/lfcdaemon";
 my %lfc_config_rules = (
       "LFCDAEMONLOGFILE" => "logfile:lfc",
-      #"LFCGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
-      #"LFC_PORT" => "port:lfc;".LINE_FORMAT_ENVVAR,
-      #"LFCUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-      "NB_THREADS" => "threads:lfc;".LINE_FORMAT_PARAM,
-      "NSCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_PARAM,
-      "RUN_DISABLEAUTOVIDS" => "disableAutoVirtualIDs:lfc;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-      "RUN_LFCDAEMON" => "ALWAYS->role_enabled:lfc;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-      "RUN_READONLY" => "readonly:lfc;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-      "ULIMIT_N" => "maxOpenFiles:lfc;".LINE_FORMAT_PARAM,
+      #"LFCGROUP" => "group:GLOBAL;".LINE_FORMAT_SH_VAR,
+      #"LFC_PORT" => "port:lfc;".LINE_FORMAT_ENV_VAR,
+      #"LFCUSER" => "user:GLOBAL;".LINE_FORMAT_SH_VAR,
+      "NB_THREADS" => "threads:lfc;".LINE_FORMAT_SH_VAR,
+      "NSCONFIGFILE" => "dbconfigfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+      "RUN_DISABLEAUTOVIDS" => "disableAutoVirtualIDs:lfc;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+      "RUN_LFCDAEMON" => "ALWAYS->role_enabled:lfc;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+      "RUN_READONLY" => "readonly:lfc;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+      "ULIMIT_N" => "maxOpenFiles:lfc;".LINE_FORMAT_SH_VAR,
            );
 
 my $lfcdli_config_file = "/etc/sysconfig/lfc-dli";
 my %lfcdli_config_rules = (
          "DLIDAEMONLOGFILE" => "logfile:lfc-dli",
-         #"DLI_PORT" => "port:lfc-dli;".LINE_FORMAT_ENVVAR,
-         "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_PARAM,
-         "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_PARAM,
-         #"LFCGROUP" => "group:GLOBAL;".LINE_FORMAT_PARAM,
-         "LFC_HOST" => "hostlist:lfc".LINE_FORMAT_ENVVAR.";".LINE_VALUE_ARRAY,
-         #"LFCUSER" => "user:GLOBAL;".LINE_FORMAT_PARAM,
-         "RUN_DLIDAEMON" => "ALWAYS->role_enabled:lfc-dli;".LINE_FORMAT_PARAM.";".LINE_VALUE_BOOLEAN,
-         "ULIMIT_N" => "maxOpenFiles:lfc-dli;".LINE_FORMAT_PARAM,
+         #"DLI_PORT" => "port:lfc-dli;".LINE_FORMAT_ENV_VAR,
+         "GRIDMAP" => "gridmapfile:GLOBAL;".LINE_FORMAT_SH_VAR,
+         "GRIDMAPDIR" => "gridmapdir:GLOBAL;".LINE_FORMAT_SH_VAR,
+         #"LFCGROUP" => "group:GLOBAL;".LINE_FORMAT_SH_VAR,
+         "LFC_HOST" => "hostlist:lfc".LINE_FORMAT_ENV_VAR.";".LINE_VALUE_ARRAY,
+         #"LFCUSER" => "user:GLOBAL;".LINE_FORMAT_SH_VAR,
+         "RUN_DLIDAEMON" => "ALWAYS->role_enabled:lfc-dli;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_BOOLEAN,
+         "ULIMIT_N" => "maxOpenFiles:lfc-dli;".LINE_FORMAT_SH_VAR,
         );
 
 my %config_files = (
@@ -1771,9 +1769,18 @@ sub updateRoleConfig {
  
   $self->debug(1,"$function_name: building configuration file for role ".uc($role)." (".${$config_files{$role}}.")");
  
-  my $changes=$self->updateConfigFile(${$config_files{$role}},$config_rules{$role},$config,\%parser_options);
+  my $changes = 0;
+  my $fh = CAF::RuleBasedEditor->new(${$config_files{$role}}, log => $self);
+  if ( defined($fh) ) {
+    unless ( $fh->updateFile($config_rules{$role}, $config, \%parser_options) ) {
+      $self->error("Error updating ".${$config_files{$role}});
+    }
+    $changes = $fh->close();
+  } else {
+      $self->error("Error opening ".${$config_files{$role}});
+  }
  
-    # Keep track of services that need to be restarted if changes have been made
+  # Keep track of services that need to be restarted if changes have been made
   if ( $changes > 0 ) {
     $self->serviceRestartNeeded($role);
   }
