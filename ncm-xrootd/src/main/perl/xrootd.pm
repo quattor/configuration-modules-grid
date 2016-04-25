@@ -33,8 +33,7 @@ package NCM::Component::${project.artifactId};
 use strict;
 use warnings;
 use vars qw($EC);
-use NCM::Component::${project.artifactId}::RuleBasedEditor qw(:rule_constants);
-use parent qw(NCM::Component NCM::Component::${project.artifactId}::RuleBasedEditor);
+use parent qw(NCM::Component);
 our $EC=LC::Exception::Context->new->will_store_all;
 
 our @EXPORT = qw( $XROOTD_SYSCONFIG_FILE );
@@ -52,6 +51,7 @@ use LC::Check;
 use CAF::FileWriter;
 use CAF::FileEditor;
 use CAF::Process;
+use CAF::RuleBasedEditor qw(:rule_constants);
 
 use Encode qw(encode_utf8);
 use Fcntl qw(SEEK_SET);
@@ -121,68 +121,68 @@ my %role_max_servers = (
 
 Readonly our $XROOTD_SYSCONFIG_FILE => "/etc/sysconfig/xrootd";
 my %xrootd_sysconfig_rules = (
-        "CMSD_INSTANCES" => "cmsdInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_HASH_KEYS,
-        "CMSD_%%INSTANCE%%_OPTIONS" => "cmsdInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_INSTANCE_PARAMS,
-        "DAEMON_COREFILE_LIMIT" => "coreMaxSize:dpm;".LINE_FORMAT_PARAM,
-        "DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_PARAM,
-        "DPMXRD_ALTERNATE_HOSTNAMES" => "alternateNames:dpm;".LINE_FORMAT_PARAM,
-        "DPNS_HOST" => "dpnsHost:dpm;".LINE_FORMAT_PARAM,
-        "MALLOC_ARENA_MAX" => "mallocArenaMax:GLOBAL;".LINE_FORMAT_PARAM,
-        "XROOTD_GROUP" => "daemonGroup:GLOBAL;".LINE_FORMAT_PARAM,
-        "XROOTD_INSTANCES" => "xrootdOrderedInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_ARRAY,
-        "XROOTD_%%INSTANCE%%_OPTIONS" => "xrootdInstances:GLOBAL;".LINE_FORMAT_PARAM.";".LINE_VALUE_INSTANCE_PARAMS,
-        "XROOTD_USER" => "daemonUser:GLOBAL;".LINE_FORMAT_PARAM,
+        "CMSD_INSTANCES" => "cmsdInstances:GLOBAL;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_HASH_KEYS,
+        "CMSD_%%INSTANCE%%_OPTIONS" => "cmsdInstances:GLOBAL;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_INSTANCE_PARAMS,
+        "DAEMON_COREFILE_LIMIT" => "coreMaxSize:dpm;".LINE_FORMAT_SH_VAR,
+        "DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_SH_VAR,
+        "DPMXRD_ALTERNATE_HOSTNAMES" => "alternateNames:dpm;".LINE_FORMAT_SH_VAR,
+        "DPNS_HOST" => "dpnsHost:dpm;".LINE_FORMAT_SH_VAR,
+        "MALLOC_ARENA_MAX" => "mallocArenaMax:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "XROOTD_GROUP" => "daemonGroup:GLOBAL;".LINE_FORMAT_SH_VAR,
+        "XROOTD_INSTANCES" => "xrootdOrderedInstances:GLOBAL;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_ARRAY,
+        "XROOTD_%%INSTANCE%%_OPTIONS" => "xrootdInstances:GLOBAL;".LINE_FORMAT_SH_VAR.";".LINE_VALUE_INSTANCE_PARAMS,
+        "XROOTD_USER" => "daemonUser:GLOBAL;".LINE_FORMAT_SH_VAR,
        );
 
 my %disk_config_rules = (
-      "all.sitename" => "siteName:GLOBAL;".LINE_FORMAT_XRDCFG,
-      "xrd.report" => "reportingOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
-      "xrootd.monitor" => "monitoringOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
+      "all.sitename" => "siteName:GLOBAL;".LINE_FORMAT_KEY_VAL,
+      "xrd.report" => "reportingOptions:GLOBAL;".LINE_FORMAT_KEY_VAL,
+      "xrootd.monitor" => "monitoringOptions:GLOBAL;".LINE_FORMAT_KEY_VAL,
       );
 
 my %redir_config_rules = (
-      "all.sitename" => "siteName:GLOBAL;".LINE_FORMAT_XRDCFG,
-      "dpmhost" => "dpmHost:dpm;".LINE_FORMAT_XRDCFG_SET,
-      "dpm.defaultprefix" => "defaultPrefix:dpm;".LINE_FORMAT_XRDCFG,
-      "dpm.fixedidrestrict" => "authorizedPaths:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-      "dpm.fqan" => "mappedFQANs:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-      "dpm.principal" => "principal:dpm;".LINE_FORMAT_XRDCFG,
-      "dpm.replacementprefix" => "replacementPrefix:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_STRING_HASH,
-      "ofs.authlib" => "authzLibraries:GLOBAL;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY,
-      "xrd.report" => "reportingOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
-      "xrootd.monitor" => "monitoringOptions:GLOBAL;".LINE_FORMAT_XRDCFG,
-      "xrootd.redirect" => "localRedirectParams:GLOBAL;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_SINGLE,
-      "DPM_CONRETRY" => "dpmConnectionRetry:dpm;".LINE_FORMAT_XRDCFG_SETENV,
-      "DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_XRDCFG_SETENV,
-      "DPNS_CONRETRY" => "dpnsConnectionRetry:dpm;".LINE_FORMAT_XRDCFG_SETENV,
-      "DPNS_HOST" => "dpnsHost:dpm;".LINE_FORMAT_XRDCFG_SETENV,
-      "TTOKENAUTHZ_AUTHORIZATIONFILE" => "authzConf:tokenAuthz;".LINE_FORMAT_XRDCFG_SETENV,
+      "all.sitename" => "siteName:GLOBAL;".LINE_FORMAT_KEY_VAL,
+      "dpmhost" => "dpmHost:dpm;".LINE_FORMAT_KEY_VAL_SET,
+      "dpm.defaultprefix" => "defaultPrefix:dpm;".LINE_FORMAT_KEY_VAL,
+      "dpm.fixedidrestrict" => "authorizedPaths:dpm;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY,
+      "dpm.fqan" => "mappedFQANs:dpm;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY,
+      "dpm.principal" => "principal:dpm;".LINE_FORMAT_KEY_VAL,
+      "dpm.replacementprefix" => "replacementPrefix:dpm;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_STRING_HASH,
+      "ofs.authlib" => "authzLibraries:GLOBAL;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY,
+      "xrd.report" => "reportingOptions:GLOBAL;".LINE_FORMAT_KEY_VAL,
+      "xrootd.monitor" => "monitoringOptions:GLOBAL;".LINE_FORMAT_KEY_VAL,
+      "xrootd.redirect" => "localRedirectParams:GLOBAL;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_ARRAY.':'.LINE_VALUE_OPT_SINGLE,
+      "DPM_CONRETRY" => "dpmConnectionRetry:dpm;".LINE_FORMAT_KEY_VAL_SETENV,
+      "DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_KEY_VAL_SETENV,
+      "DPNS_CONRETRY" => "dpnsConnectionRetry:dpm;".LINE_FORMAT_KEY_VAL_SETENV,
+      "DPNS_HOST" => "dpnsHost:dpm;".LINE_FORMAT_KEY_VAL_SETENV,
+      "TTOKENAUTHZ_AUTHORIZATIONFILE" => "authzConf:tokenAuthz;".LINE_FORMAT_KEY_VAL_SETENV,
      );
 
 my %fedredir_config_rules = (
-      "all.export" => "validPathPrefix:fedparams;".LINE_FORMAT_XRDCFG,
-      "all.manager" => "federationCmsdManager:fedparams;".LINE_FORMAT_XRDCFG,
-      "all.sitename" => "siteName:GLOBAL;".LINE_FORMAT_XRDCFG,
-      "dpm.defaultprefix" => "!namePrefix:fedparams->defaultPrefix:dpm;".LINE_FORMAT_XRDCFG,
-      "dpm.namelib" => "n2nLibrary:fedparams;".LINE_FORMAT_XRDCFG,
-      "dpm.namecheck" => "namePrefix:fedparams;".LINE_FORMAT_XRDCFG,
-      "dpm.replacementprefix" => "!namePrefix:fedparams->replacementPrefix:dpm;".LINE_FORMAT_XRDCFG.";".LINE_VALUE_STRING_HASH,
-      "pss.origin" => "localRedirector:fedparams;".LINE_FORMAT_XRDCFG,
-      "xrd.port" => "localPort:fedparams;".LINE_FORMAT_XRDCFG,
-      "xrd.report" => "reportingOptions:fedparams;".LINE_FORMAT_XRDCFG,
-      "xrootfedxrdmanager" => "federationXrdManager:fedparams;".LINE_FORMAT_XRDCFG_SET,
-      "xrootfedcmsdmanager" => "federationCmsdManager:fedparams;".LINE_FORMAT_XRDCFG_SET,
-      "xrootfedlport" => "localPort:fedparams;".LINE_FORMAT_XRDCFG_SET,
-      "xrootd.monitor" => "monitoringOptions:fedparams;".LINE_FORMAT_XRDCFG,
-      "xrootd.redirect" => "redirectParams:fedparams;".LINE_FORMAT_XRDCFG,
-      "CSEC_MECH" => "lfcHost:fedparams->lfcSecurityMechanism:fedparams;".LINE_FORMAT_XRDCFG_SETENV,
-      "DPM_CONRETRY" => "dpmConnectionRetry:dpm;".LINE_FORMAT_XRDCFG_SETENV,
-      "DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_XRDCFG_SETENV,
-      "DPNS_CONRETRY" => "dpnsConnectionRetry:dpm;".LINE_FORMAT_XRDCFG_SETENV,
-      "DPNS_HOST" => "dpnsHost:dpm;".LINE_FORMAT_XRDCFG_SETENV,
-      "LFC_CONRETRY" => "lfcHost:fedparams->lfcConnectionRetry:fedparams;".LINE_FORMAT_XRDCFG_SETENV,
-      "LFC_HOST" => "lfcHost:fedparams;".LINE_FORMAT_XRDCFG_SETENV,
-      "X509_USER_PROXY" => "proxyLocation:fedparams;".LINE_FORMAT_XRDCFG_SETENV,
+      "all.export" => "validPathPrefix:fedparams;".LINE_FORMAT_KEY_VAL,
+      "all.manager" => "federationCmsdManager:fedparams;".LINE_FORMAT_KEY_VAL,
+      "all.sitename" => "siteName:GLOBAL;".LINE_FORMAT_KEY_VAL,
+      "dpm.defaultprefix" => "!namePrefix:fedparams->defaultPrefix:dpm;".LINE_FORMAT_KEY_VAL,
+      "dpm.namelib" => "n2nLibrary:fedparams;".LINE_FORMAT_KEY_VAL,
+      "dpm.namecheck" => "namePrefix:fedparams;".LINE_FORMAT_KEY_VAL,
+      "dpm.replacementprefix" => "!namePrefix:fedparams->replacementPrefix:dpm;".LINE_FORMAT_KEY_VAL.";".LINE_VALUE_STRING_HASH,
+      "pss.origin" => "localRedirector:fedparams;".LINE_FORMAT_KEY_VAL,
+      "xrd.port" => "localPort:fedparams;".LINE_FORMAT_KEY_VAL,
+      "xrd.report" => "reportingOptions:fedparams;".LINE_FORMAT_KEY_VAL,
+      "xrootfedxrdmanager" => "federationXrdManager:fedparams;".LINE_FORMAT_KEY_VAL_SET,
+      "xrootfedcmsdmanager" => "federationCmsdManager:fedparams;".LINE_FORMAT_KEY_VAL_SET,
+      "xrootfedlport" => "localPort:fedparams;".LINE_FORMAT_KEY_VAL_SET,
+      "xrootd.monitor" => "monitoringOptions:fedparams;".LINE_FORMAT_KEY_VAL,
+      "xrootd.redirect" => "redirectParams:fedparams;".LINE_FORMAT_KEY_VAL,
+      "CSEC_MECH" => "lfcHost:fedparams->lfcSecurityMechanism:fedparams;".LINE_FORMAT_KEY_VAL_SETENV,
+      "DPM_CONRETRY" => "dpmConnectionRetry:dpm;".LINE_FORMAT_KEY_VAL_SETENV,
+      "DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_KEY_VAL_SETENV,
+      "DPNS_CONRETRY" => "dpnsConnectionRetry:dpm;".LINE_FORMAT_KEY_VAL_SETENV,
+      "DPNS_HOST" => "dpnsHost:dpm;".LINE_FORMAT_KEY_VAL_SETENV,
+      "LFC_CONRETRY" => "lfcHost:fedparams->lfcConnectionRetry:fedparams;".LINE_FORMAT_KEY_VAL_SETENV,
+      "LFC_HOST" => "lfcHost:fedparams;".LINE_FORMAT_KEY_VAL_SETENV,
+      "X509_USER_PROXY" => "proxyLocation:fedparams;".LINE_FORMAT_KEY_VAL_SETENV,
      );
 
 my %config_rules = (
@@ -687,6 +687,50 @@ sub restartServices () {
   }
 
   return($global_status);
+}
+
+
+# Update a config file using the CAF::RuleBasedEditor
+#
+# Arguments:
+#   - config_file: name of the configuration file to edit
+#   - rules: rules to apply
+#   - config: configuration to use with rules
+#   - parser_options: rule parser options
+#
+# Return value:
+#   Success: number of resulting changes in the configuration file
+#   Failure: undef
+
+sub updateConfigFile () {
+  my $function_name = "updateConfigFile";
+  my ($self, $config_file, $rules, $config, $parser_options) = @_;
+
+  unless ( $config_file ) {
+    $self->error("$function_name: 'config_file' argument missing");
+    return;
+  }
+  unless ( $rules ) {
+    $self->error("$function_name: 'rules' argument missing");
+    return;
+  }
+  unless ( $config ) {
+    $self->error("$function_name: 'config' argument missing");
+    return;
+  }
+
+  my $changes = 0;
+  my $fh = CAF::RuleBasedEditor->new($config_file, log => $self);
+  if ( defined($fh) ) {
+    unless ( $fh->updateFile($rules, $config, $parser_options) ) {
+      $self->error("Error updating ".$config_file);
+    }
+    $changes = $fh->close();
+  } else {
+      $self->error("Error opening ".$config_file);
+  }
+
+  return $changes;
 }
 
 
