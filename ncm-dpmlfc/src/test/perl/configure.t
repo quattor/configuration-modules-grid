@@ -1109,6 +1109,7 @@ Readonly my $TRUSTS_EXPECTED_CONFIG => '# This file is managed by Quattor - DO N
 DPM PROTOCOLS gsiftp rfio https xroot
 DPM REQCLEAN 180d
 DPM TRUST grid05.lal.in2p3.fr grid16.lal.in2p3.fr grid17.lal.in2p3.fr
+DPNS TRUST grid05.lal.in2p3.fr grid16.lal.in2p3.fr grid17.lal.in2p3.fr
 RFIO DAEMONV3_WRMT 1
 RFIOD FTRUST grid05.lal.in2p3.fr grid16.lal.in2p3.fr grid17.lal.in2p3.fr
 RFIOD RTRUST grid05.lal.in2p3.fr grid16.lal.in2p3.fr grid17.lal.in2p3.fr
