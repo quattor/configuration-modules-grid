@@ -1,6 +1,10 @@
-#!/usr/bin/perl
 use strict;
 use warnings;
+
+BEGIN {
+    *CORE::GLOBAL::sleep = sub {};
+}
+
 use Test::More tests => 8;
 use Test::NoWarnings;
 use Test::Quattor qw(disk atlas-fed-redir);

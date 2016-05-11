@@ -5,6 +5,11 @@
 
 use strict;
 use warnings;
+
+BEGIN {
+  *CORE::GLOBAL::sleep = sub {};
+}
+
 use Test::More tests => 14;
 use Test::NoWarnings;
 use Test::Quattor qw(local-redir cms-fed-redir);
