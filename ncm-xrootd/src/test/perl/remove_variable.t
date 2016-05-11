@@ -5,6 +5,11 @@
 
 use strict;
 use warnings;
+
+BEGIN {
+  *CORE::GLOBAL::sleep = sub {};
+}
+
 use Test::More tests => 4;
 use Test::NoWarnings;
 use Test::Quattor;

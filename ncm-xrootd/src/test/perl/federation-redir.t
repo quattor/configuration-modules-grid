@@ -5,6 +5,11 @@
 
 use strict;
 use warnings;
+
+BEGIN {
+  *CORE::GLOBAL::sleep = sub {};
+}
+
 use Test::More tests => 10;
 use Test::NoWarnings;
 use Test::Quattor qw(cms-fed-redir atlas-fed-redir);
