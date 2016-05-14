@@ -18,8 +18,6 @@ use EDG::WP4::CCM::Element;
 use File::Copy;
 use File::Path;
 
-local(*DTA);
-
 
 ##########################################################################
 sub Configure($$@) {

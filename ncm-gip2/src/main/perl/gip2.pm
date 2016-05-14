@@ -20,8 +20,6 @@ use Encode qw(encode_utf8);
 use File::Path;
 use File::Basename;
 
-local(*DTA);
-
 sub write_encoded {
     my ($self, $file, $perm, $contents) = @_;
     my $fh = CAF::FileWriter->new($file, mode => $perm, log => $self);

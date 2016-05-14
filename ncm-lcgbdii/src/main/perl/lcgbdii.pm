@@ -20,8 +20,6 @@ use EDG::WP4::CCM::Element;
 use File::Path;
 use File::Basename;
 
-local(*DTA);
-
 # List of directories invalid for BDII working directories.
 # Value is useless
 my %forbiddenDirs = (

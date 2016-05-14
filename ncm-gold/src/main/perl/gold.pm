@@ -25,8 +25,6 @@ use File::Copy;
 use File::Path;
 use Encode qw(encode_utf8);
 
-local(*DTA);
-
 use constant CLIENT_CONFIG_INT => qw(
     server.port
     response.chunksize

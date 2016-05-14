@@ -18,8 +18,6 @@ use EDG::WP4::CCM::Element;
 use CAF::FileWriter;
 use CAF::Process;
 
-local(*DTA);
-
 Readonly my $BASE => "/software/components/mkgridmap";
 Readonly my $VOBASE => "/system/vo";
 
