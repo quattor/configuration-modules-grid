@@ -199,7 +199,7 @@ type ${project.artifactId}_component_instances = {
   "type" : string with match(SELF,'(disk|redir|fedredir)')
 };
 
-type xrootd_component_security_protocols = {
+type ${project.artifactId}_component_security_protocols = {
   "authzfun" ? string
   "authzfunparams" ? string
   "authzto" ? long
@@ -243,7 +243,7 @@ type ${project.artifactId}_component_global_options = {
   "federations" ? ${project.artifactId}_component_fed_options{}
   "tokenAuthz" ? ${project.artifactId}_component_token_authz_options
   "dpm" ? ${project.artifactId}_component_dpm_options
-  "securityProtocol" ? xrootd_component_security_protocols{}
+  "securityProtocol" ? ${project.artifactId}_component_security_protocols{} 
 } with ${project.artifactId}_component_options_valid(SELF);
 
 type ${project.artifactId}_component_node_config = {
@@ -258,5 +258,4 @@ type ${project.artifactId}_component = {
 };
 
 bind "/software/components/xrootd" = ${project.artifactId}_component;
-
 
