@@ -19,8 +19,6 @@ use EDG::WP4::CCM::Element;
 use File::Copy;
 use File::Path;
 
-local(*DTA);
-
 # Match between componenent properties and MyProxy configuration keywords.
 # For each properties, there may be several options needed thus the value is a list.
 my %myproxy_options = ('defaultDNs-renewers' => ['default_renewers'],

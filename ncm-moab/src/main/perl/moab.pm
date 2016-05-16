@@ -26,8 +26,6 @@ use File::Copy;
 use File::Path;
 use Encode qw(encode_utf8);
 
-local(*DTA);
-
 use constant MOABCFG => qw(
     sched
     rm

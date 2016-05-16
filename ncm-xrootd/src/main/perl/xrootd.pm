@@ -56,8 +56,6 @@ use CAF::RuleBasedEditor qw(:rule_constants);
 use Encode qw(encode_utf8);
 use Fcntl qw(SEEK_SET);
 
-local (*DTA);
-
 use Net::Domain qw(hostname hostfqdn hostdomain);
 
 

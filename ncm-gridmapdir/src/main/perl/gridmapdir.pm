@@ -20,8 +20,6 @@ use File::Path;
 use File::Basename;
 use LC::Check;
 
-local(*DTA);
-
 
 ##########################################################################
 sub Configure($$@) {

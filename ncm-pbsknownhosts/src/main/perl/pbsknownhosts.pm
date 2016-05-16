@@ -19,8 +19,6 @@ use EDG::WP4::CCM::Element;
 use File::Path;
 use File::Basename;
 
-local(*DTA);
-
 # Define paths for convenience. 
 my $base = "/software/components/pbsknownhosts";
 

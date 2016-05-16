@@ -21,8 +21,6 @@ use EDG::WP4::CCM::Element;
 use vars qw(%wp1vars);
 
 
-local(*DTA);
-
 
 ##########################################################################
 sub Configure($$@) {

@@ -19,8 +19,6 @@ use File::Copy;
 use File::Path;
 use Encode qw(encode_utf8);
 
-local(*DTA);
-
 
 ##########################################################################
 sub Configure($$@) {

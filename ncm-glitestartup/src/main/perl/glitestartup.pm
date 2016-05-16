@@ -23,8 +23,6 @@ use CAF::Process;
 
 use Encode qw(encode_utf8);
 
-local(*DTA);
-
 # Define paths for convenience. 
 my $base = "/software/components/glitestartup";
 my $glite_config_base = "/system/glite/config";

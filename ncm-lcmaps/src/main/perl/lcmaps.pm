@@ -23,8 +23,6 @@ use LC::Check;
 use EDG::WP4::CCM::Element;
 
 
-local(*DTA);
-
 ##########################################################################
 # write a single policy file to path $path
 #

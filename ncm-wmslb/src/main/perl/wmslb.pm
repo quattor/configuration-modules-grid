@@ -21,8 +21,6 @@ use LC::Process qw(run);
 
 use Encode qw(encode_utf8);
 
-local(*DTA);
-
 # Define paths for convenience. 
 my $base = "/software/components/wmslb";
 my $glite_config_base = "/system/glite/config";
