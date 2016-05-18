@@ -13,6 +13,7 @@ BEGIN {
 use Test::More tests => 4;
 use Test::NoWarnings;
 use Test::Quattor;
+use CAF::RuleBasedEditor qw(:rule_constants);
 use NCM::Component::xrootd;
 use Readonly;
 use CAF::Object;
@@ -53,14 +54,9 @@ setenv DPNS_HOST = grid05.lal.in2p3.fr
 #setenv DPM_HOST = grid05.lal.in2p3.fr
 ';
 
-
-# Copied from xrrotd.pm
-use constant LINE_FORMAT_XRDCFG_SETENV => 4;
-use constant LINE_FORMAT_XRDCFG_SET => 5;
-
 my %config_rules = (
-      "-dpmhost" => "dpmHost:dpm;".LINE_FORMAT_XRDCFG_SET,
-      "-DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_XRDCFG_SETENV,
+      "-dpmhost" => "dpmHost:dpm;".LINE_FORMAT_KW_VAL_SET.";:".LINE_OPT_SEP_EQUAL,
+      "-DPM_HOST" => "dpmHost:dpm;".LINE_FORMAT_KW_VAL_SETENV.";:".LINE_OPT_SEP_EQUAL,
      );
 
 
