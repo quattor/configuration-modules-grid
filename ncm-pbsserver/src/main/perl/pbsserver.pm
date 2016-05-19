@@ -20,8 +20,10 @@ use CAF::FileWriter;
 
 use File::Path qw(mkpath);
 
+# Filter out any matching pbsnodes attributes from further processing
 use constant FILTER_PBSNODES_PATTERNS => qw(
-    status jobs
+    state ntype power_state
+    status jobs note
     mom_(manager|service)_port
     (total|dedicated)_(sockets|numa_nodes|cores|threads)
 );
@@ -328,7 +330,7 @@ sub Configure
                                     $self->qmgr("set node $node $nodeatt += $p");
                                 }
                             }
-                        } elsif ($nodeatt ne "status") {
+                        } else {
                             $definednatt{$nodeatt} = 1;
                             $self->qmgr("set node $node $nodeatt = ".$node_attlist->{$nodeatt});
                         }
@@ -342,15 +344,12 @@ sub Configure
                     foreach my $p (sort keys %defprops) {
                         $self->qmgr("set node $node properties -= '$p'");
                     }
-                    # Delete attributes not part of the configuration, preserving special attributes
-                    # like state, status or ntype.
+                    # Delete attributes not part of the configuration
+                    # Special and/or readonly attributes should be filtered from processing
+                    # via FILTER_PBSNODES_PATTERNS or handled separately (like properties)
                     foreach (sort keys %existingnatt) {
                         if (!defined($definednatt{$_}) &&
-                                ($_ ne "ntype") &&
-                                ($_ ne "state") &&
-                                ($_ ne "power_state") &&
-                                ($_ ne "properties") &&
-                                ($_ ne "status")) {
+                            ($_ ne 'properties')) {
                             $self->qmgr("unset node $node $_");
                         }
                     }
