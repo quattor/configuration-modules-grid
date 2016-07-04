@@ -92,9 +92,7 @@
             <mappings combine.children="append">
               <mapping>
                 <directory>/usr/lib/ncm/config/${project.artifactId}</directory>
-                <filemode>644</filemode>
-                <username>root</username>
-                <groupname>root</groupname>
+                <documentation>true</documentation>
                 <directoryIncluded>false</directoryIncluded>
                 <sources>
                   <source>
