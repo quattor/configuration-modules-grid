@@ -89,6 +89,15 @@ function ${project.artifactId}_component_options_valid = {
       };
     };
   };
+
+  # securityProtocol: only gsi is supported
+  if ( is_defined(SELF['securityProtocol']) ) {
+    foreach (protocol;params;SELF['securityProtocol']) {
+      if ( !match(protocol,'^gsi$') ) {
+        error(format("Invalid security protocol '%s' defined",protocol));
+      };
+    };
+  };
   
   true;
 };
@@ -190,6 +199,33 @@ type ${project.artifactId}_component_instances = {
   "type" : string with match(SELF,'(disk|redir|fedredir)')
 };
 
+type xrootd_component_security_protocols = {
+  "authzfun" ? string
+  "authzfunparams" ? string
+  "authzto" ? long
+  "authzpxy" ? long
+  "ca" ? long
+  "cert" ? string
+  "certdir" ? string
+  "cipher" ? string
+  "crl" ? long
+  "crldir" ? string
+  "crlext" ? string
+  "crlrefresh" ? long
+  "digpxy" ? long
+  "exppxy" ? string
+  "gmapopt" ? long
+  "gmapto" ? long
+  "gmapfun" ? string
+  "gmapfunparams" ? string
+  "gridmap" ? string
+  "key" ? string
+  "md" ? string
+  "vomsat" ? long
+  "vomsfun" ? string
+  "vomsfunparams" ? string
+};
+
 type ${project.artifactId}_component_global_options = {
   "installDir" ? string
   "configDir" : string = 'xrootd'
@@ -207,6 +243,7 @@ type ${project.artifactId}_component_global_options = {
   "federations" ? ${project.artifactId}_component_fed_options{}
   "tokenAuthz" ? ${project.artifactId}_component_token_authz_options
   "dpm" ? ${project.artifactId}_component_dpm_options
+  "securityProtocol" ? xrootd_component_security_protocols{}
 } with ${project.artifactId}_component_options_valid(SELF);
 
 type ${project.artifactId}_component_node_config = {
