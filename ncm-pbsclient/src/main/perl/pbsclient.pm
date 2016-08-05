@@ -76,6 +76,7 @@ use constant PBSINITIALISATIONVALUES => qw(
     node_check_interval
     nodefile_suffix
     nospool_dir_list
+    job_oom_score_adjust
     prologalarm
     rcpcmd
     remote_checkpoint_dirs

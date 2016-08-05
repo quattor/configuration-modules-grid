@@ -78,6 +78,8 @@ type ${project.artifactId}_component_structure_initialisation = {
     
     "nospool_dir_list"          ? string[]
 
+    "job_oom_score_adjust"      ? long
+
     "prologalarm"               ? long 
 
     "rcpcmd"                    ? string             
