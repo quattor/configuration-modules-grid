@@ -1,15 +1,6 @@
-# ${license-info}
-# ${developer-info}
-# ${author-info}
-# ${build-info}
-#
+#${PMpre} NCM::Component::pbsserver${PMpost}
 
-package NCM::Component::pbsserver;
-
-use strict;
-use warnings;
-
-use parent qw(NCM::Component);
+use parent qw(NCM::Component CAF::Path);
 
 our $EC = LC::Exception::Context->new->will_store_all;
 our $NoActionSupported = 1;
@@ -18,10 +9,10 @@ use CAF::Process;
 use CAF::Service;
 use CAF::FileWriter;
 
-use File::Path qw(mkpath);
+use Readonly;
 
 # Filter out any matching pbsnodes attributes from further processing
-use constant FILTER_PBSNODES_PATTERNS => qw(
+Readonly::Array my @FILTER_PBSNODES_PATTERNS => qw(
     state ntype power_state
     status jobs note
     mom_(manager|service)_port
@@ -38,34 +29,32 @@ sub Configure
     my ($self, $config) = @_;
 
     # Define paths for convenience and retrieve configuration
-    my $base = "/software/components/pbsserver";
-    my $tree = $config->getElement($base)->getTree();
+    my $tree = $config->getTree($self->prefix());
 
-    # set to true if service was (re)started
-    my $started = 0;
 
     # Retrieve location for pbs working directory and ensure it exists.
-    my $pbsroot = "/var/torque";
-    if ( $tree->{pbsroot} ) {
-        $pbsroot = $tree->{pbsroot};
-    }
-    mkpath($pbsroot, 0, 0755) unless (-e $pbsroot);
-    if (! -d $pbsroot) {
-        $self->error("Can't create directory: $pbsroot");
+    my $pbsroot = $tree->{pbsroot} || "/var/torque";
+
+    if (! $self->directory($pbsroot)) {
+        $self->error("Can't create directory $pbsroot: $self->{fail}");
         return 1;
     }
 
     my $srv = CAF::Service->new(['pbs_server'], log => $self);
+    # set to true if service was (re)started
+    my $started = 0;
 
     # Determine the location of the pbs commands.
-    my $binpath = "/usr/bin";
-    if ( $tree->{binpath} ) {
-        $binpath = $tree->{binpath};
-    };
+    my $binpath = $tree->{binpath} || "/usr/bin";
 
     my $serverdb = "$pbsroot/server_priv/serverdb";
-    if (! -f $serverdb) {
+    if (! $self->file_exists($serverdb)) {
         $self->info("serverdb $serverdb is missing.");
+
+        if (! $srv->stop()) {
+            $self->warn('pbs_server stop failed before create (normal in not started yet): '. $?);
+        };
+
         # force is ok, because the serverdb is missing
         return 1 if (! defined($self->force_create($binpath, $pbsroot)));
 
@@ -88,6 +77,7 @@ sub Configure
                                           log => $self,
                                           );
         print $fh_env $contents;
+
         if($fh_env->close()) {
             $self->verbose("$fname updated. Restarting pbs_server...");
             $started = 1;
@@ -125,30 +115,33 @@ sub Configure
     # this is far from true. if something else manages torque.cfg, set ignoretorquecfg to true
     } else {
         $self->info("Removing submission filter...");
-        unlink "$pbsroot/submit_filter" if (-e "$pbsroot/submit_filter");
+        $self->cleanup("$pbsroot/submit_filter");
 
-        my $removetorquecfg = -e "$pbsroot/torque.cfg";
+        my $removetorquecfg = $self->file_exists("$pbsroot/torque.cfg");
         if ($tree->{ignoretorquecfg}) {
             $removetorquecfg = 0;
             $self->info("Ignoring torque.cfg file.");
         };
-        unlink "$pbsroot/torque.cfg" if ($removetorquecfg);
+        $self->cleanup("$pbsroot/torque.cfg") if ($removetorquecfg);
     }
 
 
-    $qmgr = "$binpath/qmgr";
+    $self->set_qmgr("$binpath/qmgr");
     my $pbsnodes = "$binpath/pbsnodes";
-    if (! (-x $qmgr)) {
-        $self->error("$qmgr isn't executable");
-        return 1;
+
+    foreach my $bin ($qmgr, $pbsnodes) {
+        if (! $self->file_exists($bin)) {
+            $self->error("$bin does not exist");
+            return 1;
+        }
     }
-    if (! (-x $pbsnodes)) {
-        $self->error("$pbsnodes isn't executable");
-        return 1;
-    }
+
 
     my $existing = $self->get_current_config($started);
-    return 1 if (! defined($existing));
+    if (! defined($existing)) {
+        $self->error("No existing config found");
+        return 1;
+    }
 
 
     # server configuration
@@ -259,22 +252,26 @@ sub Configure
     # avoids having to rerun the command.
     my %existingnodes;
     my $lastnode = '';
-    my $filterpattern = '^(' . join('|', FILTER_PBSNODES_PATTERNS) . ')$';
-    my $filterregexp = qr{$filterpattern};
-    $self->verbose("pbsnodes attributes filter regexp $filterregexp");
-    if (-e "$pbsroot/server_priv/nodes" && -s "$pbsroot/server_priv/nodes") {
+
+    my $nodesfn = "$pbsroot/server_priv/nodes";
+    if ($self->file_exists($nodesfn)) {
         my $output = CAF::Process->new([$pbsnodes, '-a'], log => $self, keeps_state => 1)->output();
         if ($?) {
             $self->error("error running $pbsnodes");
             return 1;
         }
-        foreach (split(/\n/, $output)) {
-            chomp;
-            if (m/(^[\w\d\.-]+)\s*$/) {
+
+        my $filterpattern = '^(' . join('|', @FILTER_PBSNODES_PATTERNS) . ')$';
+        my $filterregexp = qr{$filterpattern};
+        $self->verbose("pbsnodes attributes filter regexp $filterregexp");
+
+        foreach my $line (split(/\n/, $output)) {
+            chomp($line);
+            if ($line =~ m/(^[\w\d\.-]+)\s*$/) {
                 # Start of a section with node name.
                 $lastnode = $1;
                 $existingnodes{$lastnode} = {};
-            } elsif (m/^\s*(\w+)\s*=\s*(.*)/) {
+            } elsif ($line =~ m/^\s*(\w+)\s*=\s*(.*)/) {
                 # This is an attribute.  Attach it to last node.
                 my $name = $1;
                 my $value = $2;
@@ -284,7 +281,10 @@ sub Configure
                 }
             }
         }
+    } else {
+        $self->verbose("nodes file $nodesfn not found, not checking any exiting nodes");
     }
+
 
     # node configuration
     # $nodebase--+
@@ -371,6 +371,18 @@ sub Configure
 }
 
 
+# Set qmgr module variable to qmgr_bin (if defined)
+# Returns value of qmgr
+sub set_qmgr
+{
+    my ($self, $qmgr_bin) = @_;
+
+    $qmgr = $qmgr_bin if defined($qmgr_bin);
+
+    return $qmgr;
+}
+
+
 # For hashref cfg, return if component is allowed to make changes
 # (it checks if the manualconfig attribute is set and false)
 sub allowed
@@ -427,7 +439,7 @@ sub qmgr
     if ($?) {
 	   $self->error("Failed to run $qmgr $cmd: $out (", $? >> 8, ")");
     } else {
-	   $self->debug(2, "OK: $cmd");
+	   $self->debug(2, "qmgr $cmd successful");
     }
     return $out;
 }
@@ -459,17 +471,17 @@ sub get_current_config
     }
 
     my $existing;
-    foreach (split('\n', $current_config)) {
-        chomp;
-        if (m/set server ([\w\.]+)/) {
+    foreach my $line (split('\n', $current_config)) {
+        chomp $line;
+        if ($line =~ m/set server ([\w\.]+)/) {
             # Mark the server attribute as set.
             $existing->{satt}->{$1} = 1;
 
-        } elsif (m/create queue ([\w\.\-]+)/) {
+        } elsif ($line =~ m/create queue ([\w\.\-]+)/) {
             # Create a hash for the queue.
             $existing->{queues}->{$1} = {};
 
-        } elsif (m/set queue ([\w\.\-]+)\s+([\w\.]+)/) {
+        } elsif ($line =~ m/set queue ([\w\.\-]+)\s+([\w\.]+)/) {
             # Mark the attribute as set for the given queue.
             my $queue = $1;
             my $name = $2;
