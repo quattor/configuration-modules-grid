@@ -43,7 +43,6 @@
     <module>ncm-gip2</module>
     <module>ncm-glitestartup</module>
     <module>ncm-globuscfg</module>
-    <module>ncm-gold</module>
     <module>ncm-gridmapdir</module>
     <module>ncm-gsissh</module>
     <module>ncm-lbconfig</module>
