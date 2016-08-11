@@ -51,7 +51,7 @@ sub Configure
     }
     mkpath($pbsroot, 0, 0755) unless (-e $pbsroot);
     if (! -d $pbsroot) {
-        $self->Fail("Can't create directory: $pbsroot");
+        $self->error("Can't create directory: $pbsroot");
         return 1;
     }
 
