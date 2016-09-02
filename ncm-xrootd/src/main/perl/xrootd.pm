@@ -136,6 +136,8 @@ my %disk_config_rules = (
     "all.sitename"   => "siteName:GLOBAL;" . LINE_FORMAT_KW_VAL,
     "xrd.report"     => "reportingOptions:GLOBAL;" . LINE_FORMAT_KW_VAL,
     "xrootd.monitor" => "monitoringOptions:GLOBAL;" . LINE_FORMAT_KW_VAL,
+    'sec.protocol /usr/$(xrdlibdir) gsi' => "securityProtocol/gsi->gsi:securityProtocol;" . LINE_FORMAT_KW_VAL . ";" . LINE_VALUE_HASH . ':'.
+                                                                                     (LINE_OPT_KEY_PREFIX_DASH | LINE_OPT_HASH_SEP_COLON),
                         );
 
 my %redir_config_rules = (
@@ -144,9 +146,13 @@ my %redir_config_rules = (
     "dpm.defaultprefix"     => "defaultPrefix:dpm;" . LINE_FORMAT_KW_VAL,
     "dpm.fixedidrestrict"   => "authorizedPaths:dpm;" . LINE_FORMAT_KW_VAL . ";" . LINE_VALUE_ARRAY,
     "dpm.fqan"              => "mappedFQANs:dpm;" . LINE_FORMAT_KW_VAL . ";" . LINE_VALUE_ARRAY,
+    "dpm.listvoms" => "vomsat:securityProtocol/gsi->;" . LINE_FORMAT_KW_VAL,
+    "dpm.nohv1" => "vomsfun:securityProtocol/gsi->;" . LINE_FORMAT_KW_VAL,
     "dpm.principal"         => "principal:dpm;" . LINE_FORMAT_KW_VAL,
     "dpm.replacementprefix" => "replacementPrefix:dpm;" . LINE_FORMAT_KW_VAL . ";" . LINE_VALUE_HASH,
     "ofs.authlib"           => "authzLibraries:GLOBAL;" . LINE_FORMAT_KW_VAL . ";" . LINE_VALUE_ARRAY,
+    'sec.protocol /usr/$(xrdlibdir) gsi' => "securityProtocol/gsi->gsi:securityProtocol;" . LINE_FORMAT_KW_VAL . ";" . LINE_VALUE_HASH . ':'.
+                                                                                       (LINE_OPT_KEY_PREFIX_DASH | LINE_OPT_HASH_SEP_COLON),
     "xrd.report"            => "reportingOptions:GLOBAL;" . LINE_FORMAT_KW_VAL,
     "xrootd.monitor"        => "monitoringOptions:GLOBAL;" . LINE_FORMAT_KW_VAL,
     "xrootd.redirect" => "localRedirectParams:GLOBAL;" . LINE_FORMAT_KW_VAL . ";" . LINE_VALUE_ARRAY . ':' . LINE_OPT_VALUE_ONELINE,
@@ -162,10 +168,14 @@ my %fedredir_config_rules = (
     "all.manager"           => "federationCmsdManager:fedparams;" . LINE_FORMAT_KW_VAL,
     "all.sitename"          => "siteName:GLOBAL;" . LINE_FORMAT_KW_VAL,
     "dpm.defaultprefix"     => "!namePrefix:fedparams->defaultPrefix:dpm;" . LINE_FORMAT_KW_VAL,
+    "dpm.listvoms"          => "vomsat:securityProtocol/gsi->;" . LINE_FORMAT_KW_VAL,
     "dpm.namelib"           => "n2nLibrary:fedparams;" . LINE_FORMAT_KW_VAL,
     "dpm.namecheck"         => "namePrefix:fedparams;" . LINE_FORMAT_KW_VAL,
+    "dpm.nohv1"             => "vomsfun:securityProtocol/gsi->;" . LINE_FORMAT_KW_VAL,
     "dpm.replacementprefix" => "!namePrefix:fedparams->replacementPrefix:dpm;" . LINE_FORMAT_KW_VAL . ";" . LINE_VALUE_HASH,
     "pss.origin"            => "localRedirector:fedparams;" . LINE_FORMAT_KW_VAL,
+    'sec.protocol /usr/$(xrdlibdir) gsi' => "securityProtocol/gsi->gsi:securityProtocol;" . LINE_FORMAT_KW_VAL. ";" . LINE_VALUE_HASH . ':'.
+                                                                                       (LINE_OPT_KEY_PREFIX_DASH | LINE_OPT_HASH_SEP_COLON),
     "xrd.port"              => "localPort:fedparams;" . LINE_FORMAT_KW_VAL,
     "xrd.report"            => "reportingOptions:fedparams;" . LINE_FORMAT_KW_VAL,
     "xrootfedxrdmanager"    => "federationXrdManager:fedparams;" . LINE_FORMAT_KW_VAL_SET . ';:' . (LINE_OPT_SEP_EQUAL | LINE_OPT_SEP_SPACE_AROUND),

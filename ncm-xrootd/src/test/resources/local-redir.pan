@@ -2,6 +2,8 @@
 
 object template local-redir;
 
+include 'components/xrootd/schema';
+
 prefix '/software/components/xrootd';
 
 'hosts/grid05.lal.in2p3.fr/roles/0' = 'redir';
@@ -17,6 +19,14 @@ prefix '/software/components/xrootd';
 'options/monitoringOptions' = 'all rbuff 32k auth flush 30s  window 5s dest files info user io redir  atl-prod05.slac.stanford.edu:9930';
 'options/reportingOptions' = ' atl-prod05.slac.stanford.edu:9931 every 60s all -buff -poll sync';
 'options/restartServices' = true;
+'options/securityProtocol/gsi' = nlist("ca", 2,
+                                       "cert", "/etc/grid-security/dpmmgr/dpmcert.pem",
+                                       "crl", 3,
+                                       "gmapopt", 10,
+                                       "key", "/etc/grid-security/dpmmgr/dpmkey.pem",
+                                       "md", "sha256:sha1",
+                                       "vomsfun", "/usr/lib64/libXrdSecgsiVOMS.so",
+                                      );
 'options/siteName' = 'GRIF-LAL';
 'options/xrootdInstances/redir/configFile' = '/etc/xrootd/xrootd-dpmredir.cfg';
 'options/xrootdInstances/redir/logFile' = '/var/log/xrootd/xrootd.log';
