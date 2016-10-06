@@ -29,20 +29,40 @@
       <email>Thorsten.Kleinwort@yahoo.de</email>
     </developer>
   </developers>
-
   <contributors>
     <contributor>
-      <name>Jane SMITH</name>
-      <email>smith@example.com</email>
+      <name>German Cancio</name>
+      <email>German.Cancio@cern.ch</email>
       <roles>
-	<role>author</role>
+    	<role>author</role>
       </roles>
     </contributor>
     <contributor>
-      <name>Joe DOE</name>
-      <email>doe@example.org</email>
+      <name>James Casey</name>
+      <email>James.Casey@cern.ch</email>
       <roles>
-	<role>author</role>
+	    <role>author</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Ulrich Schwickerath</name>
+      <email>Ulrich.Schwickerath@cern.ch</email>
+      <roles>
+	    <role>author</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Veronique Lefebure</name>
+      <email>Veronique.Lefebure@cern.ch</email>
+      <roles>
+	    <role>author</role>
+      </roles>
+    </contributor>
+    <contributor>
+      <name>Ronald Starink</name>
+      <email>ronalds@nikhef.nl</email>
+      <roles>
+	    <role>author</role>
       </roles>
     </contributor>
   </contributors>
