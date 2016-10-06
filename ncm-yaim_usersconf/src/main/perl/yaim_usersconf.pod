@@ -6,54 +6,37 @@
 
 =head1 NAME
 
-yaim_usersconf: NCM component to write users.conf and groups.conf files used by YAIM 
-to generate grid-mapfiles.
+yaim_usersconf: NCM component to write C<< users.conf >> and C<< groups.conf >>
+files used by YAIM to generate grid-mapfiles.
 
 =head1 DESCRIPTION
 
-The I<yaim_usersconf> component writes the users.conf and groups.conf
+The I<yaim_usersconf> component writes the C<< users.conf >> and C<< groups.conf >>
 files used by YAIM. The exact locations should be specified in the CDB
-structure at "/software/components/yaim_usersconf/users_conf_file" and  
-"/software/components/yaim_usersconf/groups_conf_file".
+structure at C<< /software/components/yaim_usersconf/users_conf_file >> and
+C<< /software/components/yaim_usersconf/groups_conf_file >>.
 
 =head1 RESOURCES
 
-=head2 /system/vo/<VO-name>/gridusers (list)
+=over
+
+=item * C<< /system/vo/<VO-name>/gridusers >> : list
 
 A list of nlists, where each element specifies a username and an (optional)
 flag to describe the role of the user.
 
-The component will iterate over this list, writing an entry in users.conf
+The component will iterate over this list, writing an entry in C<< users.conf >>
 for each element that has a corresponding user on the system.
 
-=head2 /system/vo/<VO-name>/gridgroups (list)
+=item * C<< /system/vo/<VO-name>/gridgroups >> : list
 
 A list of nlists, where each element specifies a VOMS path and an (optional)
 flag to describe the role.
 
-The component will iterate over this list, writing an entry in groups.conf
+The component will iterate over this list, writing an entry in C<< groups.conf >>
 for each element that has a corresponding group on the system.
 
-=head1 DEPENDENCIES
-
-=head2 Components to be run before:
-
-none.
-
-=head2 Components to be run after:
-
-none.
-
-=head1 Important: BUGS
-
-=head1 AUTHOR
-
-Jan van Eldik <Jan.van.Eldik@cern.ch>
-
-=head1 SEE ALSO
-
-ncm-ncd(1), http://cern.ch/quattor
-http://cern.ch/grid-deployment
+=back
 
 =cut
 
