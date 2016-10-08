@@ -52,7 +52,6 @@
     <module>ncm-lcmaps</module>
     <module>ncm-maui</module>
     <module>ncm-mkgridmap</module>
-    <module>ncm-moab</module>
     <module>ncm-myproxy</module>
     <module>ncm-pbsclient</module>
     <module>ncm-pbsknownhosts</module>
