@@ -6,7 +6,7 @@
   <artifactId>gsissh</artifactId>
 
   <packaging>pom</packaging>
-  <version>16.10.0-rc4-SNAPSHOT</version>
+  <version>16.10.0-rc4</version>
   <name>gsissh NCM component.</name>
 
   <parent>
