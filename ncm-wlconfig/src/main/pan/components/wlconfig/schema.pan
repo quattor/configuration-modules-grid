@@ -6,7 +6,7 @@
 
 declaration template components/wlconfig/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 type structure_wl_log = {
         'file' : string
