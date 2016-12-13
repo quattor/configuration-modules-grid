@@ -40,14 +40,15 @@ prefix '/software/components/xrootd';
 'options/federations/cms/validPathPrefix' = '/store/';
 'options/reportingOptions' = ' atl-prod05.slac.stanford.edu:9931 every 60s all -buff -poll sync';
 'options/restartServices' = true;
-'options/securityProtocol/gsi' = nlist("ca", 2,
-                                       "cert", "/etc/grid-security/dpmmgr/dpmcert.pem",
-                                       "crl", 3,
-                                       "gmapopt", 10,
-                                       "key", "/etc/grid-security/dpmmgr/dpmkey.pem",
-                                       "md", "sha256:sha1",
-                                       "vomsfun", "/usr/lib64/libXrdSecgsiVOMS.so",
-                                      );
+'options/securityProtocol/gsi' = nlist(
+    "ca", 2,
+    "cert", "/etc/grid-security/dpmmgr/dpmcert.pem",
+    "crl", 3,
+    "gmapopt", 10,
+    "key", "/etc/grid-security/dpmmgr/dpmkey.pem",
+    "md", "sha256:sha1",
+    "vomsfun", "/usr/lib64/libXrdSecgsiVOMS.so",
+);
 'options/siteName' = 'GRIF-LAL';
 'options/xrootdInstances/cmsfed/configFile' = '/etc/xrootd/xrootd-dpmfedredir_cmsfed.cfg';
 'options/xrootdInstances/cmsfed/federation' = 'cms';
