@@ -9,7 +9,7 @@
 
 declaration template components/pbsclient/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 type ${project.artifactId}_component_pathmapping_type = {
     "locations" : string
