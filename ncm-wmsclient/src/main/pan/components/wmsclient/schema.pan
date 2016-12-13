@@ -6,7 +6,7 @@
 
 declaration template components/wmsclient/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 type ${project.artifactId}_component_mw_ce_attrs = {
     'rank' ? string
