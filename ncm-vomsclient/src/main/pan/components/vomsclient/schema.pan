@@ -6,8 +6,8 @@
 
 declaration template components/vomsclient/schema;
 
-include { 'quattor/schema' };
-include { 'pan/types' };
+include 'quattor/schema';
+include 'pan/types';
 
 type structure_vomsclient_voms_info = {
     'name' ? string

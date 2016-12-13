@@ -6,7 +6,7 @@
 
 declaration template components/xrootd/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 # Validation of host configiguration (hosts resource)
 function ${project.artifactId}_component_node_config_valid = {

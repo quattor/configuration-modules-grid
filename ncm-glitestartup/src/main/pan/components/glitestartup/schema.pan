@@ -6,9 +6,9 @@
 
 declaration template components/glitestartup/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
-include { 'pan/types' };
+include 'pan/types';
 
 type ${project.artifactId}_component_service = {
     'args' ? string = ''

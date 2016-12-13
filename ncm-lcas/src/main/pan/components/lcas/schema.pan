@@ -9,7 +9,7 @@
 
 declaration template components/lcas/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 # Validation function to ensure that legacy schema properties for describing
 #databases ('dbpath', 'module') are not used with the new ones (under 'db').

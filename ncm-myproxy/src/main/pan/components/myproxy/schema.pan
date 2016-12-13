@@ -6,7 +6,7 @@
 
 declaration template components/myproxy/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 # Function to validate component configuration, in particular
 # ensure than obsolete trustedDNs is not specified as the same

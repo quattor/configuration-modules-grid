@@ -9,7 +9,7 @@
 
 declaration template components/lcmaps/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 function component_lcmaps_valid = {
     if ( (ARGC != 1) && !is_nlist(ARGV[0]) ) {

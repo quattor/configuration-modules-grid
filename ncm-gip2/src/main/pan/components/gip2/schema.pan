@@ -6,8 +6,8 @@
 
 declaration template components/gip2/schema;
 
-include { 'quattor/schema' };
-include { 'pan/types' };
+include 'quattor/schema';
+include 'pan/types';
 
 type structure_gip2_attribute = string[];
 

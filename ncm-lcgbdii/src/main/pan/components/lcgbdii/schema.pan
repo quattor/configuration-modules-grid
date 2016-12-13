@@ -6,9 +6,9 @@
 
 declaration template components/lcgbdii/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
-include { 'pan/types' };
+include 'pan/types';
 
 # Function to check that some optional properties are present in context they
 # are requireed
