@@ -19,7 +19,7 @@ prefix '/software/components/xrootd';
 'options/monitoringOptions' = 'all rbuff 32k auth flush 30s  window 5s dest files info user io redir  atl-prod05.slac.stanford.edu:9930';
 'options/reportingOptions' = ' atl-prod05.slac.stanford.edu:9931 every 60s all -buff -poll sync';
 'options/restartServices' = true;
-'options/securityProtocol/gsi' = nlist(
+'options/securityProtocol/gsi' = dict(
     "ca", 2,
     "cert", "/etc/grid-security/dpmmgr/dpmcert.pem",
     "crl", 3,

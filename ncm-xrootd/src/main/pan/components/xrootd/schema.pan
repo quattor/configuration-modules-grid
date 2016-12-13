@@ -130,7 +130,7 @@ function ${project.artifactId}_component_access_rules_valid = {
 # used if present).
 
 type ${project.artifactId}_component_exported_path = {
-    # Path is optional: if absent the VO name (nlist key will be used).
+    # Path is optional: if absent the VO name (dict key will be used).
     # If the path is not starting with '/', will be appended to exportedPathRoot.
     'path' ? string
 };
