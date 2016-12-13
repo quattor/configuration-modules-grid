@@ -6,7 +6,7 @@
 
 declaration template components/pbsknownhosts/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 type ${project.artifactId}_component = {
     include structure_component
