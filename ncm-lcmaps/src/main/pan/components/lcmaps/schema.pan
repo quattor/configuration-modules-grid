@@ -12,7 +12,7 @@ declaration template components/lcmaps/schema;
 include 'quattor/schema';
 
 function component_lcmaps_valid = {
-    if ( (ARGC != 1) && !is_nlist(ARGV[0]) ) {
+    if ( (ARGC != 1) && !is_dict(ARGV[0]) ) {
         error('Invalid argument list in validation function component_lcmaps_valid');
     };
 
