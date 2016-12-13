@@ -9,14 +9,14 @@ unique template components/glitestartup/functions;
 # Function to add a gLite service with optional attributes.
 # If the service already exists, its attributes are modified.
 #
-# Return value : nlist of gLite services
+# Return value : dict of gLite services
 #
 # Expect to be called as :
 #   '/software/components/glitestartup/services' = glitestartup_mod_service(service_name[,service_attrs]);
 #
 # where :
 #  - service_name is the name of the gLite service
-#  - service_attrs is a nlist of valid attributes (see schema.tpl)
+#  - service_attrs is a dict of valid attributes (see schema.tpl)
 
 function glitestartup_mod_service = {
     function_name = 'glitestartup_mod_service';
@@ -29,7 +29,7 @@ function glitestartup_mod_service = {
     if ( ARGC == 2 ) {
         SELF[ARGV[0]] = ARGV[1];
     } else {
-        SELF[ARGV[0]] = nlist();
+        SELF[ARGV[0]] = dict();
     };
 
     SELF;
@@ -48,7 +48,7 @@ function glitestartup_mod_service = {
 function glitestartup_add_dependency = {
     function_name = 'glitestartup_add_dependency';
     deps = SELF;
-    tmpdeps = nlist();
+    tmpdeps = dict();
 
     if ( (ARGC != 1) || !is_list(ARGV[0]) ) {
         error(function_name + ': argument must be list of dependencies');

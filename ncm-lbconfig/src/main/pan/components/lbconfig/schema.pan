@@ -13,7 +13,7 @@ type structure_index_list = string[];
 type ${project.artifactId}_component = {
     include structure_component
         'configFile' : string = 'edg_wl_query_index.conf'
-        'indicies' : structure_index_list{} = nlist('system', list('owner', 'location', 'destination'))
+        'indicies' : structure_index_list{} = dict('system', list('owner', 'location', 'destination'))
 };
 
 bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
