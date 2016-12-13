@@ -6,8 +6,8 @@
 
 declaration template components/gsissh/schema;
 
-include { 'quattor/schema' };
-include { 'pan/types' };
+include 'quattor/schema';
+include 'pan/types';
 
 type structure_gsissh_server = {
     'port' : type_port
