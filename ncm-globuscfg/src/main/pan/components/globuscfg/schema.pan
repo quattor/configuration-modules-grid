@@ -7,7 +7,7 @@
 
 declaration template components/globuscfg/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 type reg_type = {
     "recordname" : string
