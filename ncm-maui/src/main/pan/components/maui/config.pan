@@ -16,4 +16,4 @@ prefix '/software/components/${project.artifactId}';
 'dependencies/pre' ?= list('spma');
 
 # Install Quattor configuration module via RPM package.
-'/software/packages' = pkg_repl('ncm-${project.artifactId}','${no-snapshot-version}-${rpm.release}','noarch');
+'/software/packages' = pkg_repl('ncm-${project.artifactId}', '${no-snapshot-version}-${rpm.release}', 'noarch');

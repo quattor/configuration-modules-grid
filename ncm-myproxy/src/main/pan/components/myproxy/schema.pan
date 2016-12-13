@@ -14,7 +14,7 @@ include { 'quattor/schema' };
 
 function component_myproxy_options_valid = {
     if ( is_defined(SELF['trustedDNs']) && (is_defined(SELF['authorizedDNs']) || is_defined(SELF['defaultDNs'])) ) {
-        error('trustedDNs is obsolete and cannot be mixed with authorizedDNs and defaultDNs');  
+        error('trustedDNs is obsolete and cannot be mixed with authorizedDNs and defaultDNs');
     };
     true;
 };
@@ -29,7 +29,7 @@ type ${project.artifactId}_component_policies = {
 
 type ${project.artifactId}_component = {
     include structure_component
-    'flavor' : string = 'edg' with match(SELF,'^(edg|glite)$')
+    'flavor' : string = 'edg' with match(SELF, '^(edg|glite)$')
     'confFile' ? string = 'opt/edg/etc/edg-myproxy.conf'
     'daemonName' : string = 'myproxy' with match(SELF, '^(myproxy|myproxy-server)$')
     'trustedDNs' ? string[]

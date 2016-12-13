@@ -19,20 +19,20 @@ unique template components/glitestartup/functions;
 #  - service_attrs is a nlist of valid attributes (see schema.tpl)
 
 function glitestartup_mod_service = {
-  function_name = 'glitestartup_mod_service';
-  if ( ARGC < 1 ) {
-    error(function_name+': missing required argument (service name)');
-  } else if ( ARGC > 2 ){
-    error(function_name+': too many arguments ('+to_string(ARGC)+')');  
-  };
-  
-  if ( ARGC == 2 ) {
-    SELF[ARGV[0]] = ARGV[1];
-  } else {
-    SELF[ARGV[0]] = nlist();
-  };
-  
-  SELF;
+    function_name = 'glitestartup_mod_service';
+    if ( ARGC < 1 ) {
+        error(function_name + ': missing required argument (service name)');
+    } else if ( ARGC > 2 ){
+        error(function_name + ': too many arguments (' + to_string(ARGC) + ')');
+    };
+
+    if ( ARGC == 2 ) {
+        SELF[ARGV[0]] = ARGV[1];
+    } else {
+        SELF[ARGV[0]] = nlist();
+    };
+
+    SELF;
 };
 
 
@@ -46,38 +46,38 @@ function glitestartup_mod_service = {
 # with dependency_list a list of dependency.
 
 function glitestartup_add_dependency = {
-  function_name = 'glitestartup_add_dependency';
-  deps = SELF;
-  tmpdeps = nlist();
+    function_name = 'glitestartup_add_dependency';
+    deps = SELF;
+    tmpdeps = nlist();
 
-  if ( (ARGC != 1) || !is_list(ARGV[0]) ) {
-    error(function_name+': argument must be list of dependencies');
-  };
-  
-  if ( !is_defined(deps) ) {
-    deps = list();
-  } else if ( !is_list(deps) ) {
-    error('component dependencies must be a list');
-  } else {
-    foreach (i;dep;deps) {
-      tmpdeps[dep] = '';
+    if ( (ARGC != 1) || !is_list(ARGV[0]) ) {
+        error(function_name + ': argument must be list of dependencies');
     };
-  };
-  
-  foreach (i;dep;ARGV[0]) {
-    if ( !exists(tmpdeps[dep]) ) {
-      tmpdeps[dep] = '';
-    }
-  };
-  
-  deps = list();
-  foreach (dep;v;tmpdeps) {
-    deps[length(deps)] = dep;
-  };
-  
-  if ( length(deps) > 0 ) {
-    deps;
-  } else {
-    null;
-  };
+
+    if ( !is_defined(deps) ) {
+        deps = list();
+    } else if ( !is_list(deps) ) {
+        error('component dependencies must be a list');
+    } else {
+        foreach (i;dep;deps) {
+            tmpdeps[dep] = '';
+        };
+    };
+
+    foreach (i;dep;ARGV[0]) {
+        if ( !exists(tmpdeps[dep]) ) {
+            tmpdeps[dep] = '';
+        }
+    };
+
+    deps = list();
+    foreach (dep;v;tmpdeps) {
+        deps[length(deps)] = dep;
+    };
+
+    if ( length(deps) > 0 ) {
+        deps;
+    } else {
+        null;
+    };
 };

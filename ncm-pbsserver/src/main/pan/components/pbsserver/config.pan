@@ -9,7 +9,7 @@ include 'components/${project.artifactId}/schema';
 bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
 
 # Install Quattor configuration module via RPM package.
-'/software/packages' = pkg_repl('ncm-${project.artifactId}','${no-snapshot-version}-${rpm.release}','noarch');
+'/software/packages' = pkg_repl('ncm-${project.artifactId}', '${no-snapshot-version}-${rpm.release}', 'noarch');
 
 # Set prefix to root of component configuration.
 prefix '/software/components/${project.artifactId}';
