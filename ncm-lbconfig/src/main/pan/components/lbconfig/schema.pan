@@ -6,7 +6,7 @@
 
 declaration template components/lbconfig/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 type structure_index_list = string[];
 
