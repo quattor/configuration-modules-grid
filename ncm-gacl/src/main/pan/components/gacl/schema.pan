@@ -9,7 +9,7 @@
 
 declaration template components/gacl/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 type ${project.artifactId}_component = {
     include structure_component
