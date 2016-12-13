@@ -24,7 +24,7 @@ type structure_wl_jobcontroller = {
         'outputFile' : string = '${EDG_WL_TMP}/jobcontrol/cond'
         'queueFile' : string = '${EDG_WL_TMP}/jobcontrol/queue.fl'
         'lockFile' : string = '${EDG_WL_TMP}/jobcontrol/lock'
-        'log' : structure_wl_log = nlist('file', '${EDG_WL_TMP}/jobcontrol/log/events.log', 'level', 5)
+        'log' : structure_wl_log = dict('file', '${EDG_WL_TMP}/jobcontrol/log/events.log', 'level', 5)
 };
 
 type structure_wl_logmonitor = {
@@ -37,7 +37,7 @@ type structure_wl_logmonitor = {
         'abortedJobsTimeout' : long(1..) = 600
         'externalLogFile' : string = '${EDG_WL_TMP}/logmonitor/log/external.log'
         'lockFile' : string = '${EDG_WL_TMP}/logmonitor/lock'
-        'log' : structure_wl_log = nlist('file', '${EDG_WL_TMP}/logmonitor/log/events.log', 'level', 5)
+        'log' : structure_wl_log = dict('file', '${EDG_WL_TMP}/logmonitor/log/events.log', 'level', 5)
 };
 
 type structure_wl_networkserver = {
@@ -58,7 +58,7 @@ type structure_wl_networkserver = {
         'quotaAdjustment' : boolean = false
         'quotaAdjustmentAmount' : long(0..) = 2000
         'reservedDiskPercentage' : double = 2.0 with (self >= 0.0 && self <= 100.0)
-        'log' : structure_wl_log = nlist('file', '${EDG_WL_TMP}/networkserver/log/events.log', 'level', 5)
+        'log' : structure_wl_log = dict('file', '${EDG_WL_TMP}/networkserver/log/events.log', 'level', 5)
         'DLICatalog' ? string[]
         'RLSCatalog' ? string[]
 };
@@ -69,7 +69,7 @@ type structure_wl_workloadmanager = {
         'dispatcherType' : string = 'filelist'
         'inputFile' : string = '${EDG_WL_TMP}/workload_manager/input.fl'
         'maxRetryCount' : long(1..) = 10
-        'log' : structure_wl_log = nlist('file', '${EDG_WL_TMP}/workload_manager/log/events.log', 'level', 5)
+        'log' : structure_wl_log = dict('file', '${EDG_WL_TMP}/workload_manager/log/events.log', 'level', 5)
 };
 
 
@@ -80,10 +80,10 @@ type ${project.artifactId}_component = {
         'hostProxyFile' : string = '${EDG_WL_TMP}/networkserver/ns.proxy'
         'grisCache' : long(1..) = 1
         'useCachedResourceInfo' : boolean = true
-    'jobController' : structure_wl_jobcontroller = nlist()
-    'logMonitor' : structure_wl_logmonitor = nlist()
-    'networkServer' : structure_wl_networkserver = nlist()
-    'workloadManager' : structure_wl_workloadmanager = nlist()
+    'jobController' : structure_wl_jobcontroller = dict()
+    'logMonitor' : structure_wl_logmonitor = dict()
+    'networkServer' : structure_wl_networkserver = dict()
+    'workloadManager' : structure_wl_workloadmanager = dict()
 };
 
 bind '/software/components/${project.artifactId}' = ${project.artifactId}_component;
