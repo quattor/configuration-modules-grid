@@ -14,7 +14,7 @@ include 'quattor/schema';
 # Validation function to ensure that legacy schema properties for describing
 #databases ('dbpath', 'module') are not used with the new ones (under 'db').
 function component_lcas_valid = {
-    if ( (ARGC != 1) && !is_nlist(ARGV[0]) ) {
+    if ( (ARGC != 1) && !is_dict(ARGV[0]) ) {
         error('Invalid argument list in validation function component_lcas_valid');
     };
 
