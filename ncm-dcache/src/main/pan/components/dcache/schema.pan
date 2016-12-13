@@ -6,7 +6,7 @@
 
 declaration template components/dcache/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 type structure_dcache_unit_units = {
     "cond" : string
