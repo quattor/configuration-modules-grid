@@ -6,7 +6,7 @@
 
 declaration template components/mkgridmap/schema;
 
-include { 'quattor/schema' };
+include 'quattor/schema';
 
 type structure_mkgridmap_local = {
     'cert' : string
