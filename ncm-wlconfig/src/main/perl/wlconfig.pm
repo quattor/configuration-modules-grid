@@ -175,7 +175,7 @@ sub sourceFile {
 		
 		# Ignore comments.
 		
-	    } elsif (/(\w+)=\${\w+:[-=]([^}]+)}(\s*\#.*)?/) {
+	    } elsif (/(\w+)=\$\{\w+:[-=]([^}]+)\}(\s*\#.*)?/) {
 
 		my $key = $1;
 		my $value = $2;
