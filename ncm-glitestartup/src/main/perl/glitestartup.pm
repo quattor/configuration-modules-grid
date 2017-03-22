@@ -13,8 +13,6 @@ $EC=LC::Exception::Context->new->will_store_all;
 use NCM::Template;
 @ISA= qw(NCM::Component NCM::Template);
 
-use EDG::WP4::CCM::Element;
-
 use LC::Check;
 use CAF::FileEditor;
 use CAF::FileReader;
