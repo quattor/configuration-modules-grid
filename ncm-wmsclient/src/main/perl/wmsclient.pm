@@ -16,8 +16,6 @@ use File::Copy;
 use File::Path;
 use LC::File qw(file_contents);
 
-use EDG::WP4::CCM::Element;
-
 # In the following hash, the same keys must exist.
 #   - mw_locations : define install path of the corresponding MW
 #   - mw_config_opts : define relative configuration path (inside this component config)
