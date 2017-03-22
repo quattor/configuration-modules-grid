@@ -39,8 +39,6 @@ use vars qw($EC);
 use parent qw(NCM::Component);
 $EC = LC::Exception::Context->new->will_store_all;
 
-use EDG::WP4::CCM::Element;
-
 use Readonly;
 
 use File::Path;
