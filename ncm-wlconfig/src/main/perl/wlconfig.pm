@@ -16,11 +16,9 @@ use File::Copy;
 use File::Path;
 use File::Find;
 
-use EDG::WP4::CCM::Element;
-
 use vars qw(%wp1vars);
 
-
+use EDG::WP4::CCM::CacheManager::Encode qw(LIST PROPERTY STRING);
 
 ##########################################################################
 sub Configure($$@) {
@@ -267,12 +265,12 @@ sub fill {
 	my $element = $config->getElement($path);
 
 	# WARNING: This will ignore any elements of the list which are not properties.
-	if ($element->isType(EDG::WP4::CCM::Element::LIST)) {
+	if ($element->isType(LIST)) {
 	    my @items;
 	    while ($element->hasNextElement()) {
 		my $item = $element->getNextElement();
-		if ($item->isType(EDG::WP4::CCM::Element::PROPERTY)) {
-		    if ($item->isType(EDG::WP4::CCM::Element::STRING)) {
+		if ($item->isType(PROPERTY)) {
+		    if ($item->isType(STRING)) {
 			push @items, '"' . $item->getValue() . '"';
 		    } else {
 			push @items, $item->getValue();
