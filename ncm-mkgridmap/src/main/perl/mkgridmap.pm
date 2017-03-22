@@ -13,8 +13,6 @@ use vars qw(@ISA $EC);
 $EC=LC::Exception::Context->new->will_store_all;
 use Readonly;
 
-use EDG::WP4::CCM::Element;
-
 use CAF::FileWriter;
 use CAF::Process;
 
