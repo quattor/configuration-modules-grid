@@ -13,7 +13,7 @@ use vars qw(@ISA $EC);
 $EC=LC::Exception::Context->new->will_store_all;
 use NCM::Check;
 
-use EDG::WP4::CCM::Element qw(unescape);
+use EDG::WP4::CCM::Path qw(unescape);
 
 use LC::File qw(copy);
 use LC::Check;
