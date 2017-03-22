@@ -39,8 +39,6 @@ our $EC = LC::Exception::Context->new->will_store_all;
 our @EXPORT = qw( $XROOTD_SYSCONFIG_FILE );
 use Readonly;
 
-use EDG::WP4::CCM::Element;
-
 use File::Path;
 use File::Copy;
 use File::Compare;
