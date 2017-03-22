@@ -18,8 +18,6 @@ use NCM::Check;
 
 use File::Path;
 
-use EDG::WP4::CCM::Element;
-
 
 ##########################################################################
 sub Configure($$@) {
