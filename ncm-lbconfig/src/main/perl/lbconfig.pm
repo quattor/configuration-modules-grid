@@ -14,9 +14,6 @@ $EC=LC::Exception::Context->new->will_store_all;
 use NCM::Check;
 use File::Copy;
 
-use EDG::WP4::CCM::Element;
-
-
 
 ##########################################################################
 sub Configure($$@) {

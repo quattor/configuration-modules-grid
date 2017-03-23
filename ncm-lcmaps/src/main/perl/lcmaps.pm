@@ -20,8 +20,6 @@ use File::Path;
 
 use LC::Check;
 
-use EDG::WP4::CCM::Element;
-
 
 ##########################################################################
 # write a single policy file to path $path

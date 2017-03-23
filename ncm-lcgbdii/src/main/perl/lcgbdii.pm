@@ -15,8 +15,6 @@ use CAF::Process;
 use NCM::Check;
 use File::Copy;
 
-use EDG::WP4::CCM::Element;
-
 use File::Path;
 use File::Basename;
 

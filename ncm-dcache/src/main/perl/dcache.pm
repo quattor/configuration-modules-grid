@@ -20,8 +20,6 @@ use vars qw(@ISA $EC);
 $EC=LC::Exception::Context->new->will_store_all;
 use NCM::Check;
 
-use EDG::WP4::CCM::Element;
-
 use File::Copy;
 use File::Path;
 use File::Compare;
