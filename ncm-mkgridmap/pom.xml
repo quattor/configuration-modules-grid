@@ -6,7 +6,7 @@
   <artifactId>mkgridmap</artifactId>
 
   <packaging>pom</packaging>
-  <version>17.8.0-rc5-SNAPSHOT</version>
+  <version>17.8.0-rc5</version>
   <name>mkgridmap NCM component.</name>
 
   <parent>
