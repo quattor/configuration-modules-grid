@@ -6,7 +6,7 @@
   <artifactId>wlconfig</artifactId>
 
   <packaging>pom</packaging>
-  <version>17.8.0-rc4-SNAPSHOT</version>
+  <version>17.8.0-rc4</version>
   <name>wlconfig NCM component.</name>
 
   <parent>
