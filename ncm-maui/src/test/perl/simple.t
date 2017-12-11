@@ -11,10 +11,6 @@ use CAF::Object;
 use Test::Quattor qw(simple);
 use NCM::Component::maui;
 
-$CAF::Object::NoAction = 1;
-
-set_caf_file_close_diff(1);
-
 my $cfg = get_config_for_profile('simple');
 my $cmp = NCM::Component::maui->new('simple');
 

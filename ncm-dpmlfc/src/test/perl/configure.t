@@ -14,6 +14,10 @@ use Readonly;
 use CAF::Object;
 Test::NoWarnings::clear_warnings();
 
+# Keep this around, because there are some strange file existence test that
+# rely on it during unittests.
+$CAF::Object::NoAction = 1;
+
 =pod
 
 =head1 SYNOPSIS
@@ -1170,9 +1174,6 @@ Readonly my $SERVICE_RESTART_LIST_EXPECTED => 'dpm dpmcopyd dpnsdaemon httpd rfi
 Test configuration of a DPM head node.
 
 =cut
-
-$CAF::Object::NoAction = 1;
-set_caf_file_close_diff(1);
 
 my $cmp = NCM::Component::dpmlfc->new('dpmlfc');
 my $config = get_config_for_profile("dpm-config");

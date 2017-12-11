@@ -64,9 +64,6 @@ my %config_rules = (
 # Main code #
 #############
 
-$CAF::Object::NoAction = 1;
-set_caf_file_close_diff(1);
-
 my $comp = NCM::Component::xrootd->new('xrootd');
 
 my $xrootd_options = {};

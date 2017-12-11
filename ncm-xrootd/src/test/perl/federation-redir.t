@@ -296,9 +296,6 @@ dpm.nohv1
 # Main code #
 #############
 
-$CAF::Object::NoAction = 1;
-set_caf_file_close_diff(1);
-
 my $comp = NCM::Component::xrootd->new('xrootd');
 my $fed_redir_rules = $comp->getRules("fedredir");
 my %parser_options;
