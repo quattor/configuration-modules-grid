@@ -76,10 +76,6 @@ node1.example.com
     dedicated_threads = 20
 EOF
 
-$CAF::Object::NoAction = 1;
-
-set_caf_file_close_diff(1);
-
 my $cfg = get_config_for_profile('simple');
 my $cmp = NCM::Component::pbsserver->new('simple');
 

@@ -209,9 +209,6 @@ use constant FED_REDIRECT_EXPECTED => 'xrootd.redirect grid05.lal.in2p3.fr:11001
 # Main code #
 #############
 
-$CAF::Object::NoAction = 1;
-set_caf_file_close_diff(1);
-
 my $comp = NCM::Component::xrootd->new('xrootd');
 
 my $config = get_config_for_profile("local-redir");
