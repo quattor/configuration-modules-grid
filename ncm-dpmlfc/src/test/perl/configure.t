@@ -1011,7 +1011,7 @@ NSTrustedDNS "/DC=ch/DC=cern/OU=computers/CN=trusted-host.cern.ch" "/DC=ch/DC=ce
   # If mod_gridsite does not give us information about the certificate, this
   # enables mod_ssl to pass environment variables that can be used by mod_lcgdm_ns
   # to get the user DN.
-SSLOptions +StdEnvVars
+  SSLOptions +StdEnvVars
 
 </LocationMatch>
 
@@ -1053,7 +1053,7 @@ DiskFlags Write
   # If mod_gridsite does not give us information about the certificate, this
   # enables mod_ssl to pass environment variables that can be used by mod_lcgdm_ns
   # to get the user DN.
-SSLOptions +StdEnvVars
+  SSLOptions +StdEnvVars
 
 </LocationMatch>
 
@@ -1086,10 +1086,10 @@ Listen 443
     SSLProtocol all -SSLv2 -SSLv3
 
     # Certificates and CAs
-SSLCertificateFile /etc/grid-security/hostcert.pem
-SSLCertificateKeyFile /etc/grid-security/hostkey.pem
-SSLCACertificatePath /etc/grid-security/certificates
-SSLCARevocationPath /etc/grid-security/certificates
+    SSLCertificateFile		/etc/grid-security/hostcert.pem
+    SSLCertificateKeyFile	/etc/grid-security/hostkey.pem
+    SSLCACertificatePath 	/etc/grid-security/certificates
+    SSLCARevocationPath		/etc/grid-security/certificates
 
     # This improves HTTPS performance when the client disables encryption
 #    SSLCipherSuite 	NULL-MD5:NULL:RC4-MD5:RC4:+LOW:+MEDIUM:+HIGH:+EXP
