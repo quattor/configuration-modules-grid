@@ -6,7 +6,7 @@
   <artifactId>wmsclient</artifactId>
 
   <packaging>pom</packaging>
-  <version>18.6.0-rc1</version>
+  <version>18.6.0-rc2-SNAPSHOT</version>
   <name>NCM component to configure WMS client</name>
 
   <parent>
