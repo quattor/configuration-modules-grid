@@ -6,7 +6,7 @@
   <artifactId>wmslb</artifactId>
 
   <packaging>pom</packaging>
-  <version>18.6.0-rc4-SNAPSHOT</version>
+  <version>18.6.0</version>
   <name>NCM component to configure gLite  WMS and LB</name>
 
   <parent>
