@@ -41,8 +41,7 @@ Two extra processor related flags can be specified : ncpus, and ncores
 ncpus is the number of physical CPUs in the node, and ncores is the total number of cores.
 ** All CPUs in one host are assumed to be the same **
 
-Example properties are : "ncores", "ncpus", "flags", "model name", "cpu MHz",
-"cpu family","model","stepping"
+Example properties are : "ncores", "ncpus", "flags", "model name", "cpu MHz", "cpu family", "model", "stepping"
 
 Properties that start with "model " or "cpu " will see this be stripped as a first step.
 All resulting pbs_mom resources will be prefixed with C<cpu_> except ncpus and ncores.
