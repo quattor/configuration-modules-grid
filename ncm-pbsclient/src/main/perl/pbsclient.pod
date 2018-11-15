@@ -1,10 +1,6 @@
 # ${license-info}
 # ${developer-info}
 # ${author-info}
-# ${build-info}
-#
-# Coding style: emulate <TAB> characters with 4 spaces, thanks!
-################################################################################
 
 =head1 NAME
 
@@ -45,10 +41,10 @@ Two extra processor related flags can be specified : ncpus, and ncores
 ncpus is the number of physical CPUs in the node, and ncores is the total number of cores.
 ** All CPUs in one host are assumed to be the same **
 
-Example properties are : "ncores", "ncpus", "flags", "model name","cpu MHz","cpu family","model","stepping"
+Example properties are : "ncores", "ncpus", "flags", "model name", "cpu MHz", "cpu family", "model", "stepping"
 
 Properties that start with "model " or "cpu " will see this be stripped as a first step.
-All resulting pbs_mom resources will be prefixed with cpu_ except ncpus and ncores.
+All resulting pbs_mom resources will be prefixed with C<cpu_> except ncpus and ncores.
 
 =item /software/components/pbsclient/masters : string[]
 
@@ -105,8 +101,8 @@ Translates into configuration directive $prologalarm.
 =item /software/components/pbsclient/configPath : string
 
 location of the PBS mom configuration file (default: 
-/var/spool/pbs/mom_priv/config).  Note that the server_name file is 
-written two directories up (thus by default in /var/spool/pbs).
+C</var/spool/pbs/mom_priv/config>).  Note that the server_name file is 
+written two directories up (thus by default in C</var/spool/pbs>).
 
 =item /software/components/pbsclient/behaviour : string
 
@@ -122,7 +118,7 @@ in the "$pbsservername" directive in the mom config file.
 =item /software/components/pbsclient/initScriptPath : string
 
 Name of the init.d script to run in the configuration changed. BY
-default this is "/etc/init.d/pbs".
+default this is "C</etc/init.d/pbs>".
 
 =item /software/components/pbsclient/directPaths : component_pbsclient_pathmapping_type[]
 
@@ -147,28 +143,4 @@ If true, it assumes this host is only used for job submission, and has no pbs MO
 
 =back
 
-=head1 DEPENDENCIES
-
-=head2 Components to be run before:
-
-none.
-
-=head2 Components to be run after:
-
-none.
-
-=head1 BUGS
-
-none known.
-
-=head1 AUTHOR
-
-David Groep <davidg@nikhef.nl>
-
-=head1 SEE ALSO
-
-ncm-ncd(1)
-
 =cut
-
-
