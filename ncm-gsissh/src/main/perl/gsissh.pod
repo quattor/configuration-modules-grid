@@ -40,12 +40,13 @@ always configured even if there are no options.
 
 =head1 EXAMPLE
 
-"/software/components/gsissh/server/port" = 1975;
-"/software/components/gsissh/server/options" = 
-  nlist("PermitRootLogin", "no",
-        "RSAAuthentication", "no",
-        "PubkeyAuthentication", "no",
-        "PasswordAuthentication", "no",
-        "ChallengeResponseAuthentication", "no");
+    "/software/components/gsissh/server/port" = 1975;
+    "/software/components/gsissh/server/options" =
+          dict(
+              "PermitRootLogin", "no",
+              "RSAAuthentication", "no",
+              "PubkeyAuthentication", "no",
+              "PasswordAuthentication", "no",
+              "ChallengeResponseAuthentication", "no");
 
 =cut
