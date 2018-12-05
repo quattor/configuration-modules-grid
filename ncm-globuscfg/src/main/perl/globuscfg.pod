@@ -103,7 +103,7 @@ executable (in the default area), so for example in the case of
 
 "xyz" will be taken, as the name of the executable.
 You may optionally specify a fully-qualified executable name to
- override this default. The parameter to set is, for example,
+override this default. The parameter to set is, for example,
 "provider_edg" for the edg information provider.
 
 =item C</software/components/globuscfg/mds/gris/registration>
