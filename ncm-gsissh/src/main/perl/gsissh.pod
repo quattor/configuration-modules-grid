@@ -42,7 +42,7 @@ always configured even if there are no options.
 
     "/software/components/gsissh/server/port" = 1975;
     "/software/components/gsissh/server/options" =
-          nlist(
+          dict(
               "PermitRootLogin", "no",
               "RSAAuthentication", "no",
               "PubkeyAuthentication", "no",
