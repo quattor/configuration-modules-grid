@@ -6,7 +6,7 @@
   <artifactId>globuscfg</artifactId>
 
   <packaging>pom</packaging>
-  <version>18.12.0-rc3</version>
+  <version>18.12.0-rc4-SNAPSHOT</version>
   <name>Component to manage Globus configuration</name>
 
   <parent>
