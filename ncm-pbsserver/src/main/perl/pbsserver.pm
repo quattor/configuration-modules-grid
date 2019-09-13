@@ -17,6 +17,7 @@ Readonly::Array my @FILTER_PBSNODES_PATTERNS => qw(
     status jobs note
     mom_(manager|service)_port
     (total|dedicated)_(sockets|numa_nodes|cores|threads)
+    gpus gpu_status
 );
 
 
