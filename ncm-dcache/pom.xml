@@ -6,7 +6,7 @@
   <artifactId>dcache</artifactId>
 
   <packaging>pom</packaging>
-  <version>21.12.1</version>
+  <version>21.12.2-SNAPSHOT</version>
   <name>NCM component to manage dcache configuration.</name>
 
   <parent>
