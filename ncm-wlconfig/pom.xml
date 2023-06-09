@@ -103,6 +103,7 @@
                 </sources>
               </mapping>
             </mappings>
+            <url>https://github.com/quattor/configuration-modules-grid/tree/master/ncm-${project.artifactId}</url>
           </configuration>
         </plugin>
       </plugins>

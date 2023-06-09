@@ -47,5 +47,18 @@
     </contributor>
   </contributors>
 
-  
+    <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>rpm-maven-plugin</artifactId>
+          <configuration>
+            <url>https://github.com/quattor/configuration-modules-grid/tree/master/ncm-${project.artifactId}</url>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
 </project>
