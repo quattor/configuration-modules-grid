@@ -6,7 +6,7 @@
   <artifactId>pbsserver</artifactId>
 
   <packaging>pom</packaging>
-  <version>23.6.0</version>
+  <version>23.6.1-SNAPSHOT</version>
   <name>PBS server NCM component.</name>
 
   <parent>

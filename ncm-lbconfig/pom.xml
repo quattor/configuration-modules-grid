@@ -6,7 +6,7 @@
   <artifactId>lbconfig</artifactId>
 
   <packaging>pom</packaging>
-  <version>23.6.0</version>
+  <version>23.6.1-SNAPSHOT</version>
   <name>lbconfig NCM component.</name>
 
   <parent>
