@@ -349,7 +349,7 @@ sub getCertSubject () {
   
   # Extract the subject name using OpenSSL to help avoid
   # typos.
-  my $subject = `echo "$cert" | openssl x509 -noout -subject`;
+  my $subject = `echo "$cert" | openssl x509 -noout -subject -nameopt compat`;
   if ($?) {
     $self->error("cannot extract subject name for certificate");
     return(undef);
@@ -378,7 +378,7 @@ sub getIssuer () {
   return;
  }
 
- my $issuer = `echo "$cert" | openssl x509 -noout -issuer`;
+ my $issuer = `echo "$cert" | openssl x509 -noout -issuer -nameopt compat`;
  if ($?) {
   $self->error('cannot extract issuer name from certificate');
   return(undef);
