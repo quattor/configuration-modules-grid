@@ -33,7 +33,6 @@
     <module>ncm-globuscfg</module>
     <module>ncm-gridmapdir</module>
     <module>ncm-gsissh</module>
-    <module>ncm-lbconfig</module>
     <module>ncm-lcas</module>
     <module>ncm-lcgbdii</module>
     <module>ncm-lcgmonjob</module>
