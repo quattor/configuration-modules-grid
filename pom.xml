@@ -40,7 +40,6 @@
     <module>ncm-maui</module>
     <module>ncm-mkgridmap</module>
     <module>ncm-myproxy</module>
-    <module>ncm-pbsclient</module>
     <module>ncm-pbsserver</module>
     <module>ncm-vomsclient</module>
     <module>ncm-wlconfig</module>
