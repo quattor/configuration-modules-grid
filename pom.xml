@@ -5,7 +5,7 @@
   <artifactId>configuration-modules-grid</artifactId>
   <packaging>pom</packaging>
 
-  <version>24.10.0-rc1</version>
+  <version>24.10.0-rc2-SNAPSHOT</version>
 
   <name>Node Configuration Manager - components related to Grid services</name>
   <description>Modules configuring different services related to computing Grid</description>
