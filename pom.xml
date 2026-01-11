@@ -37,7 +37,6 @@
     <module>ncm-lcgbdii</module>
     <module>ncm-lcgmonjob</module>
     <module>ncm-lcmaps</module>
-    <module>ncm-maui</module>
     <module>ncm-mkgridmap</module>
     <module>ncm-myproxy</module>
     <module>ncm-pbsclient</module>
